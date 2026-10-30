@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "taczammobox:crate_50bmg"
+    }
+  ],
+  "result": {
+    "item": "taczammobox:box_50bmg",
+    "count": 9
+  }
+}

@@ -1,0 +1,87 @@
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+}
+
+version = '0.1.0-beta'
+group = 'com.taczammobox'
+archivesBaseName = 'taczammobox-1.20.1'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+minecraft {
+    mappings channel: 'official', version: '1.20.1'
+    copyIdeResources = true
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            mods {
+                taczammobox {
+                    source sourceSets.main
+                }
+            }
+        }
+        server {
+            workingDirectory project.file('run-server')
+            args '--nogui'
+            mods {
+                taczammobox {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+repositories {
+    maven { url = uri('local-maven') }
+    mavenCentral()
+    maven { url = 'https://maven.createmod.net' }
+    maven { url = 'https://maven.ithundxr.dev/mirror' }
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.20.1-47.3.19'
+    compileOnly files('libs/tacz-1.20.1-1.1.8-hotfix2.jar')
+    runtimeOnly files('libs/tacz-1.20.1-1.1.8-hotfix2.jar')
+    // Optional overlays; classes are only loaded by Jade/WTHIT when installed.
+    compileOnly files('libs/Jade-1.20.1-Forge-11.13.3.jar')
+    compileOnly files('libs/wthit-1.20.1-forge-8.21.1.jar')
+    // Optional Curios equipped-slot search; loaded only when Curios is installed.
+    compileOnly files('libs/curios-forge-5.14.1+1.20.1.jar')
+
+    // Optional Create compat (deployer filling). Only loaded when Create is installed.
+    compileOnly(fg.deobf('com.simibubi.create:create-1.20.1:6.0.8-289:slim')) { transitive = false }
+    compileOnly fg.deobf('net.createmod.ponder:Ponder-Forge-1.20.1:1.0.91')
+    compileOnly fg.deobf('dev.engine-room.flywheel:flywheel-forge-api-1.20.1:1.0.5')
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('META-INF/mods.toml') {
+        expand 'version': project.version
+    }
+}
+
+jar {
+    from('LICENSE') {
+        into 'META-INF'
+    }
+    manifest {
+        attributes([
+                'Specification-Title'    : 'taczammobox',
+                'Specification-Vendor'   : 'jmywork',
+                'Specification-Version'  : '1',
+                'Implementation-Title'   : project.name,
+                'Implementation-Version' : project.version,
+                'Implementation-Vendor'  : 'jmywork',
+                'MixinConfigs'           : 'taczammobox.mixins.json'
+        ])
+    }
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "taczammobox:item/box_base",
+  "textures": {
+    "label": "taczammobox:item/label/box_rpg_rocket",
+    "top": "taczammobox:item/top/box_rpg_rocket"
+  }
+}

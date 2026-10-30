@@ -1,0 +1,10 @@
+{
+  "parent": "taczammobox:block/crate_base",
+  "textures": {
+    "particle": "taczammobox:item/crate_side",
+    "side": "taczammobox:item/crate_side",
+    "top": "taczammobox:item/top/crate_generic",
+    "bottom": "taczammobox:item/crate_bottom",
+    "label": "taczammobox:item/label/crate_generic"
+  }
+}

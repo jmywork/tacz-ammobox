@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "taczammobox:block/ammo_packer_side_pack",
+    "down": "taczammobox:block/ammo_packer_bottom_pack",
+    "up": "taczammobox:block/ammo_packer_top_pack",
+    "north": "taczammobox:block/ammo_packer_front_pack",
+    "south": "taczammobox:block/ammo_packer_side_pack",
+    "west": "taczammobox:block/ammo_packer_side_pack",
+    "east": "taczammobox:block/ammo_packer_side_pack"
+  }
+}

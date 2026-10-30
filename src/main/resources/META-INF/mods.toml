@@ -1,0 +1,67 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="GPL-3.0-only"
+
+[[mods]]
+modId="taczammobox"
+version="${version}"
+displayName="TACZ Ammo Box"
+authors="jmywork"
+logoFile="icon.png"
+description='''Ammo packaging and automated ammo-box filling for Timeless and Classics Zero.'''
+
+[[dependencies.taczammobox]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.taczammobox]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.20.2)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.taczammobox]]
+    modId="tacz"
+    mandatory=true
+    versionRange="[1.1.7,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.taczammobox]]
+    modId="create"
+    mandatory=false
+    versionRange="[6.0.0,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.taczammobox]]
+    modId="jade"
+    mandatory=false
+    versionRange="[11,)"
+    ordering="AFTER"
+    side="CLIENT"
+
+[[dependencies.taczammobox]]
+    modId="wthit"
+    mandatory=false
+    versionRange="[8,)"
+    ordering="AFTER"
+    side="CLIENT"
+
+[[dependencies.taczammobox]]
+    modId="curios"
+    mandatory=false
+    versionRange="[5,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.taczammobox]]
+    modId="sophisticatedbackpacks"
+    mandatory=false
+    versionRange="[3,)"
+    ordering="AFTER"
+    side="BOTH"

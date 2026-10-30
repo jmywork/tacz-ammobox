@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "taczammobox:block/crate_22wmr"
+    },
+    "facing=east": {
+      "model": "taczammobox:block/crate_22wmr",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "taczammobox:block/crate_22wmr",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "taczammobox:block/crate_22wmr",
+      "y": 270
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,mode=pack": { "model": "taczammobox:block/ammo_packer_pack" },
+    "facing=east,mode=pack": { "model": "taczammobox:block/ammo_packer_pack", "y": 90 },
+    "facing=south,mode=pack": { "model": "taczammobox:block/ammo_packer_pack", "y": 180 },
+    "facing=west,mode=pack": { "model": "taczammobox:block/ammo_packer_pack", "y": 270 },
+    "facing=north,mode=unpack": { "model": "taczammobox:block/ammo_packer_unpack" },
+    "facing=east,mode=unpack": { "model": "taczammobox:block/ammo_packer_unpack", "y": 90 },
+    "facing=south,mode=unpack": { "model": "taczammobox:block/ammo_packer_unpack", "y": 180 },
+    "facing=west,mode=unpack": { "model": "taczammobox:block/ammo_packer_unpack", "y": 270 }
+  }
+}

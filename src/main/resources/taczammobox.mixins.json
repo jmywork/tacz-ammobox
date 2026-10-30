@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.taczammobox.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "DeployerHandlerMixin",
+    "DeployerBlockEntityMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

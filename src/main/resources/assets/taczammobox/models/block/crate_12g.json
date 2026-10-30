@@ -1,0 +1,9 @@
+{
+  "parent": "taczammobox:block/crate_base",
+  "textures": {
+    "label": "taczammobox:item/label/crate_12g",
+    "top": "taczammobox:item/top/crate_12g",
+    "side": "taczammobox:item/crate_side",
+    "bottom": "taczammobox:item/crate_bottom"
+  }
+}

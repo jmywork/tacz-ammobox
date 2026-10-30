@@ -1,0 +1,7 @@
+{
+  "parent": "taczammobox:item/box_base",
+  "textures": {
+    "label": "taczammobox:item/label/box_68x51fury",
+    "top": "taczammobox:item/top/box_68x51fury"
+  }
+}

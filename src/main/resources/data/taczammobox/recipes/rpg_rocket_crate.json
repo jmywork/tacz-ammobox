@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "taczammobox:box_rpg_rocket"
+    },
+    {
+      "item": "taczammobox:box_rpg_rocket"
+    },
+    {
+      "item": "taczammobox:box_rpg_rocket"
+    },
+    {
+      "item": "taczammobox:box_rpg_rocket"
+    },
+    {
+      "item": "taczammobox:box_rpg_rocket"
+    },
+    {
+      "item": "taczammobox:box_rpg_rocket"
+    },
+    {
+      "item": "taczammobox:box_rpg_rocket"
+    },
+    {
+      "item": "taczammobox:box_rpg_rocket"
+    },
+    {
+      "item": "taczammobox:box_rpg_rocket"
+    }
+  ],
+  "result": {
+    "item": "taczammobox:crate_rpg_rocket",
+    "count": 1
+  }
+}

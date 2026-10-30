@@ -1,0 +1,25 @@
+# Gradle / build output
+.gradle/
+build/
+run/
+run-server/
+*.log
+*-log.txt
+
+# Python helper cache
+__pycache__/
+*.pyc
+
+# Local build-only dependencies (TACZ jar, local Create/Ponder/Flywheel maven)
+libs/*.jar
+local-maven/
+
+# Generated release/preview artifacts
+release/
+preview/
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store

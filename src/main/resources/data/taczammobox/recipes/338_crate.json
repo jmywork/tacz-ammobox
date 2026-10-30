@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "taczammobox:box_338"
+    },
+    {
+      "item": "taczammobox:box_338"
+    },
+    {
+      "item": "taczammobox:box_338"
+    },
+    {
+      "item": "taczammobox:box_338"
+    },
+    {
+      "item": "taczammobox:box_338"
+    },
+    {
+      "item": "taczammobox:box_338"
+    },
+    {
+      "item": "taczammobox:box_338"
+    },
+    {
+      "item": "taczammobox:box_338"
+    },
+    {
+      "item": "taczammobox:box_338"
+    }
+  ],
+  "result": {
+    "item": "taczammobox:crate_338",
+    "count": 1
+  }
+}

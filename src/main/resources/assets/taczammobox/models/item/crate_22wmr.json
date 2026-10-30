@@ -1,0 +1,7 @@
+{
+  "parent": "taczammobox:item/crate_base",
+  "textures": {
+    "label": "taczammobox:item/label/crate_22wmr",
+    "top": "taczammobox:item/top/crate_22wmr"
+  }
+}

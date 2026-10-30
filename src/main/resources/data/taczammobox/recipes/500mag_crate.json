@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "taczammobox:box_500mag"
+    },
+    {
+      "item": "taczammobox:box_500mag"
+    },
+    {
+      "item": "taczammobox:box_500mag"
+    },
+    {
+      "item": "taczammobox:box_500mag"
+    },
+    {
+      "item": "taczammobox:box_500mag"
+    },
+    {
+      "item": "taczammobox:box_500mag"
+    },
+    {
+      "item": "taczammobox:box_500mag"
+    },
+    {
+      "item": "taczammobox:box_500mag"
+    },
+    {
+      "item": "taczammobox:box_500mag"
+    }
+  ],
+  "result": {
+    "item": "taczammobox:crate_500mag",
+    "count": 1
+  }
+}

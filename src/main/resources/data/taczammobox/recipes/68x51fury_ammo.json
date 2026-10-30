@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "taczammobox:box_68x51fury"
+    }
+  ],
+  "result": {
+    "item": "tacz:ammo",
+    "count": 60,
+    "nbt": "{AmmoId:\"tacz:68x51fury\"}"
+  }
+}
