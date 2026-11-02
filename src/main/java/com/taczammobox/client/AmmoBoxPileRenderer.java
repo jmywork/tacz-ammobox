@@ -67,8 +67,9 @@ public class AmmoBoxPileRenderer implements BlockEntityRenderer<AmmoBoxPileBlock
             {4.0F, 2.67F, 0.0F}, {12.0F, 2.67F, 0.0F},
             {4.0F, 8.0F, 0.0F}, {12.0F, 8.0F, 0.0F},
             {4.0F, 13.33F, 0.0F}, {12.0F, 13.33F, 0.0F},
-            {4.0F, 5.33F, 1.0F}, {12.0F, 5.33F, 1.0F},
-            {4.0F, 10.67F, 1.0F}, {12.0F, 10.67F, 1.0F}, {8.0F, 8.0F, 1.0F}
+            {4.0F, 2.67F, 1.0F}, {12.0F, 2.67F, 1.0F},
+            {4.0F, 8.0F, 1.0F}, {12.0F, 8.0F, 1.0F},
+            {4.0F, 13.33F, 1.0F}
     };
     private static final float[][] TWELVE = {
             {4.0F, 2.67F, 0.0F}, {12.0F, 2.67F, 0.0F},
