@@ -68,22 +68,31 @@ public class AmmoBoxItem extends Item implements PackagedAmmo {
         BlockState clicked = level.getBlockState(pos);
         ItemStack held = context.getItemInHand();
 
-        // Right-click an existing pile to add one matching box.
+        // Right-click an existing pile: sneak + matching box adds; otherwise
+        // take one box (to hand when possible, then partial/empty inventory).
         if (clicked.getBlock() instanceof AmmoBoxPileBlock) {
             if (!level.isClientSide) {
-                boolean added = tryAddToPile(level, pos, clicked, player, held);
-                if (!added && player.isShiftKeyDown()) {
-                    tryPlacePile(level, pos.above(), player, held);
+                if (player.isShiftKeyDown() && type.ammoId().equals(
+                        level.getBlockEntity(pos) instanceof AmmoBoxPileBlockEntity pile
+                                ? pile.getAmmoId() : null)) {
+                    boolean added = tryAddToPile(level, pos, clicked, player, held);
+                    if (!added) {
+                        tryPlacePile(level, pos.above(), player, held);
+                    }
+                } else {
+                    AmmoBoxPileBlock.withdraw(level, pos, clicked, player, context.getHand());
                 }
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
 
-        // Right-click any block to place a new pile. Right-clicking air still
-        // unpacks into loose ammo, so block interactions never consume the box
-        // as a loose-ammo conversion by accident.
-        if (!level.isClientSide) {
-            tryPlacePile(level, pos.relative(context.getClickedFace()), player, held);
+        // Sneak + right-click a block to place a new pile. Normal block clicks
+        // are consumed so they cannot fall through to the loose-ammo action.
+        if (player.isShiftKeyDown()) {
+            if (!level.isClientSide) {
+                tryPlacePile(level, pos.relative(context.getClickedFace()), player, held);
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

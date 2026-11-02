@@ -71,32 +71,70 @@ public class AmmoBoxPileBlock extends BaseEntityBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player,
                                  net.minecraft.world.InteractionHand hand, BlockHitResult hit) {
-        // Sneak + empty hand removes one box from the top of the pile.
-        if (level.isClientSide || !player.isShiftKeyDown() || !player.getItemInHand(hand).isEmpty()) {
-            return InteractionResult.PASS;
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
         }
-        int count = state.getValue(BOXES);
-        if (!(level.getBlockEntity(pos) instanceof AmmoBoxPileBlockEntity pile)
+        withdraw(level, pos, state, player, hand);
+        return InteractionResult.sidedSuccess(false);
+    }
+
+    /** Takes one box from the pile, or leaves the pile untouched if the player has no room. */
+    public static boolean withdraw(Level level, BlockPos pos, BlockState state, Player player,
+                                   net.minecraft.world.InteractionHand hand) {
+        if (level.isClientSide
+                || !(level.getBlockEntity(pos) instanceof AmmoBoxPileBlockEntity pile)
                 || pile.getAmmoId() == null) {
-            return InteractionResult.PASS;
+            return false;
         }
-        ItemStack drop = new ItemStack(ModItems.box(pile.getAmmoId()));
-        if (drop.isEmpty()) {
-            return InteractionResult.PASS;
+        ItemStack one = new ItemStack(ModItems.box(pile.getAmmoId()));
+        if (one.isEmpty()) {
+            return false;
         }
+        ItemStack held = player.getItemInHand(hand);
+        boolean stored;
+        if (held.isEmpty()) {
+            player.setItemInHand(hand, one);
+            stored = true;
+        } else if (held.is(one.getItem()) && held.getCount() < held.getMaxStackSize()) {
+            held.grow(1);
+            stored = true;
+        } else {
+            stored = storeInInventory(player, one);
+        }
+        if (!stored) {
+            return false;
+        }
+
+        int count = state.getValue(BOXES);
         if (count <= 1) {
             level.removeBlock(pos, false);
         } else {
             level.setBlock(pos, state.setValue(BOXES, count - 1), 3);
         }
-        if (!player.getAbilities().instabuild) {
-            if (!player.getInventory().add(drop)) {
-                player.drop(drop, false);
-            }
-        }
         level.playSound(null, pos, net.minecraft.sounds.SoundEvents.ITEM_PICKUP,
                 SoundSource.BLOCKS, 0.6F, 1.0F);
-        return InteractionResult.sidedSuccess(false);
+        return true;
+    }
+
+    private static boolean storeInInventory(Player player, ItemStack one) {
+        net.minecraft.world.entity.player.Inventory inventory = player.getInventory();
+        for (int i = 0; i < 36; i++) {
+            ItemStack stack = inventory.getItem(i);
+            if (!stack.isEmpty() && stack.is(one.getItem())
+                    && stack.getCount() < stack.getMaxStackSize()) {
+                stack.grow(1);
+                inventory.setChanged();
+                return true;
+            }
+        }
+        for (int i = 0; i < 36; i++) {
+            if (inventory.getItem(i).isEmpty()) {
+                inventory.setItem(i, one);
+                inventory.setChanged();
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

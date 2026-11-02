@@ -1,7 +1,7 @@
 {
   "itemGroup.taczammobox": "TACZ 弹药盒装",
   "item.taczammobox.box": "%s 弹药盒",
-  "item.taczammobox.box.place": "右键方块放置/叠加盒堆；右键空气拆成散弹；每堆最多 12 盒",
+  "item.taczammobox.box.place": "右键空气拆散弹；潜行右键方块放置；右键盒堆取一盒；潜行右键盒堆叠加",
   "item.taczammobox.crate": "%s 弹药箱",
   "item.taczammobox.ammo_belt": "自动供弹弹链",
   "item.taczammobox.ammo_belt.desc": "主手枪低于满弹匣时自动从背包中的压缩弹药盒补弹，不需要手动换弹。",

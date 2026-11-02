@@ -1,7 +1,7 @@
 {
   "itemGroup.taczammobox": "TACZ Ammo Box",
   "item.taczammobox.box": "%s Ammo Box",
-  "item.taczammobox.box.place": "Right-click a block to place/add a pile; right-click air to unpack; up to 12 per pile",
+  "item.taczammobox.box.place": "Right-click air to unpack; sneak-right-click block to place; right-click pile to take; sneak-right-click pile to add",
   "item.taczammobox.crate": "%s Ammo Crate",
   "item.taczammobox.ammo_belt": "Automatic Ammo Belt",
   "item.taczammobox.ammo_belt.desc": "Automatically feeds the main-hand gun from compressed ammo boxes in your inventory when its magazine is below full. No manual reload required.",

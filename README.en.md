@@ -7,7 +7,7 @@ Ammo packaging for **Timeless and Classics Zero (TACZ)**: pack loose ammo into b
 - Create 6.0.x optional
 - GPL-3.0-only
 - Author jmywork
-- Version `0.2.1`
+- Version `0.3.0`
 
 中文: [README.md](README.md)
 
@@ -17,7 +17,7 @@ Capacity API and data-driven config: [docs/api.md](docs/api.md).
 
 1. Install Forge 1.20.1.
 2. Install TACZ 1.1.8-hotfix2.
-3. Put `taczammobox-1.20.1-0.2.1.jar` into `mods/`.
+3. Put `taczammobox-1.20.1-0.3.0.jar` into `mods/`.
 4. Create is optional; install it only if you want deployer support.
 
 ## Quick start
@@ -26,8 +26,9 @@ Capacity API and data-driven config: [docs/api.md](docs/api.md).
 - Loose ammo keeps pulling matching stacks from your inventory, Sophisticated Backpacks and Curios: it fills as much as possible and **never wastes**. Boxes/crates also aggregate matching packages: with waste **on** the last package may be partially wasted; with waste **off** filling stops before a package that does not fit.
 - With an inventory/container open, hover loose ammo, a box or a crate and press `V` to fill from that slot. When the held stack runs out, the same item is pulled from your inventory, Sophisticated Backpacks or Curios. Disable this with `autoRefill` in `settings.json` if another refill mod conflicts.
 - **Crate**: right-click to place; 9 boxes ↔ 1 crate.
-- **Ammo Box Pile**: sneak-right-click the ground to place one box; right-click a pile to add more. Up to 12 boxes per block: 2 columns x 3 rows per layer, 2 layers. Breaking the pile returns all boxes.
+- **Box pile**: sneak-right-click a block to place; right-click a pile to take one box (to hand when empty, stack when holding the same box, otherwise into inventory); sneak-right-click a matching pile to add. Up to 12 boxes per pile; breaking drops all.
 - **Pack**: press `H` (rebindable) or run `/taczammobox pack` to turn full loose-ammo stacks in inventory, Curios and the open container (including Sophisticated Backpacks and chests) into new boxes. Partial stacks stay where they are.
+- **Ammo belt**: keep it in your inventory/Curios; the main-hand gun is fed from compressed boxes/crates whenever its magazine is below full, without starting a reload. Normal behavior resumes when the belt is empty or the gun overheats. 0.3.0 prototype, no survival recipe yet.
 - **Target priority**: `boxPriority` in `settings.json` controls the order of `main_hand / inventory / curios / open_container`.
 - **Doctor / recipe reload**: `/taczammobox doctor` checks config and generated assets; `/taczammobox reloadrecipes` reloads data packs and third-party recipe injection.
 - **Ammo Packer**: loose ammo → box, 9 boxes → crate, or unpack. Its GUI has a filter slot; insert loose ammo/a box/a crate to process only that ammo type.
