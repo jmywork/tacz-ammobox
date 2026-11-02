@@ -71,45 +71,43 @@ public class AmmoBoxItem extends Item implements PackagedAmmo {
         // Right-click an existing pile to add one matching box.
         if (clicked.getBlock() instanceof AmmoBoxPileBlock) {
             if (!level.isClientSide) {
-                tryAddToPile(level, pos, clicked, player, held);
+                boolean added = tryAddToPile(level, pos, clicked, player, held);
+                if (!added && player.isShiftKeyDown()) {
+                    tryPlacePile(level, pos.above(), player, held);
+                }
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
 
-        // Sneak + right-click ground to place a new pile; normal right-click
-        // keeps the original unpack behavior.
-        if (player.isShiftKeyDown()) {
-            if (!level.isClientSide) {
-                tryPlacePile(level, pos.relative(context.getClickedFace()), player, held);
-            }
-            return InteractionResult.sidedSuccess(level.isClientSide);
+        // Right-click any block to place a new pile. Right-clicking air still
+        // unpacks into loose ammo, so block interactions never consume the box
+        // as a loose-ammo conversion by accident.
+        if (!level.isClientSide) {
+            tryPlacePile(level, pos.relative(context.getClickedFace()), player, held);
         }
-
-        InteractionResultHolder<ItemStack> result = use(context.getLevel(), player, context.getHand());
-        return result.getResult().consumesAction()
-                ? InteractionResult.sidedSuccess(context.getLevel().isClientSide)
-                : InteractionResult.PASS;
+        return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
-    private void tryAddToPile(Level level, BlockPos pos, BlockState state, Player player, ItemStack held) {
+    private boolean tryAddToPile(Level level, BlockPos pos, BlockState state, Player player, ItemStack held) {
         if (!(level.getBlockEntity(pos) instanceof AmmoBoxPileBlockEntity pile)
                 || !type.ammoId().equals(pile.getAmmoId())) {
-            return;
+            return false;
         }
         int count = state.getValue(AmmoBoxPileBlock.BOXES);
         if (count >= AmmoBoxPileBlock.MAX_BOXES) {
-            return;
+            return false;
         }
         level.setBlock(pos, state.setValue(AmmoBoxPileBlock.BOXES, count + 1), 3);
         consume(player, held);
         level.playSound(null, pos, SoundType.WOOD.getPlaceSound(), SoundSource.BLOCKS, 0.8F, 1.0F);
+        return true;
     }
 
-    private void tryPlacePile(Level level, BlockPos pos, Player player, ItemStack held) {
+    private boolean tryPlacePile(Level level, BlockPos pos, Player player, ItemStack held) {
         if (!level.getBlockState(pos).canBeReplaced()
                 || !level.mayInteract(player, pos)
                 || !player.mayUseItemAt(pos, net.minecraft.core.Direction.UP, held)) {
-            return;
+            return false;
         }
         level.setBlock(pos, ModBlocks.BOX_PILE.get().defaultBlockState(), 3);
         if (level.getBlockEntity(pos) instanceof AmmoBoxPileBlockEntity pile) {
@@ -117,6 +115,7 @@ public class AmmoBoxItem extends Item implements PackagedAmmo {
         }
         consume(player, held);
         level.playSound(null, pos, SoundType.WOOD.getPlaceSound(), SoundSource.BLOCKS, 0.8F, 1.0F);
+        return true;
     }
 
     private static void consume(Player player, ItemStack held) {
