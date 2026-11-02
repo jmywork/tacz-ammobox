@@ -37,7 +37,7 @@ public class AmmoBoxPileBlock extends BaseEntityBlock {
     static {
         for (int i = 1; i <= MAX_BOXES; i++) {
             int layers = (i + 5) / 6;
-            SHAPES[i] = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 2.0D + layers * 3.0D, 16.0D);
+            SHAPES[i] = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 2.0D + layers * 6.0D, 16.0D);
         }
     }
 

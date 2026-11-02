@@ -37,7 +37,7 @@ public class AmmoBoxPileRenderer implements BlockEntityRenderer<AmmoBoxPileBlock
             {12.0F, 13.33F}
     };
     private static final float SHIFT_X = 4.0F;
-    private static final float SHIFT_Y = 4.0F;
+    private static final float SHIFT_Y = 0.0F;
     private static final float SHIFT_Z = 4.0F;
 
     public AmmoBoxPileRenderer(BlockEntityRendererProvider.Context context) {
@@ -75,7 +75,7 @@ public class AmmoBoxPileRenderer implements BlockEntityRenderer<AmmoBoxPileBlock
             // model transform, so compensate here and keep every box centered
             // on its 2 x 3 grid cell.
             pose.translate((slot[0] - 3.75F + SHIFT_X) / 16.0F,
-                    layer * 3.0F / 16.0F + SHIFT_Y / 16.0F,
+                    layer * 6.0F / 16.0F + SHIFT_Y / 16.0F,
                     (slot[1] - 3.75F + SHIFT_Z) / 16.0F);
             pose.scale(0.5F, 0.5F, 0.5F);
             renderer.renderStatic(stack, ItemDisplayContext.NONE, packedLight, packedOverlay,
