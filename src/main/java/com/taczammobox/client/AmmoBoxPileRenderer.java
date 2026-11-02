@@ -22,23 +22,65 @@ import net.minecraftforge.fml.common.Mod;
 import com.taczammobox.TaczAmmoBoxMod;
 
 /**
- * Draws the boxes on a pile. Six boxes are two columns by three layers; the
- * lower layers are filled first so a partly filled pile still looks natural.
+ * Draws the boxes on a pile. Six boxes fill one 2 x 3 layer; a second layer is
+ * used for 7-12 boxes. Partial counts use centered arrangements instead of
+ * filling from one corner.
  */
 @Mod.EventBusSubscriber(modid = TaczAmmoBoxMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class AmmoBoxPileRenderer implements BlockEntityRenderer<AmmoBoxPileBlockEntity> {
-    // 2 columns (x) x 3 rows (z), filled bottom layer first.
-    private static final float[][] SLOTS = {
-            {4.0F, 2.67F},
-            {12.0F, 2.67F},
-            {4.0F, 8.0F},
-            {12.0F, 8.0F},
-            {4.0F, 13.33F},
-            {12.0F, 13.33F}
+    private static final float[][] FULL = {
+            {4.0F, 2.67F, 0.0F}, {12.0F, 2.67F, 0.0F},
+            {4.0F, 8.0F, 0.0F}, {12.0F, 8.0F, 0.0F},
+            {4.0F, 13.33F, 0.0F}, {12.0F, 13.33F, 0.0F}
     };
-    private static final float SHIFT_X = 4.0F;
+    private static final float[][] ONE = {{8.0F, 8.0F, 0.0F}};
+    private static final float[][] TWO = {{4.0F, 8.0F, 0.0F}, {12.0F, 8.0F, 0.0F}};
+    private static final float[][] THREE = {
+            {4.0F, 8.0F, 0.0F}, {12.0F, 8.0F, 0.0F}, {8.0F, 8.0F, 1.0F}
+    };
+    private static final float[][] FOUR = {
+            {4.0F, 5.33F, 0.0F}, {12.0F, 5.33F, 0.0F},
+            {4.0F, 10.67F, 0.0F}, {12.0F, 10.67F, 0.0F}
+    };
+    private static final float[][] FIVE = {
+            {4.0F, 5.33F, 0.0F}, {12.0F, 5.33F, 0.0F},
+            {4.0F, 10.67F, 0.0F}, {12.0F, 10.67F, 0.0F}, {8.0F, 8.0F, 1.0F}
+    };
+    private static final float[][] ONE_TOP = {{8.0F, 8.0F, 1.0F}};
+    private static final float[][] TWO_TOP = {
+            {4.0F, 8.0F, 1.0F}, {12.0F, 8.0F, 1.0F}
+    };
+    private static final float[][] NINE = {
+            {4.0F, 2.67F, 0.0F}, {12.0F, 2.67F, 0.0F},
+            {4.0F, 8.0F, 0.0F}, {12.0F, 8.0F, 0.0F},
+            {4.0F, 13.33F, 0.0F}, {12.0F, 13.33F, 0.0F},
+            {8.0F, 2.67F, 1.0F}, {8.0F, 8.0F, 1.0F}, {8.0F, 13.33F, 1.0F}
+    };
+    private static final float[][] TEN = {
+            {4.0F, 2.67F, 0.0F}, {12.0F, 2.67F, 0.0F},
+            {4.0F, 8.0F, 0.0F}, {12.0F, 8.0F, 0.0F},
+            {4.0F, 13.33F, 0.0F}, {12.0F, 13.33F, 0.0F},
+            {4.0F, 5.33F, 1.0F}, {12.0F, 5.33F, 1.0F},
+            {4.0F, 10.67F, 1.0F}, {12.0F, 10.67F, 1.0F}
+    };
+    private static final float[][] ELEVEN = {
+            {4.0F, 2.67F, 0.0F}, {12.0F, 2.67F, 0.0F},
+            {4.0F, 8.0F, 0.0F}, {12.0F, 8.0F, 0.0F},
+            {4.0F, 13.33F, 0.0F}, {12.0F, 13.33F, 0.0F},
+            {4.0F, 5.33F, 1.0F}, {12.0F, 5.33F, 1.0F},
+            {4.0F, 10.67F, 1.0F}, {12.0F, 10.67F, 1.0F}, {8.0F, 8.0F, 1.0F}
+    };
+    private static final float[][] TWELVE = {
+            {4.0F, 2.67F, 0.0F}, {12.0F, 2.67F, 0.0F},
+            {4.0F, 8.0F, 0.0F}, {12.0F, 8.0F, 0.0F},
+            {4.0F, 13.33F, 0.0F}, {12.0F, 13.33F, 0.0F},
+            {4.0F, 2.67F, 1.0F}, {12.0F, 2.67F, 1.0F},
+            {4.0F, 8.0F, 1.0F}, {12.0F, 8.0F, 1.0F},
+            {4.0F, 13.33F, 1.0F}, {12.0F, 13.33F, 1.0F}
+    };
+    private static final float SHIFT_X = 0.0F;
     private static final float SHIFT_Y = 0.0F;
-    private static final float SHIFT_Z = 4.0F;
+    private static final float SHIFT_Z = 0.0F;
 
     public AmmoBoxPileRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -63,24 +105,68 @@ public class AmmoBoxPileRenderer implements BlockEntityRenderer<AmmoBoxPileBlock
         int count = state.hasProperty(AmmoBoxPileBlock.BOXES)
                 ? state.getValue(AmmoBoxPileBlock.BOXES) : 1;
         count = Math.max(1, Math.min(AmmoBoxPileBlock.MAX_BOXES, count));
+        float[][] layout = layout(count);
 
         ItemRenderer renderer = Minecraft.getInstance().getItemRenderer();
         ItemStack stack = new ItemStack(item);
         int seed = (int) pile.getBlockPos().asLong();
-        for (int i = 0; i < count; i++) {
-            float[] slot = SLOTS[i % 6];
-            float layer = i / 6;
+        for (int i = 0; i < layout.length; i++) {
+            float[] slot = layout[i];
             pose.pushPose();
             // ItemRenderer itself applies a -0.5 block translation after the
             // model transform, so compensate here and keep every box centered
-            // on its 2 x 3 grid cell.
+            // on its grid cell.
             pose.translate((slot[0] - 3.75F + SHIFT_X) / 16.0F,
-                    layer * 6.0F / 16.0F + SHIFT_Y / 16.0F,
+                    slot[2] * 6.0F / 16.0F + SHIFT_Y / 16.0F,
                     (slot[1] - 3.75F + SHIFT_Z) / 16.0F);
             pose.scale(0.5F, 0.5F, 0.5F);
             renderer.renderStatic(stack, ItemDisplayContext.NONE, packedLight, packedOverlay,
                     pose, buffer, pile.getLevel(), seed + i);
             pose.popPose();
         }
+    }
+
+    private static float[][] layout(int count) {
+        if (count <= 1) {
+            return ONE;
+        }
+        if (count == 2) {
+            return TWO;
+        }
+        if (count == 3) {
+            return THREE;
+        }
+        if (count == 4) {
+            return FOUR;
+        }
+        if (count == 5) {
+            return FIVE;
+        }
+        if (count == 6) {
+            return FULL;
+        }
+        if (count == 7) {
+            return concat(FULL, ONE_TOP);
+        }
+        if (count == 8) {
+            return concat(FULL, TWO_TOP);
+        }
+        if (count == 9) {
+            return NINE;
+        }
+        if (count == 10) {
+            return TEN;
+        }
+        if (count == 11) {
+            return ELEVEN;
+        }
+        return TWELVE;
+    }
+
+    private static float[][] concat(float[][] first, float[][] second) {
+        float[][] result = new float[first.length + second.length][];
+        System.arraycopy(first, 0, result, 0, first.length);
+        System.arraycopy(second, 0, result, first.length, second.length);
+        return result;
     }
 }
