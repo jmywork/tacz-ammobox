@@ -76,9 +76,6 @@ public class AmmoBoxPileBlock extends BaseEntityBlock {
             return InteractionResult.PASS;
         }
         int count = state.getValue(BOXES);
-        if (count <= 1) {
-            return InteractionResult.PASS;
-        }
         if (!(level.getBlockEntity(pos) instanceof AmmoBoxPileBlockEntity pile)
                 || pile.getAmmoId() == null) {
             return InteractionResult.PASS;
@@ -87,7 +84,11 @@ public class AmmoBoxPileBlock extends BaseEntityBlock {
         if (drop.isEmpty()) {
             return InteractionResult.PASS;
         }
-        level.setBlock(pos, state.setValue(BOXES, count - 1), 3);
+        if (count <= 1) {
+            level.removeBlock(pos, false);
+        } else {
+            level.setBlock(pos, state.setValue(BOXES, count - 1), 3);
+        }
         if (!player.getAbilities().instabuild) {
             if (!player.getInventory().add(drop)) {
                 player.drop(drop, false);
