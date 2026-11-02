@@ -80,7 +80,7 @@ public class AmmoBoxPileRenderer implements BlockEntityRenderer<AmmoBoxPileBlock
             {4.0F, 13.33F, 1.0F}, {12.0F, 13.33F, 1.0F}
     };
     private static final float SHIFT_X = -2.0F;
-    private static final float SHIFT_Y = 0.0F;
+    private static final float SHIFT_Y = 4.0F;
     private static final float SHIFT_Z = -2.0F;
 
     public AmmoBoxPileRenderer(BlockEntityRendererProvider.Context context) {
