@@ -26,7 +26,7 @@ Capacity API and data-driven config: [docs/api.md](docs/api.md).
 - Loose ammo keeps pulling matching stacks from your inventory, Sophisticated Backpacks and Curios: it fills as much as possible and **never wastes**. Boxes/crates also aggregate matching packages: with waste **on** the last package may be partially wasted; with waste **off** filling stops before a package that does not fit.
 - With an inventory/container open, hover loose ammo, a box or a crate and press `V` to fill from that slot. When the held stack runs out, the same item is pulled from your inventory, Sophisticated Backpacks or Curios. Disable this with `autoRefill` in `settings.json` if another refill mod conflicts.
 - **Crate**: right-click to place; 9 boxes ↔ 1 crate.
-- **Ammo Box Pile**: sneak-right-click the ground to place one box; right-click a pile to add more. Up to 6 boxes per block, arranged in 2 columns x 3 layers. Breaking the pile returns all boxes.
+- **Ammo Box Pile**: sneak-right-click the ground to place one box; right-click a pile to add more. Up to 12 boxes per block: 2 columns x 3 rows per layer, 2 layers. Breaking the pile returns all boxes.
 - **Pack**: press `H` (rebindable) or run `/taczammobox pack` to turn full loose-ammo stacks in inventory, Curios and the open container (including Sophisticated Backpacks and chests) into new boxes. Partial stacks stay where they are.
 - **Target priority**: `boxPriority` in `settings.json` controls the order of `main_hand / inventory / curios / open_container`.
 - **Doctor / recipe reload**: `/taczammobox doctor` checks config and generated assets; `/taczammobox reloadrecipes` reloads data packs and third-party recipe injection.

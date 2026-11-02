@@ -29,14 +29,15 @@ import org.jetbrains.annotations.Nullable;
  * so each ammo type keeps its own label.
  */
 public class AmmoBoxPileBlock extends BaseEntityBlock {
-    public static final int MAX_BOXES = 6;
+    public static final int MAX_BOXES = 12;
     public static final IntegerProperty BOXES = IntegerProperty.create("boxes", 1, MAX_BOXES);
 
     private static final VoxelShape[] SHAPES = new VoxelShape[MAX_BOXES + 1];
 
     static {
         for (int i = 1; i <= MAX_BOXES; i++) {
-            SHAPES[i] = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 2.0D + i * 1.5D, 16.0D);
+            int layers = (i + 5) / 6;
+            SHAPES[i] = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 2.0D + layers * 3.0D, 16.0D);
         }
     }
 

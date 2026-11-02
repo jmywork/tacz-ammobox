@@ -1,7 +1,7 @@
 {
   "itemGroup.taczammobox": "TACZ Ammo Box",
   "item.taczammobox.box": "%s Ammo Box",
-  "item.taczammobox.box.place": "Sneak-right-click ground to place; right-click a pile to add",
+  "item.taczammobox.box.place": "Sneak-right-click ground to place; right-click a pile to add; up to 12 per pile",
   "item.taczammobox.crate": "%s Ammo Crate",
   "message.taczammobox.no_space": "No matching ammo box with enough space",
   "message.taczammobox.config_mismatch": "Ammo config differs from the server: missing %s, extra %s. Sync config/taczammobox/ammo_boxes.json and restart.",

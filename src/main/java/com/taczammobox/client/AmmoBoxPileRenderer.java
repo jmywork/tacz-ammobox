@@ -27,14 +27,14 @@ import com.taczammobox.TaczAmmoBoxMod;
  */
 @Mod.EventBusSubscriber(modid = TaczAmmoBoxMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class AmmoBoxPileRenderer implements BlockEntityRenderer<AmmoBoxPileBlockEntity> {
-    private static final int[][][] LAYOUTS = {
-            {},
-            {{8, 0}},
-            {{4, 0}, {12, 0}},
-            {{4, 0}, {12, 0}, {8, 1}},
-            {{4, 0}, {12, 0}, {4, 1}, {12, 1}},
-            {{4, 0}, {12, 0}, {4, 1}, {12, 1}, {8, 2}},
-            {{4, 0}, {12, 0}, {4, 1}, {12, 1}, {4, 2}, {12, 2}}
+    // 2 columns (x) x 3 rows (z), filled bottom layer first.
+    private static final float[][] SLOTS = {
+            {4.0F, 2.67F},
+            {12.0F, 2.67F},
+            {4.0F, 8.0F},
+            {12.0F, 8.0F},
+            {4.0F, 13.33F},
+            {12.0F, 13.33F}
     };
 
     public AmmoBoxPileRenderer(BlockEntityRendererProvider.Context context) {
@@ -64,12 +64,15 @@ public class AmmoBoxPileRenderer implements BlockEntityRenderer<AmmoBoxPileBlock
         ItemRenderer renderer = Minecraft.getInstance().getItemRenderer();
         ItemStack stack = new ItemStack(item);
         int seed = (int) pile.getBlockPos().asLong();
-        for (int i = 0; i < LAYOUTS[count].length; i++) {
-            int[] pos = LAYOUTS[count][i];
+        for (int i = 0; i < count; i++) {
+            float[] slot = SLOTS[i % 6];
+            float layer = i / 6;
             pose.pushPose();
-            // The box item model is 15 x 6 x 8 pixels. At 0.5 scale it is
-            // 7.5 wide, so two columns fit with a small gap.
-            pose.translate(pos[0] / 16.0F - 0.25F, pos[1] * 3.0F / 16.0F, 0.25F);
+            // ItemRenderer itself applies a -0.5 block translation after the
+            // model transform, so compensate here and keep every box centered
+            // on its 2 x 3 grid cell.
+            pose.translate((slot[0] - 3.75F) / 16.0F, layer * 3.0F / 16.0F,
+                    (slot[1] - 3.75F) / 16.0F);
             pose.scale(0.5F, 0.5F, 0.5F);
             renderer.renderStatic(stack, ItemDisplayContext.NONE, packedLight, packedOverlay,
                     pose, buffer, pile.getLevel(), seed + i);
