@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.2.0
+
+0.2.0 正式版。
+
+### 新增
+
+- 一键打包：`H` / `/taczammobox pack` 把满组散弹打包成新盒
+- 一键打包开关：`oneKeyPack` + `/taczammobox packtoggle`，默认开启
+- 打包机/装填机弹种过滤槽
+- 过滤槽改为标记槽：不消耗物品、不可取出、破坏不掉落
+- JEI 打包机/装填机加工关系分类
+- 容量 Provider API（`AmmoBoxCapacityApi`）
+- `ammo_boxes.json` 数据驱动容量：`capacity` / `capacityMultiplier`
+- 自动探测按等级写入 `物品#等级` 倍率
+- 固定第三方 `itemName`，`scan` 只追加
+- `/taczammobox clean` 直接清理失效条目
+- `/taczammobox cleanup [半径]` 直接清理孤儿盒/箱
+- `/taczammobox doctor` 自检
+- `/taczammobox reloadrecipes` 配方重载
+- 盒/箱最大堆叠默认 64，可配置 1–64
+- 旧打包机 2 槽 / 装填机 3 槽 NBT 自动迁移
+
+### 修复
+
+- 自动输入误填过滤槽并消耗 1 个物品
+- 一键打包每格生成一盒、不与已有盒子堆叠
+- 旧机器 NBT 槽位数量导致 `Slot 2 not in valid range`
+- 装填机/打包机界面枚举 switch 合成类导致的 `NoClassDefFoundError`
+- 过滤槽标记不能取出/掉落
+
+### 升级说明
+
+1. 关闭游戏/服务器
+2. 替换为 `taczammobox-1.20.1-0.2.0.jar`
+3. 不要删除 `config/taczammobox/`
+4. 服务端和所有客户端必须一起更新
+5. 正常更新不要执行 `clean` / `cleanup`
+
 ## 0.1.0-beta
 
 首个内测版本。
@@ -30,6 +68,16 @@
 - 兼容第三方修改容量的弹药盒：自动探测 + `ammoBoxCapacity` 覆盖
 - 修复主背包/主手弹药盒在背包界面装填不生效（改为直接写回玩家背包）
 - 修复精妙背包装备在饰品栏/背部时，内部弹药盒无法装填
+- 新增 A5：按 `H` 或 `/taczammobox pack` 一键把背包、Curios、当前打开容器里的满组散弹打包成新盒
+- 新增 A6：装填目标自动跳过满盒、弹种不匹配盒和创造模式盒
+- 新增 C1：公开容量 Provider API（`AmmoBoxCapacityApi`）
+- 新增 C2：`ammo_boxes.json` 支持 `capacity` / `capacityMultiplier` 按等级数据配置
+- 新增 C3：自动探测按 `物品#等级` 写入倍率
+- 新增 C7：`/taczammobox doctor` 自检
+- 新增 C8：`/taczammobox reloadrecipes` 热重载配方
+- 固定第三方 `itemName`，`scan` 只追加；`clean` 直接删除失效条目；`doctor` 报告孤儿条目
+- 新增 `oneKeyPack` 开关和 `/taczammobox packtoggle`，默认开启一键打包
+- 盒/箱最大堆叠默认改为 64，可通过 `boxStackSize` / `crateStackSize` 配置为 1–64
 - 自动探测：干净倍数写物品级倍率，非整数倍写绝对容量，避免取整误差
 - 支持 1.25 等小数倍率，新增 `capacityRounding` 和 `capacity rounding` 指令
 - 配置文件内嵌中英示例，新增 `/taczammobox help`

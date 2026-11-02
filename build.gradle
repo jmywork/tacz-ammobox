@@ -4,7 +4,7 @@ plugins {
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
 }
 
-version = '0.1.0-beta'
+version = '0.2.0'
 group = 'com.taczammobox'
 archivesBaseName = 'taczammobox-1.20.1'
 
@@ -51,6 +51,8 @@ dependencies {
     compileOnly files('libs/wthit-1.20.1-forge-8.21.1.jar')
     // Optional Curios equipped-slot search; loaded only when Curios is installed.
     compileOnly files('libs/curios-forge-5.14.1+1.20.1.jar')
+    // Optional JEI recipe categories; only loaded when JEI is installed.
+    compileOnly files('libs/jei-1.20.1-forge-15.59.0.210.jar')
 
     // Optional Create compat (deployer filling). Only loaded when Create is installed.
     compileOnly(fg.deobf('com.simibubi.create:create-1.20.1:6.0.8-289:slim')) { transitive = false }

@@ -8,6 +8,7 @@ import com.taczammobox.item.PackagedAmmo;
 import com.taczammobox.registry.AmmoTypes;
 import com.taczammobox.registry.ModItems;
 import com.taczammobox.util.AmmoBoxHelper;
+import com.taczammobox.util.AmmoFilter;
 import com.taczammobox.util.AutoIoHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -37,6 +38,7 @@ import javax.annotation.Nullable;
 public class AmmoPackerBlockEntity extends BlockEntity implements MenuProvider {
     public static final int SLOT_INPUT = 0;
     public static final int SLOT_OUTPUT = 1;
+    public static final int SLOT_FILTER = 2;
     public static int ticksPerOperation() {
         return WasteSettings.packerTicks();
     }
@@ -53,25 +55,40 @@ public class AmmoPackerBlockEntity extends BlockEntity implements MenuProvider {
         LOW
     }
 
-    private final ItemStackHandler inventory = new ItemStackHandler(2) {
+    private final ItemStackHandler inventory = new ItemStackHandler(3) {
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
+            if (slot == SLOT_FILTER) {
+                // The filter is a ghost marker set through the menu click.
+                // Automation must never be able to insert into it.
+                return false;
+            }
             if (slot != SLOT_INPUT) {
                 return false;
             }
-            return stack.getItem() instanceof IAmmo || stack.getItem() instanceof PackagedAmmo;
+            return (stack.getItem() instanceof IAmmo || stack.getItem() instanceof PackagedAmmo)
+                    && AmmoFilter.matches(inventory.getStackInSlot(SLOT_FILTER), stack);
         }
 
         @Override
         public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-            if (slot != SLOT_INPUT) {
+            if (slot == SLOT_OUTPUT) {
                 return stack;
             }
             return super.insertItem(slot, stack, simulate);
         }
 
         @Override
+        public int getSlotLimit(int slot) {
+            return slot == SLOT_FILTER ? 1 : super.getSlotLimit(slot);
+        }
+
+        @Override
         protected void onContentsChanged(int slot) {
+            if (slot == SLOT_FILTER) {
+                cachedInput = ItemStack.EMPTY;
+                cachedMode = -1;
+            }
             wake();
             setChanged();
         }
@@ -282,7 +299,7 @@ public class AmmoPackerBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     private ItemStack buildRawResult(ItemStack input) {
-        if (input.isEmpty()) {
+        if (input.isEmpty() || !AmmoFilter.matches(inventory.getStackInSlot(SLOT_FILTER), input)) {
             return ItemStack.EMPTY;
         }
 
@@ -419,7 +436,13 @@ public class AmmoPackerBlockEntity extends BlockEntity implements MenuProvider {
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        inventory.deserializeNBT(tag.getCompound("Inventory"));
+        // Old worlds saved a 2-slot inventory with Size=2. Forge's
+        // ItemStackHandler honours that Size tag, which would shrink the new
+        // 3-slot inventory and make the filter slot crash. Force the current
+        // size before deserializing, while preserving the old two stacks.
+        CompoundTag inventoryTag = tag.getCompound("Inventory").copy();
+        inventoryTag.putInt("Size", 3);
+        inventory.deserializeNBT(inventoryTag);
         progress = tag.getInt("Progress");
         mode = tag.getInt("Mode");
         int[] savedSides = tag.getIntArray("Sides");

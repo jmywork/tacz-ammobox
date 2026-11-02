@@ -46,7 +46,40 @@ public final class ContainerSlotHandler implements IItemHandlerModifiable {
 
     @Override
     public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-        return stack;
+        if (slot < 0 || slot >= slots.size() || stack.isEmpty()) {
+            return stack;
+        }
+        Slot target = slots.get(slot);
+        if (!target.mayPlace(stack)) {
+            return stack;
+        }
+        ItemStack current = target.getItem();
+        int limit = Math.min(target.getMaxStackSize(), stack.getMaxStackSize());
+        if (current.isEmpty()) {
+            int count = Math.min(stack.getCount(), limit);
+            if (!simulate) {
+                target.set(stack.copyWithCount(count));
+                target.setChanged();
+            }
+            return count >= stack.getCount()
+                    ? ItemStack.EMPTY
+                    : stack.copyWithCount(stack.getCount() - count);
+        }
+        if (!ItemStack.isSameItemSameTags(current, stack)) {
+            return stack;
+        }
+        int space = limit - current.getCount();
+        if (space <= 0) {
+            return stack;
+        }
+        int count = Math.min(space, stack.getCount());
+        if (!simulate) {
+            current.grow(count);
+            target.setChanged();
+        }
+        return count >= stack.getCount()
+                ? ItemStack.EMPTY
+                : stack.copyWithCount(stack.getCount() - count);
     }
 
     @Override

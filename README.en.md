@@ -7,15 +7,17 @@ Ammo packaging for **Timeless and Classics Zero (TACZ)**: pack loose ammo into b
 - Create 6.0.x optional
 - GPL-3.0-only
 - Author jmywork
-- Version `0.1.0-beta`
+- Version `0.2.0`
 
 中文: [README.md](README.md)
+
+Capacity API and data-driven config: [docs/api.md](docs/api.md).
 
 ## Install
 
 1. Install Forge 1.20.1.
 2. Install TACZ 1.1.8-hotfix2.
-3. Put `taczammobox-1.20.1-0.1.0-beta.jar` into `mods/`.
+3. Put `taczammobox-1.20.1-0.2.0.jar` into `mods/`.
 4. Create is optional; install it only if you want deployer support.
 
 ## Quick start
@@ -24,8 +26,12 @@ Ammo packaging for **Timeless and Classics Zero (TACZ)**: pack loose ammo into b
 - Loose ammo keeps pulling matching stacks from your inventory, Sophisticated Backpacks and Curios: it fills as much as possible and **never wastes**. Boxes/crates also aggregate matching packages: with waste **on** the last package may be partially wasted; with waste **off** filling stops before a package that does not fit.
 - With an inventory/container open, hover loose ammo, a box or a crate and press `V` to fill from that slot. When the held stack runs out, the same item is pulled from your inventory, Sophisticated Backpacks or Curios. Disable this with `autoRefill` in `settings.json` if another refill mod conflicts.
 - **Crate**: right-click to place; 9 boxes ↔ 1 crate.
-- **Ammo Packer**: loose ammo → box, 9 boxes → crate, or unpack.
-- **Ammo Loader**: fills TACZ ammo boxes from boxes, crates or loose ammo.
+- **Pack**: press `H` (rebindable) or run `/taczammobox pack` to turn full loose-ammo stacks in inventory, Curios and the open container (including Sophisticated Backpacks and chests) into new boxes. Partial stacks stay where they are.
+- **Target priority**: `boxPriority` in `settings.json` controls the order of `main_hand / inventory / curios / open_container`.
+- **Doctor / recipe reload**: `/taczammobox doctor` checks config and generated assets; `/taczammobox reloadrecipes` reloads data packs and third-party recipe injection.
+- **Ammo Packer**: loose ammo → box, 9 boxes → crate, or unpack. Its GUI has a filter slot; insert loose ammo/a box/a crate to process only that ammo type.
+- **The filter is a ghost/marker slot**: left-click with an item to set it, right-click or empty-hand click to clear; the item is not consumed, cannot be taken out, and is not dropped when the machine is broken.
+- **Ammo Loader**: fills TACZ ammo boxes from boxes, crates or loose ammo. Its GUI has a filter slot for the same ammo-type filter.
 - `/taczammobox waste true|false` controls whether partially fitting packages are wasted.
 - `V` can be rebound in Controls → TACZ Ammo Box → Fill Ammo Box.
 
@@ -60,6 +66,7 @@ Both are optional; the mod works without them.
 
 - **Sophisticated Backpacks**: `V` also searches ammo boxes inside backpacks
 - **DCSharp**: reads its custom iron/gold/diamond box stack counts automatically
+- **JEI**: optional Packer/Loader processing categories
 - **Curios**: ammo boxes in equipped curio slots are searched too
 - Without these mods, only the normal player inventory is searched
 
@@ -97,8 +104,12 @@ Client and server must use the same config, or items will be missing. See [docs/
 | Command | Permission | Description |
 |---|---|---|
 | `/taczammobox help` | any | Show common commands and config path |
+| `/taczammobox pack` | any | Pack full loose-ammo stacks into new boxes |
+| `/taczammobox packtoggle [true\|false]` | any / 2 | Show or set one-key packing |
 | `/taczammobox dump` | 2 | Export loaded ammo types to `detected_ammo.json` |
-| `/taczammobox scan` | 2 | Add missing ammo and prune removed packs; restart required |
+| `/taczammobox scan` | 2 | Add missing ammo only; never removes existing entries; restart required |
+| `/taczammobox clean` | 2 | Remove invalid ammo entries directly |
+| `/taczammobox cleanup [radius]` | 2 | Remove orphan boxes in players/containers/drops; default 64 |
 | `/taczammobox reload` | 2 | Reload `settings.json` and sync it to clients |
 | `/taczammobox autorefill` | any | Show the auto-refill toggle |
 | `/taczammobox autorefill <true\|false>` | 2 | Set the auto-refill toggle |

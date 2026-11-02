@@ -7,9 +7,11 @@ TACZ（Timeless and Classics Zero）的弹药包装附属。把散装弹药装�
 - Create 6.0.x 可选
 - 协议 GPL-3.0-only
 - 作者 jmywork
-- 版本 `0.1.0-beta`
+- 版本 `0.2.0`
 
 English: [README.en.md](README.en.md)
+
+容量 API 和数据驱动配置见 [docs/api.md](docs/api.md)。
 
 ## 从源码构建
 
@@ -19,7 +21,7 @@ English: [README.en.md](README.en.md)
 
 1. 安装 Forge 1.20.1。
 2. 安装 TACZ 1.1.8-hotfix2。
-3. 把 `taczammobox-1.20.1-0.1.0-beta.jar` 放进 `mods/`。
+3. 把 `taczammobox-1.20.1-0.2.0.jar` 放进 `mods/`。
 4. 想用 Create 部署器兼容再装 Create 6.0.x，不装也能正常玩。
 
 ## 快速开始
@@ -28,8 +30,12 @@ English: [README.en.md](README.en.md)
 - 散装弹药会从当前格继续找背包/精妙背包/Curios 里的同弹种，**能装多少装多少，不浪费**；盒/箱也会聚合同类包装，**浪费开启**时最后一包可部分浪费，**浪费关闭**时遇到放不下的整包就停止。
 - 打开背包/容器时，把鼠标移到散装弹药、盒或箱上按 `V`，可以直接用这一格装填；主手同类物品用完后会自动从背包、精妙背包或 Curios 补到手上。自动补货可用 `settings.json` 的 `autoRefill` 关闭。
 - **箱**：右键放置成方块；9 盒 ↔ 1 箱。
-- **打包机**：散弹 → 盒、9 盒 → 箱；也可以反向拆包。
-- **装填机**：把盒/箱/散弹装进 TACZ 弹药盒。
+- **一键打包**：按 `H`（可改键）或 `/taczammobox pack`，把玩家背包、Curios、当前打开容器（含精妙背包/箱子）里的满组散弹打包成新盒；不满一组会留在原位。
+- **装填优先级**：`settings.json` 的 `boxPriority` 可调整 `main_hand / inventory / curios / open_container` 的搜索顺序。
+- **自检/重载配方**：`/taczammobox doctor` 检查配置和生成资源；`/taczammobox reloadrecipes` 重载数据包和第三方配方。
+- **打包机**：散弹 → 盒、9 盒 → 箱；也可以反向拆包。GUI 有过滤槽，放入散弹/盒/箱可只处理该弹种。
+- **过滤槽是标记槽**：左键放物品设置过滤，右键或空手点击清除；不消耗物品、不能取出、破坏机器也不掉落。
+- **装填机**：把盒/箱/散弹装进 TACZ 弹药盒。GUI 有过滤槽，放入散弹/盒/箱可只处理该弹种。
 - 盒/箱装不满时是否浪费，用 `/taczammobox waste true|false` 控制。
 - `V` 可以在「控制 → TACZ 弹药盒装 → 装填弹药盒」里改键。
 
@@ -64,6 +70,7 @@ English: [README.en.md](README.en.md)
 
 - **精妙背包**：按 `V` 会搜索背包里的弹药盒
 - **DCSharp**：自动读取它对铁/金/钻石弹药盒的 6/12/20 组容量修改
+- **JEI**：提供打包机/装填机加工关系分类（可选）
 - **Curios**：饰品栏里如果有弹药盒，也会被搜索
 - 没有安装这些模组时，只搜索玩家普通背包
 
@@ -102,7 +109,11 @@ English: [README.en.md](README.en.md)
 |---|---|---|
 | `/taczammobox help` | 任意 | 查看常用指令和配置位置 |
 | `/taczammobox dump` | 2 | 导出当前弹种到 `detected_ammo.json` |
-| `/taczammobox scan` | 2 | 补充缺失弹种、清理已移除枪包，重启生效 |
+| `/taczammobox pack` | 任意 | 满组散弹打包成新盒 |
+| `/taczammobox packtoggle [true\|false]` | 2 设置 | 开关一键打包 |
+| `/taczammobox scan` | 2 | 只追加缺失弹种，不删除已有条目，重启生效 |
+| `/taczammobox clean` | 2 | 直接清理失效弹种条目 |
+| `/taczammobox cleanup [半径]` | 2 | 直接清理玩家/容器/掉落物里的孤儿盒，默认 64 |
 | `/taczammobox reload` | 2 | 重读 `settings.json` 并同步客户端 |
 | `/taczammobox autorefill` | 任意 | 查看自动补货开关 |
 | `/taczammobox autorefill <true\|false>` | 2 | 设置自动补货开关 |

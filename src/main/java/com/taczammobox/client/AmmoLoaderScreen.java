@@ -76,19 +76,23 @@ public class AmmoLoaderScreen extends AbstractContainerScreen<AmmoLoaderMenu> {
     }
 
     private static ChatFormatting color(AmmoLoaderBlockEntity.SideMode mode) {
-        return switch (mode) {
-            case INPUT -> ChatFormatting.GREEN;
-            case OUTPUT -> ChatFormatting.GOLD;
-            case DISABLED -> ChatFormatting.DARK_GRAY;
-        };
+        if (mode == AmmoLoaderBlockEntity.SideMode.INPUT) {
+            return ChatFormatting.GREEN;
+        }
+        if (mode == AmmoLoaderBlockEntity.SideMode.OUTPUT) {
+            return ChatFormatting.GOLD;
+        }
+        return ChatFormatting.DARK_GRAY;
     }
 
     private static ChatFormatting redstoneColor(AmmoLoaderBlockEntity.RedstoneMode mode) {
-        return switch (mode) {
-            case IGNORE -> ChatFormatting.DARK_GRAY;
-            case HIGH -> ChatFormatting.RED;
-            case LOW -> ChatFormatting.AQUA;
-        };
+        if (mode == AmmoLoaderBlockEntity.RedstoneMode.HIGH) {
+            return ChatFormatting.RED;
+        }
+        if (mode == AmmoLoaderBlockEntity.RedstoneMode.LOW) {
+            return ChatFormatting.AQUA;
+        }
+        return ChatFormatting.DARK_GRAY;
     }
 
     @Override
@@ -113,6 +117,7 @@ public class AmmoLoaderScreen extends AbstractContainerScreen<AmmoLoaderMenu> {
         drawSlot(graphics, x + 43, y + 34);
         drawSlot(graphics, x + 79, y + 34);
         drawSlot(graphics, x + 133, y + 34);
+        drawSlot(graphics, x + 157, y + 34);
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 drawSlot(graphics, x + 7 + col * 18, y + 83 + row * 18);
@@ -140,6 +145,7 @@ public class AmmoLoaderScreen extends AbstractContainerScreen<AmmoLoaderMenu> {
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         graphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 0x404040, false);
         graphics.drawString(this.font, Component.translatable("gui.taczammobox.sides"), 180, 6, 0x404040, false);
+        graphics.drawString(this.font, Component.translatable("gui.taczammobox.filter"), 150, 22, 0x404040, false);
         graphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 0x404040, false);
     }
 }

@@ -9,6 +9,7 @@ import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.resource.index.CommonAmmoIndex;
 import com.taczammobox.AmmoType;
 import com.taczammobox.TaczAmmoBoxMod;
+import com.taczammobox.api.AmmoBoxCapacityApi;
 import com.taczammobox.compat.CuriosCompat;
 import com.taczammobox.compat.DCSharpCompat;
 import com.taczammobox.config.WasteSettings;
@@ -23,6 +24,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.fml.ModList;
@@ -98,60 +100,48 @@ public final class AmmoBoxHelper {
         boolean fromHand = source == player.getMainHandItem();
         int rounds = roundsPerBox(type) * boxes;
         boolean waste = WasteSettings.waste();
+        BoxTarget target = findTargetBox(player, type, waste ? 1 : rounds);
+        if (target == null) {
+            player.displayClientMessage(Component.translatable("message.taczammobox.no_space"), true);
+            return false;
+        }
 
-        for (IItemHandler inventory : ammoBoxHandlers(player)) {
-            for (int i = 0; i < inventory.getSlots(); i++) {
-                ItemStack candidate = inventory.getStackInSlot(i);
-                if (!(candidate.getItem() instanceof IAmmoBox ammoBox)) {
-                    continue;
-                }
-                if (ammoBox.isCreative(candidate) || ammoBox.isAllTypeCreative(candidate)) {
-                    continue;
-                }
-                ResourceLocation boxAmmoId = ammoBox.getAmmoId(candidate);
-                boolean empty = boxAmmoId.equals(DefaultAssets.EMPTY_AMMO_ID);
-                if (!empty && !boxAmmoId.equals(type.ammoId())) {
-                    continue;
-                }
-                int capacity = capacity(ammoBox, candidate, type);
-                int current = ammoBox.getAmmoCount(candidate);
-                int[] space = {capacity - current};
-                if (space[0] <= 0) {
-                    continue;
-                }
-
-                int added = 0;
-                while (space[0] > 0 && !source.isEmpty()) {
-                    int toAdd = packageAmount(space[0], rounds, waste);
-                    if (toAdd <= 0) {
-                        break;
-                    }
-                    source.shrink(1);
-                    added += toAdd;
-                    space[0] -= toAdd;
-                    if (waste && toAdd < rounds) {
-                        break;
-                    }
-                }
-                if (space[0] > 0) {
-                    added += consumePackages(player, refillTemplate, rounds, space, waste);
-                }
-                if (added <= 0) {
-                    continue;
-                }
-
-                ammoBox.setAmmoId(candidate, type.ammoId());
-                ammoBox.setAmmoCount(candidate, current + added);
-                writeBack(inventory, i, candidate);
-                if (fromHand && source.isEmpty()) {
-                    refillHand(player, refillTemplate);
-                }
-                player.playSound(SoundEvents.BUNDLE_INSERT, 0.8F, 0.8F + player.getRandom().nextFloat() * 0.4F);
-                return true;
+        ItemStack candidate = target.handler().getStackInSlot(target.slot());
+        if (!(candidate.getItem() instanceof IAmmoBox ammoBox)) {
+            return false;
+        }
+        int capacity = capacity(ammoBox, candidate, type);
+        int current = ammoBox.getAmmoCount(candidate);
+        int[] space = {capacity - current};
+        int added = 0;
+        while (space[0] > 0 && !source.isEmpty()) {
+            int toAdd = packageAmount(space[0], rounds, waste);
+            if (toAdd <= 0) {
+                break;
+            }
+            source.shrink(1);
+            added += toAdd;
+            space[0] -= toAdd;
+            if (waste && toAdd < rounds) {
+                break;
             }
         }
-        player.displayClientMessage(Component.translatable("message.taczammobox.no_space"), true);
-        return false;
+        if (space[0] > 0) {
+            added += consumePackages(player, refillTemplate, rounds, space, waste);
+        }
+        if (added <= 0) {
+            player.displayClientMessage(Component.translatable("message.taczammobox.no_space"), true);
+            return false;
+        }
+
+        ammoBox.setAmmoId(candidate, type.ammoId());
+        ammoBox.setAmmoCount(candidate, current + added);
+        writeBack(target.handler(), target.slot(), candidate);
+        if (fromHand && source.isEmpty()) {
+            refillHand(player, refillTemplate);
+        }
+        player.playSound(SoundEvents.BUNDLE_INSERT, 0.8F, 0.8F + player.getRandom().nextFloat() * 0.4F);
+        return true;
     }
 
     private static int packageAmount(int space, int rounds, boolean waste) {
@@ -221,48 +211,186 @@ public final class AmmoBoxHelper {
         ItemStack refillTemplate = ammoStack.copy();
         refillTemplate.setCount(1);
         boolean fromHand = ammoStack == player.getMainHandItem();
+        BoxTarget target = findTargetBox(player, type, 1);
+        if (target == null) {
+            player.displayClientMessage(Component.translatable("message.taczammobox.no_space"), true);
+            return false;
+        }
 
-        for (IItemHandler inventory : ammoBoxHandlers(player)) {
-            for (int i = 0; i < inventory.getSlots(); i++) {
-                ItemStack candidate = inventory.getStackInSlot(i);
-                if (!(candidate.getItem() instanceof IAmmoBox ammoBox)) {
-                    continue;
+        ItemStack candidate = target.handler().getStackInSlot(target.slot());
+        if (!(candidate.getItem() instanceof IAmmoBox ammoBox)) {
+            return false;
+        }
+        int space = capacity(ammoBox, candidate, type) - ammoBox.getAmmoCount(candidate);
+        if (space <= 0) {
+            player.displayClientMessage(Component.translatable("message.taczammobox.no_space"), true);
+            return false;
+        }
+        int added = Math.min(space, ammoStack.getCount());
+        if (added <= 0) {
+            player.displayClientMessage(Component.translatable("message.taczammobox.no_space"), true);
+            return false;
+        }
+        if (!player.isCreative()) {
+            ammoStack.shrink(added);
+            int remainingSpace = space - added;
+            if (remainingSpace > 0) {
+                added += consumeOtherLooseAmmo(player, type, remainingSpace);
+            }
+        }
+        ammoBox.setAmmoId(candidate, type.ammoId());
+        ammoBox.setAmmoCount(candidate, ammoBox.getAmmoCount(candidate) + added);
+        writeBack(target.handler(), target.slot(), candidate);
+        if (!player.isCreative() && fromHand && ammoStack.isEmpty()) {
+            refillHand(player, refillTemplate);
+        }
+        player.playSound(SoundEvents.BUNDLE_INSERT, 0.8F, 0.8F + player.getRandom().nextFloat() * 0.4F);
+        return true;
+    }
+
+    /**
+     * One-click packing: turn full stacks of loose ammo in the player inventory,
+     * Curios and the currently open container into new box items. A partial stack
+     * is left in place; this never fills existing TACZ ammo boxes.
+     */
+    public static int packLooseAmmo(Level level, Player player) {
+        if (level.isClientSide) {
+            return 0;
+        }
+        if (!WasteSettings.oneKeyPack()) {
+            player.displayClientMessage(Component.translatable("command.taczammobox.pack.disabled"), true);
+            return 0;
+        }
+        List<BoxTarget> sources = new ArrayList<>();
+        for (IItemHandler handler : ammoBoxHandlers(player)) {
+            for (int slot = 0; slot < handler.getSlots(); slot++) {
+                addTarget(sources, handler, slot);
+            }
+        }
+
+        boolean hasLoose = false;
+        boolean hasFull = false;
+        int boxed = 0;
+        for (BoxTarget source : sources) {
+            ItemStack stack = source.handler().getStackInSlot(source.slot());
+            if (!(stack.getItem() instanceof IAmmo ammoItem) || stack.isEmpty()) {
+                continue;
+            }
+            hasLoose = true;
+            AmmoType type = AmmoTypes.byId(ammoItem.getAmmoId(stack));
+            if (type == null) {
+                continue;
+            }
+            int rounds = roundsPerBox(type);
+            if (rounds <= 0) {
+                continue;
+            }
+            if (stack.getCount() >= rounds) {
+                hasFull = true;
+            }
+            Item boxItem = ModItems.box(type.ammoId());
+            if (boxItem == null) {
+                continue;
+            }
+
+            List<IItemHandler> outputs = new ArrayList<>();
+            outputs.add(source.handler());
+            for (IItemHandler handler : ammoBoxHandlers(player)) {
+                if (!outputs.contains(handler)) {
+                    outputs.add(handler);
                 }
-                if (ammoBox.isCreative(candidate) || ammoBox.isAllTypeCreative(candidate)) {
-                    continue;
+            }
+
+            while (true) {
+                ItemStack current = source.handler().getStackInSlot(source.slot());
+                if (!(current.getItem() instanceof IAmmo currentAmmo) || current.isEmpty()
+                        || !currentAmmo.getAmmoId(current).equals(type.ammoId())
+                        || current.getCount() < rounds) {
+                    break;
                 }
-                ResourceLocation boxAmmoId = ammoBox.getAmmoId(candidate);
-                boolean empty = boxAmmoId.equals(DefaultAssets.EMPTY_AMMO_ID);
-                if (!empty && !boxAmmoId.equals(type.ammoId())) {
-                    continue;
+                ItemStack boxStack = new ItemStack(boxItem);
+
+                if (current.getCount() == rounds) {
+                    ItemStack extracted = source.handler().extractItem(source.slot(), rounds, false);
+                    if (extracted.isEmpty()) {
+                        break;
+                    }
+                    // Use the normal stacked insertion path. Inserting directly
+                    // into the source slot would create one box per inventory
+                    // slot instead of merging with existing box stacks.
+                    if (insertInto(outputs, boxStack)) {
+                        boxed++;
+                    } else {
+                        refund(player, source, extracted);
+                    }
+                    break;
                 }
-                int space = capacity(ammoBox, candidate, type) - ammoBox.getAmmoCount(candidate);
-                if (space <= 0) {
-                    continue;
-                }
-                int added = Math.min(space, ammoStack.getCount());
-                if (added <= 0) {
-                    continue;
-                }
-                if (!player.isCreative()) {
-                    ammoStack.shrink(added);
-                    int remainingSpace = space - added;
-                    if (remainingSpace > 0) {
-                        added += consumeOtherLooseAmmo(player, type, remainingSpace);
+
+                ItemStack simulated = ItemHandlerHelper.insertItemStacked(outputs.get(0), boxStack.copy(), true);
+                boolean hasRoom = simulated.isEmpty();
+                if (!hasRoom) {
+                    for (int i = 1; i < outputs.size() && !hasRoom; i++) {
+                        hasRoom = ItemHandlerHelper.insertItemStacked(outputs.get(i), boxStack.copy(), true).isEmpty();
                     }
                 }
-                ammoBox.setAmmoId(candidate, type.ammoId());
-                ammoBox.setAmmoCount(candidate, ammoBox.getAmmoCount(candidate) + added);
-                writeBack(inventory, i, candidate);
-                if (!player.isCreative() && fromHand && ammoStack.isEmpty()) {
-                    refillHand(player, refillTemplate);
+                if (!hasRoom) {
+                    break;
                 }
-                player.playSound(SoundEvents.BUNDLE_INSERT, 0.8F, 0.8F + player.getRandom().nextFloat() * 0.4F);
+
+                ItemStack extracted = source.handler().extractItem(source.slot(), rounds, false);
+                if (extracted.isEmpty()) {
+                    break;
+                }
+                if (insertInto(outputs, boxStack)) {
+                    boxed++;
+                } else {
+                    refund(player, source, extracted);
+                    break;
+                }
+            }
+        }
+
+        if (boxed <= 0) {
+            player.displayClientMessage(Component.translatable(!hasLoose
+                    ? "command.taczammobox.pack.no_ammo"
+                    : !hasFull
+                    ? "command.taczammobox.pack.no_full"
+                    : "command.taczammobox.pack.no_space"), true);
+            return 0;
+        }
+        int total = boxed;
+        player.displayClientMessage(Component.translatable("command.taczammobox.pack.done", total), true);
+        player.playSound(SoundEvents.BUNDLE_INSERT, 0.8F, 0.8F + player.getRandom().nextFloat() * 0.4F);
+        return boxed;
+    }
+
+    private static boolean insertInto(List<IItemHandler> outputs, ItemStack stack) {
+        // Prefer merging into existing box stacks in every handler before
+        // using an empty slot. Otherwise a full inventory can turn every
+        // source slot into a separate one-box stack.
+        for (IItemHandler output : outputs) {
+            for (int slot = 0; slot < output.getSlots(); slot++) {
+                ItemStack existing = output.getStackInSlot(slot);
+                if (!existing.isEmpty() && ItemStack.isSameItemSameTags(existing, stack)) {
+                    if (output.insertItem(slot, stack.copy(), false).isEmpty()) {
+                        return true;
+                    }
+                }
+            }
+        }
+        for (IItemHandler output : outputs) {
+            if (ItemHandlerHelper.insertItemStacked(output, stack.copy(), false).isEmpty()) {
                 return true;
             }
         }
-        player.displayClientMessage(Component.translatable("message.taczammobox.no_space"), true);
         return false;
+    }
+
+    private static void refund(Player player, BoxTarget source, ItemStack ammo) {
+        ItemStack remainder = source.handler().insertItem(source.slot(), ammo.copy(), false);
+        if (!remainder.isEmpty()) {
+            ItemHandlerHelper.giveItemToPlayer(player, remainder);
+        }
     }
 
     /** Loose ammo is never wasted: keep pulling matching stacks until the box is full or they run out. */
@@ -320,6 +448,91 @@ public final class AmmoBoxHelper {
             }
         }
         return handlers;
+    }
+
+    private record BoxTarget(IItemHandler handler, int slot) {
+    }
+
+    private static BoxTarget findTargetBox(Player player, AmmoType type, int minSpace) {
+        for (BoxTarget target : orderedBoxTargets(player)) {
+            ItemStack candidate = target.handler().getStackInSlot(target.slot());
+            if (!(candidate.getItem() instanceof IAmmoBox ammoBox)) {
+                continue;
+            }
+            if (ammoBox.isCreative(candidate) || ammoBox.isAllTypeCreative(candidate)) {
+                continue;
+            }
+            ResourceLocation boxAmmoId = ammoBox.getAmmoId(candidate);
+            boolean empty = boxAmmoId.equals(DefaultAssets.EMPTY_AMMO_ID);
+            if (!empty && !boxAmmoId.equals(type.ammoId())) {
+                continue;
+            }
+            int space = capacity(ammoBox, candidate, type) - ammoBox.getAmmoCount(candidate);
+            if (space <= 0 || space < minSpace) {
+                continue;
+            }
+            if (!(target.handler() instanceof IItemHandlerModifiable)) {
+                continue;
+            }
+            return target;
+        }
+        return null;
+    }
+
+    private static List<BoxTarget> orderedBoxTargets(Player player) {
+        List<BoxTarget> targets = new ArrayList<>();
+        IItemHandler main = new InvWrapper(player.getInventory());
+
+        List<IItemHandler> curiosHandlers = new ArrayList<>();
+        if (ModList.get().isLoaded("curios")) {
+            CuriosCompat.addEquipped(player, curiosHandlers);
+        }
+
+        ContainerSlotHandler openContainer = null;
+        if (player.containerMenu != null && player.containerMenu != player.inventoryMenu) {
+            ContainerSlotHandler candidate = new ContainerSlotHandler(player.containerMenu, player);
+            if (!candidate.isEmpty()) {
+                openContainer = candidate;
+            }
+        }
+
+        for (String group : WasteSettings.boxPriority()) {
+            switch (group) {
+                case "main_hand" -> addTarget(targets, main, player.getInventory().selected);
+                case "inventory" -> {
+                    for (int slot = 0; slot < main.getSlots(); slot++) {
+                        addTarget(targets, main, slot);
+                    }
+                }
+                case "curios" -> {
+                    for (IItemHandler curios : curiosHandlers) {
+                        for (int slot = 0; slot < curios.getSlots(); slot++) {
+                            addTarget(targets, curios, slot);
+                        }
+                    }
+                }
+                case "open_container" -> {
+                    if (openContainer != null) {
+                        for (int slot = 0; slot < openContainer.getSlots(); slot++) {
+                            addTarget(targets, openContainer, slot);
+                        }
+                    }
+                }
+                default -> {
+                    // Ignore unknown entries; the config loader validates them.
+                }
+            }
+        }
+        return targets;
+    }
+
+    private static void addTarget(List<BoxTarget> targets, IItemHandler handler, int slot) {
+        for (BoxTarget target : targets) {
+            if (target.handler() == handler && target.slot() == slot) {
+                return;
+            }
+        }
+        targets.add(new BoxTarget(handler, slot));
     }
 
     private static void writeBack(IItemHandler handler, int slot, ItemStack stack) {
@@ -402,6 +615,18 @@ public final class AmmoBoxHelper {
         if (multiplier != null) {
             return Math.max(1, WasteSettings.roundCapacity(formula * multiplier));
         }
+        Integer dataCapacity = AmmoTypes.capacityFor(type.ammoId(), level);
+        if (dataCapacity != null) {
+            return dataCapacity;
+        }
+        Double dataMultiplier = AmmoTypes.multiplierFor(type.ammoId(), level);
+        if (dataMultiplier != null) {
+            return Math.max(1, WasteSettings.roundCapacity(formula * dataMultiplier));
+        }
+        Integer provided = AmmoBoxCapacityApi.findCapacity(ammoBox, stack, type, level, formula);
+        if (provided != null) {
+            return provided;
+        }
         int dcsharpStacks = DCSharpCompat.stackCountForLevel(level);
         if (dcsharpStacks > 0) {
             return Math.max(1, roundsPerBox(type) * dcsharpStacks);
@@ -422,7 +647,7 @@ public final class AmmoBoxHelper {
                         "Detected custom ammo box multiplier {} for {} (formula was {}, detected {})",
                         ratio, key, formula, detected);
                 if (isServerThread()) {
-                    WasteSettings.recordDetectedMultiplier(itemId, ratio);
+                    WasteSettings.recordDetectedMultiplier(itemId + "#" + level, ratio);
                 }
             } else {
                 // The capacity is not a clean multiple of the formula (additive or

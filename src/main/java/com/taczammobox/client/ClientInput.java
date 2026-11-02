@@ -29,6 +29,9 @@ public final class ClientInput {
         if (minecraft.player == null || minecraft.screen != null) {
             return;
         }
+        if (ModKeyMappings.SORT_AMMO.consumeClick()) {
+            ModNetwork.sendPack();
+        }
         if (!(minecraft.player.getMainHandItem().getItem() instanceof PackagedAmmo)
                 && !(minecraft.player.getMainHandItem().getItem() instanceof IAmmo)) {
             return;
@@ -48,6 +51,10 @@ public final class ClientInput {
             return;
         }
         if (screen.getFocused() instanceof EditBox) {
+            return;
+        }
+        if (ModKeyMappings.SORT_AMMO.matches(event.getKey(), event.getScanCode())) {
+            ModNetwork.sendPack();
             return;
         }
         if (!ModKeyMappings.FILL_AMMO_BOX.matches(event.getKey(), event.getScanCode())) {

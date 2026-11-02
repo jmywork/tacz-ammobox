@@ -3,12 +3,14 @@ package com.taczammobox.menu;
 import com.tacz.guns.api.item.IAmmo;
 import com.taczammobox.block.AmmoLoaderBlockEntity;
 import com.taczammobox.item.PackagedAmmo;
+import com.taczammobox.util.AmmoFilter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -16,6 +18,7 @@ import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
 public class AmmoLoaderMenu extends AbstractContainerMenu {
+    private static final int FILTER_SLOT_INDEX = 3;
     private final AmmoLoaderBlockEntity loader;
     private final ContainerData data;
 
@@ -29,6 +32,17 @@ public class AmmoLoaderMenu extends AbstractContainerMenu {
         addSlot(new SlotItemHandler(handler, AmmoLoaderBlockEntity.SLOT_BOX_IN, 44, 35));
         addSlot(new SlotItemHandler(handler, AmmoLoaderBlockEntity.SLOT_SOURCE, 80, 35));
         addSlot(new SlotItemHandler(handler, AmmoLoaderBlockEntity.SLOT_BOX_OUT, 134, 35) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return false;
+            }
+        });
+        addSlot(new SlotItemHandler(handler, AmmoLoaderBlockEntity.SLOT_FILTER, 158, 35) {
+            @Override
+            public boolean mayPickup(Player player) {
+                return false;
+            }
+
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return false;
@@ -84,6 +98,9 @@ public class AmmoLoaderMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
+        if (index == FILTER_SLOT_INDEX) {
+            return ItemStack.EMPTY;
+        }
         Slot slot = slots.get(index);
         if (!slot.hasItem()) {
             return ItemStack.EMPTY;
@@ -91,8 +108,8 @@ public class AmmoLoaderMenu extends AbstractContainerMenu {
         ItemStack stack = slot.getItem();
         ItemStack copy = stack.copy();
 
-        if (index < 3) {
-            if (!moveItemStackTo(stack, 3, slots.size(), true)) {
+        if (index < 4) {
+            if (!moveItemStackTo(stack, 4, slots.size(), true)) {
                 return ItemStack.EMPTY;
             }
         } else {
@@ -102,6 +119,10 @@ public class AmmoLoaderMenu extends AbstractContainerMenu {
                 }
             } else if (stack.getItem() instanceof IAmmo || stack.getItem() instanceof PackagedAmmo) {
                 if (!moveItemStackTo(stack, 1, 2, false)) {
+                    return ItemStack.EMPTY;
+                }
+            } else if (AmmoFilter.isValidFilter(stack)) {
+                if (!moveItemStackTo(stack, 3, 4, false)) {
                     return ItemStack.EMPTY;
                 }
             } else {
@@ -115,6 +136,25 @@ public class AmmoLoaderMenu extends AbstractContainerMenu {
             slot.setChanged();
         }
         return copy;
+    }
+
+    @Override
+    public void clicked(int slotId, int button, ClickType clickType, Player player) {
+        if (slotId == FILTER_SLOT_INDEX && clickType == ClickType.PICKUP) {
+            ItemStack carried = getCarried();
+            if (button == 0 && !carried.isEmpty() && AmmoFilter.isValidFilter(carried)) {
+                loader.getInventory().setStackInSlot(AmmoLoaderBlockEntity.SLOT_FILTER,
+                        carried.copyWithCount(1));
+                broadcastChanges();
+                return;
+            }
+            if (button == 1 || carried.isEmpty()) {
+                loader.getInventory().setStackInSlot(AmmoLoaderBlockEntity.SLOT_FILTER, ItemStack.EMPTY);
+                broadcastChanges();
+                return;
+            }
+        }
+        super.clicked(slotId, button, clickType, player);
     }
 
     @Override

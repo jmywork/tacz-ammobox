@@ -5,8 +5,17 @@
 | 指令 | 权限 | 作用 |
 |---|---|---|
 | `/taczammobox help` | 任意 | 显示常用指令和配置文件位置 |
+| `/taczammobox pack` | 任意 | 把满组散弹打包成新盒 |
+| `/taczammobox packtoggle` | 任意 | 查看一键打包开关 |
+| `/taczammobox packtoggle <true\|false>` | 2 | 开启/关闭一键打包 |
+| `/taczammobox doctor` | 2 | 自检弹种、盒/箱物品、容量键、生成配方包 |
+| `/taczammobox reloadrecipes` | 2 | 重载数据包和第三方配方注入 |
+| `/taczammobox priority` | 任意 | 查看装填目标优先级 |
+| `/taczammobox priority <顺序>` | 2 | 设置优先级，例如 `main_hand,open_container,inventory,curios` |
 | `/taczammobox dump` | 2 | 导出当前加载的弹种到 `config/taczammobox/detected_ammo.json` |
-| `/taczammobox scan` | 2 | 补充缺失弹种、清理已移除枪包的条目；**重启后生效** |
+| `/taczammobox scan` | 2 | 只追加缺失弹种，不删除已有条目；**重启后生效** |
+| `/taczammobox clean` | 2 | 直接清理失效弹种条目 |
+| `/taczammobox cleanup [半径]` | 2 | 直接清理玩家、容器和掉落物里的孤儿盒/箱，默认半径 64 |
 | `/taczammobox reload` | 2 | 重读 `settings.json` 并同步给在线客户端 |
 | `/taczammobox autorefill` | 任意 | 查看主手自动补货开关 |
 | `/taczammobox autorefill <true\|false>` | 2 | 设置主手自动补货开关 |
@@ -29,7 +38,9 @@
 
 ## 说明
 
-- `scan` 会修改 `ammo_boxes.json`，新物品需要重启后才会出现。
+- `scan` 会追加 `ammo_boxes.json` 条目，不删除旧条目；新物品需要重启后才会出现。
+- `clean` 直接删除失效条目；删除后旧盒子/箱子会变成未知物品。
+- `cleanup` 直接删除孤儿盒/箱；默认半径 64。
 - `reload` 只重读 `settings.json`（浪费开关、机器速率），不改变物品注册。
 - `capacity held` 会按主手盒子的物品 id + 当前等级 + 当前弹种写入；`capacity heldlevel` 只按物品 id + 等级写。
 - 第三方作者通常改的是等级容量倍率，优先用 `heldmult` / `mult`，这样所有弹种会自动适配；自动探测会写物品级倍率。
@@ -46,8 +57,17 @@ All commands start with `/taczammobox`.
 | Command | Permission | Description |
 |---|---|---|
 | `/taczammobox help` | any | Show common commands and the config path |
+| `/taczammobox pack` | any | Pack full loose-ammo stacks into new boxes |
+| `/taczammobox packtoggle` | any | Show the one-key packing toggle |
+| `/taczammobox packtoggle <true\|false>` | 2 | Enable/disable one-key packing |
+| `/taczammobox doctor` | 2 | Self-check ammo types, box/crate items, capacity keys and generated recipes |
+| `/taczammobox reloadrecipes` | 2 | Reload data packs and third-party recipe injection |
+| `/taczammobox priority` | any | Show ammo box target priority |
+| `/taczammobox priority <order>` | 2 | Set priority, e.g. `main_hand,open_container,inventory,curios` |
 | `/taczammobox dump` | 2 | Export loaded ammo types to `config/taczammobox/detected_ammo.json` |
-| `/taczammobox scan` | 2 | Add missing ammo and prune removed packs; **restart required** |
+| `/taczammobox scan` | 2 | Add missing ammo only; never removes existing entries; **restart required** |
+| `/taczammobox clean` | 2 | Remove invalid ammo entries directly |
+| `/taczammobox cleanup [radius]` | 2 | Remove orphan boxes in players/containers/drops; default radius 64 |
 | `/taczammobox reload` | 2 | Reload `settings.json` and sync it to online clients |
 | `/taczammobox autorefill` | any | Show the main-hand auto-refill toggle |
 | `/taczammobox autorefill <true\|false>` | 2 | Set the main-hand auto-refill toggle |
@@ -70,7 +90,9 @@ All commands start with `/taczammobox`.
 
 ## Notes
 
-- `scan` edits `ammo_boxes.json`; new items only appear after a restart.
+- `scan` appends entries to `ammo_boxes.json` and never removes old entries; new items appear after a restart.
+- `clean` removes invalid entries directly; old boxes/crates become unknown items afterwards.
+- `cleanup` removes orphan boxes directly; default radius 64.
 - `reload` only re-reads `settings.json` (waste and machine speed); it does not change item registration.
 - `capacity held` writes the held box's item id + current level + current ammo; `capacity heldlevel` writes only item id + level.
 - Third-party authors usually change a level's capacity multiplier; prefer `heldmult` / `mult` so every ammo type adapts. Automatic detection writes an item-wide multiplier.

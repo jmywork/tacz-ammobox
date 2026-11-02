@@ -105,7 +105,10 @@ public class AmmoLoaderBlock extends BaseEntityBlock {
         if (!state.is(newState.getBlock()) && !level.isClientSide) {
             BlockEntity blockEntity = level.getBlockEntity(pos);
             if (blockEntity instanceof AmmoLoaderBlockEntity loader) {
-                for (int slot = 0; slot < 3; slot++) {
+                for (int slot = 0; slot < loader.getInventory().getSlots(); slot++) {
+                    if (slot == AmmoLoaderBlockEntity.SLOT_FILTER) {
+                        continue;
+                    }
                     Block.popResource(level, pos, loader.getInventory().getStackInSlot(slot));
                 }
             }

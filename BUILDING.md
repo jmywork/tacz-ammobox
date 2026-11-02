@@ -10,6 +10,7 @@
   - Jade 11.x
   - WTHIT 8.x
   - Curios 5.x
+  - JEI 15.x
 
 ## Steps / 步骤
 
@@ -18,6 +19,7 @@
    - `libs/Jade-1.20.1-Forge-11.13.3.jar`
    - `libs/wthit-1.20.1-forge-8.21.1.jar`
    - `libs/curios-forge-5.14.1+1.20.1.jar`
+   - `libs/jei-1.20.1-forge-15.59.0.210.jar`
 2. Run:
 
 ```bash

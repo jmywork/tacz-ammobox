@@ -12,8 +12,12 @@ import net.minecraftforge.fml.loading.FMLPaths;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Runtime toggle, persisted in {@code config/taczammobox/settings.json} and
@@ -26,12 +30,18 @@ import java.util.Map;
 public final class WasteSettings {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final int DEFAULT_TICKS = 5;
+    public static final List<String> BOX_PRIORITY_OPTIONS =
+            List.of("main_hand", "inventory", "curios", "open_container");
 
     private static boolean waste = true;
     private static boolean autoRefill = true;
+    private static boolean oneKeyPack = true;
     private static int packerTicks = DEFAULT_TICKS;
     private static int loaderTicks = DEFAULT_TICKS;
+    private static int boxStackSize = 64;
+    private static int crateStackSize = 64;
     private static String capacityRounding = "round";
+    private static List<String> boxPriority = new ArrayList<>(BOX_PRIORITY_OPTIONS);
     private static final Map<String, Integer> BOX_CAPACITY = new HashMap<>();
     private static final Map<String, Double> BOX_MULTIPLIER = new HashMap<>();
 
@@ -56,12 +66,51 @@ public final class WasteSettings {
         save();
     }
 
+    public static boolean oneKeyPack() {
+        return oneKeyPack;
+    }
+
+    public static void setOneKeyPack(boolean value) {
+        oneKeyPack = value;
+        save();
+    }
+
+    public static int boxStackSize() {
+        return boxStackSize;
+    }
+
+    public static int crateStackSize() {
+        return crateStackSize;
+    }
+
     public static int packerTicks() {
         return packerTicks;
     }
 
     public static int loaderTicks() {
         return loaderTicks;
+    }
+
+    public static List<String> boxPriority() {
+        return List.copyOf(boxPriority);
+    }
+
+    /** Parse a comma/space separated order; all four groups are required exactly once. */
+    public static boolean setBoxPriority(String raw) {
+        List<String> parsed = new ArrayList<>();
+        for (String token : raw.toLowerCase().split("[,\\s]+")) {
+            if (!token.isBlank()) {
+                parsed.add(token);
+            }
+        }
+        Set<String> unique = new HashSet<>(parsed);
+        if (parsed.size() != BOX_PRIORITY_OPTIONS.size()
+                || !unique.containsAll(BOX_PRIORITY_OPTIONS)) {
+            return false;
+        }
+        boxPriority = parsed;
+        save();
+        return true;
     }
 
     /** Client-side values from the server. Does not write the local file. */
@@ -137,6 +186,14 @@ public final class WasteSettings {
         TaczAmmoBoxMod.LOGGER.info("Wrote detected ammo box multiplier {} = {}", key, multiplier);
     }
 
+    public static java.util.Set<String> capacityKeys() {
+        return java.util.Set.copyOf(BOX_CAPACITY.keySet());
+    }
+
+    public static java.util.Set<String> multiplierKeys() {
+        return java.util.Set.copyOf(BOX_MULTIPLIER.keySet());
+    }
+
     /** Persist an automatically detected custom capacity so the player can inspect/edit it. */
     public static void recordDetectedCapacity(String key, int capacity) {
         if (capacity <= 0 || BOX_CAPACITY.containsKey(key)) {
@@ -206,10 +263,34 @@ public final class WasteSettings {
             if (root.has("autoRefill")) {
                 autoRefill = root.get("autoRefill").getAsBoolean();
             }
+            if (root.has("oneKeyPack")) {
+                oneKeyPack = root.get("oneKeyPack").getAsBoolean();
+            }
+            boxStackSize = clampStack(root.has("boxStackSize")
+                    ? root.get("boxStackSize").getAsInt() : 64);
+            crateStackSize = clampStack(root.has("crateStackSize")
+                    ? root.get("crateStackSize").getAsInt() : 64);
             if (root.has("capacityRounding")) {
                 String mode = root.get("capacityRounding").getAsString();
                 if (mode.equals("round") || mode.equals("floor") || mode.equals("ceil")) {
                     capacityRounding = mode;
+                }
+            }
+            if (root.has("boxPriority") && root.get("boxPriority").isJsonArray()) {
+                List<String> parsed = new ArrayList<>();
+                for (var element : root.getAsJsonArray("boxPriority")) {
+                    String token = element.getAsString();
+                    if (BOX_PRIORITY_OPTIONS.contains(token) && !parsed.contains(token)) {
+                        parsed.add(token);
+                    }
+                }
+                if (!parsed.isEmpty()) {
+                    for (String option : BOX_PRIORITY_OPTIONS) {
+                        if (!parsed.contains(option)) {
+                            parsed.add(option);
+                        }
+                    }
+                    boxPriority = parsed;
                 }
             }
             BOX_CAPACITY.clear();
@@ -249,15 +330,19 @@ public final class WasteSettings {
         return Math.max(1, Math.min(200, value));
     }
 
+    private static int clampStack(int value) {
+        return Math.max(1, Math.min(64, value));
+    }
+
     private static void save() {
         Path file = file();
         try {
             Files.createDirectories(file.getParent());
             JsonObject root = new JsonObject();
             root.addProperty("_comment_cn",
-                    "waste: true=盒/箱装不满时消耗并浪费剩余, false=必须整组/整包装得下. autoRefill: 主手用完后是否自动从背包补同类物品. packerTicks/loaderTicks: 每次操作耗时(tick), 20 tick = 1 秒, 范围 1-200. capacityRounding: 小数倍率取整方式 round/floor/ceil. ammoBoxCapacity: 绝对容量覆盖. ammoBoxCapacityMultiplier: 容量倍率覆盖. 键为 item_id / item_id#level / item_id#level#ammo.");
+                    "waste: true=盒/箱装不满时消耗并浪费剩余, false=必须整组/整包装得下. autoRefill: 主手用完后是否自动从背包补同类物品. oneKeyPack: 是否允许 H/一键打包. boxStackSize/crateStackSize: 盒/箱最大堆叠, 1-64. boxPriority: 装填目标搜索顺序 main_hand/inventory/curios/open_container. packerTicks/loaderTicks: 每次操作耗时(tick), 20 tick = 1 秒, 范围 1-200. capacityRounding: 小数倍率取整方式 round/floor/ceil. ammoBoxCapacity: 绝对容量覆盖. ammoBoxCapacityMultiplier: 容量倍率覆盖. 键为 item_id / item_id#level / item_id#level#ammo.");
             root.addProperty("_comment_en",
-                    "waste: true=consume a box even when it only partially fits and discard the rest, false=require the whole package to fit. autoRefill: pull a matching item back to the main hand after a fill. packerTicks/loaderTicks: ticks per operation, 20 ticks = 1 second, range 1-200. capacityRounding: round/floor/ceil for fractional multipliers. ammoBoxCapacity: absolute capacity overrides. ammoBoxCapacityMultiplier: capacity multipliers. Keys are item_id / item_id#level / item_id#level#ammo.");
+                    "waste: true=consume a box even when it only partially fits and discard the rest, false=require the whole package to fit. autoRefill: pull a matching item back to the main hand after a fill. oneKeyPack: allow H/one-key packing. boxStackSize/crateStackSize: maximum box/crate stack size, 1-64. boxPriority: target search order main_hand/inventory/curios/open_container. packerTicks/loaderTicks: ticks per operation, 20 ticks = 1 second, range 1-200. capacityRounding: round/floor/ceil for fractional multipliers. ammoBoxCapacity: absolute capacity overrides. ammoBoxCapacityMultiplier: capacity multipliers. Keys are item_id / item_id#level / item_id#level#ammo.");
 
             JsonArray examplesCn = new JsonArray();
             examplesCn.add("把所有 TACZ 弹药盒容量改成 2 倍: \"ammoBoxCapacityMultiplier\": { \"tacz:ammo_box\": 2.0 }");
@@ -265,6 +350,9 @@ public final class WasteSettings {
             examplesCn.add("固定容量(不随弹种变化): \"ammoBoxCapacity\": { \"modid:custom_box\": 1080 }");
             examplesCn.add("小数倍率取整: \"capacityRounding\": \"floor\"");
             examplesCn.add("关闭主手自动补货: \"autoRefill\": false");
+            examplesCn.add("关闭一键打包: \"oneKeyPack\": false");
+            examplesCn.add("盒子/箱子堆叠 64: \"boxStackSize\": 64, \"crateStackSize\": 64");
+            examplesCn.add("装填优先主手，然后当前容器: \"boxPriority\": [\"main_hand\", \"open_container\", \"inventory\", \"curios\"]");
             root.add("_examples_cn", examplesCn);
 
             JsonArray examplesEn = new JsonArray();
@@ -273,13 +361,22 @@ public final class WasteSettings {
             examplesEn.add("Fixed capacity independent of ammo: \"ammoBoxCapacity\": { \"modid:custom_box\": 1080 }");
             examplesEn.add("Fractional rounding: \"capacityRounding\": \"floor\"");
             examplesEn.add("Disable main-hand auto refill: \"autoRefill\": false");
+            examplesEn.add("Disable one-key packing: \"oneKeyPack\": false");
+            examplesEn.add("Box/crate stack size 64: \"boxStackSize\": 64, \"crateStackSize\": 64");
+            examplesEn.add("Prefer main hand, then the open container: \"boxPriority\": [\"main_hand\", \"open_container\", \"inventory\", \"curios\"]");
             root.add("_examples_en", examplesEn);
 
             root.addProperty("waste", waste);
             root.addProperty("autoRefill", autoRefill);
+            root.addProperty("oneKeyPack", oneKeyPack);
+            root.addProperty("boxStackSize", boxStackSize);
+            root.addProperty("crateStackSize", crateStackSize);
             root.addProperty("packerTicks", packerTicks);
             root.addProperty("loaderTicks", loaderTicks);
             root.addProperty("capacityRounding", capacityRounding);
+            JsonArray priority = new JsonArray();
+            boxPriority.forEach(priority::add);
+            root.add("boxPriority", priority);
             JsonObject capacities = new JsonObject();
             BOX_CAPACITY.forEach(capacities::addProperty);
             root.add("ammoBoxCapacity", capacities);

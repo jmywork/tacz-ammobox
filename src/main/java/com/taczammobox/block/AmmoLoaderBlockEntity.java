@@ -9,6 +9,7 @@ import com.taczammobox.item.PackagedAmmo;
 import com.taczammobox.menu.AmmoLoaderMenu;
 import com.taczammobox.registry.AmmoTypes;
 import com.taczammobox.util.AmmoBoxHelper;
+import com.taczammobox.util.AmmoFilter;
 import com.taczammobox.util.AutoIoHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -39,6 +40,7 @@ public class AmmoLoaderBlockEntity extends BlockEntity implements MenuProvider {
     public static final int SLOT_BOX_IN = 0;
     public static final int SLOT_SOURCE = 1;
     public static final int SLOT_BOX_OUT = 2;
+    public static final int SLOT_FILTER = 3;
     public static int ticksPerOperation() {
         return WasteSettings.loaderTicks();
     }
@@ -55,12 +57,16 @@ public class AmmoLoaderBlockEntity extends BlockEntity implements MenuProvider {
         LOW
     }
 
-    private final ItemStackHandler inventory = new ItemStackHandler(3) {
+    private final ItemStackHandler inventory = new ItemStackHandler(4) {
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
+            ItemStack filter = inventory.getStackInSlot(SLOT_FILTER);
             return switch (slot) {
-                case SLOT_BOX_IN, SLOT_BOX_OUT -> stack.getItem() instanceof IAmmoBox;
-                case SLOT_SOURCE -> stack.getItem() instanceof IAmmo || stack.getItem() instanceof PackagedAmmo;
+                case SLOT_BOX_IN -> stack.getItem() instanceof IAmmoBox
+                        && AmmoFilter.matchesOrEmptyBox(filter, stack);
+                case SLOT_SOURCE -> (stack.getItem() instanceof IAmmo || stack.getItem() instanceof PackagedAmmo)
+                        && AmmoFilter.matches(filter, stack);
+                case SLOT_FILTER -> false;
                 default -> false;
             };
         }
@@ -75,7 +81,11 @@ public class AmmoLoaderBlockEntity extends BlockEntity implements MenuProvider {
 
         @Override
         public int getSlotLimit(int slot) {
-            return slot == SLOT_SOURCE ? 64 : 1;
+            return switch (slot) {
+                case SLOT_SOURCE -> 64;
+                case SLOT_FILTER -> 1;
+                default -> 1;
+            };
         }
 
         @Override
@@ -268,6 +278,10 @@ public class AmmoLoaderBlockEntity extends BlockEntity implements MenuProvider {
         if (type == null || !boxAccepts(box, boxStack, type)) {
             return false;
         }
+        ItemStack filter = inventory.getStackInSlot(SLOT_FILTER);
+        if (!AmmoFilter.matchesOrEmptyBox(filter, boxStack) || !AmmoFilter.matches(filter, source)) {
+            return false;
+        }
         int capacity = AmmoBoxHelper.capacity(box, boxStack, type);
         int current = box.getAmmoCount(boxStack);
         int space = capacity - current;
@@ -400,7 +414,11 @@ public class AmmoLoaderBlockEntity extends BlockEntity implements MenuProvider {
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        inventory.deserializeNBT(tag.getCompound("Inventory"));
+        // Migrate old 3-slot loader inventories (Size=3) to the 4-slot
+        // inventory that contains the filter slot.
+        CompoundTag inventoryTag = tag.getCompound("Inventory").copy();
+        inventoryTag.putInt("Size", 4);
+        inventory.deserializeNBT(inventoryTag);
         progress = tag.getInt("Progress");
         int[] savedSides = tag.getIntArray("Sides");
         if (savedSides.length == sides.length) {

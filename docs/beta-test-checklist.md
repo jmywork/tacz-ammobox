@@ -1,4 +1,4 @@
-# 0.1.0-beta 内测检查清单
+# 0.2.0 发布检查清单
 
 ## 环境
 
@@ -10,7 +10,7 @@
 
 ## 安装
 
-1. 把 `taczammobox-1.20.1-0.1.0-beta.jar` 放进 `mods/`
+1. 把 `taczammobox-1.20.1-0.2.0.jar` 放进 `mods/`
 2. 安装 TACZ 和枪包
 3. 启动一次，确认生成：
    - `config/taczammobox/ammo_boxes.json`
@@ -47,6 +47,16 @@
 - [ ] 主手盒/弹药耗尽后自动从背包补同类物品
 - [ ] `autoRefill=false` 时不自动补货
 - [ ] 精妙背包/Curios 内的物品也能悬停装填
+- [ ] 按 H 或 `/taczammobox pack` 能把满组散弹打包成新盒
+- [ ] 安装 JEI 后能查看打包机/装填机加工关系
+- [ ] `ammo_boxes.json` 的 `capacity` / `capacityMultiplier` 按等级生效
+- [ ] 自动探测写入的是 `物品#等级` 倍率，不是物品级
+- [ ] `/taczammobox doctor` 能报告配置和生成资源状态
+- [ ] 过滤槽左键设置后物品不被消耗，右键/空手可清除
+- [ ] 自动输入不会把物品塞进过滤槽，也不会少 1 个子弹
+- [ ] `/taczammobox cleanup` 能直接清理孤儿盒，默认半径 64
+- [ ] `/taczammobox reloadrecipes` 能重载数据包和第三方配方
+- [ ] 打包机/装填机过滤槽放入 12g 后只处理 12g，放入 9mm 后只处理 9mm
 - [ ] 快速连按 `V` 不会复制物品
 - [ ] 盒/箱装填会聚合背包同类包装，浪费开关行为正确
 - [ ] 精妙背包在背包/饰品栏/背部时，内部弹药盒也能装填

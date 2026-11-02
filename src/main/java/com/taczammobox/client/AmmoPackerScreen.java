@@ -86,19 +86,23 @@ public class AmmoPackerScreen extends AbstractContainerScreen<AmmoPackerMenu> {
     }
 
     private static ChatFormatting color(AmmoPackerBlockEntity.SideMode mode) {
-        return switch (mode) {
-            case INPUT -> ChatFormatting.GREEN;
-            case OUTPUT -> ChatFormatting.GOLD;
-            case DISABLED -> ChatFormatting.DARK_GRAY;
-        };
+        if (mode == AmmoPackerBlockEntity.SideMode.INPUT) {
+            return ChatFormatting.GREEN;
+        }
+        if (mode == AmmoPackerBlockEntity.SideMode.OUTPUT) {
+            return ChatFormatting.GOLD;
+        }
+        return ChatFormatting.DARK_GRAY;
     }
 
     private static ChatFormatting redstoneColor(AmmoPackerBlockEntity.RedstoneMode mode) {
-        return switch (mode) {
-            case IGNORE -> ChatFormatting.DARK_GRAY;
-            case HIGH -> ChatFormatting.RED;
-            case LOW -> ChatFormatting.AQUA;
-        };
+        if (mode == AmmoPackerBlockEntity.RedstoneMode.HIGH) {
+            return ChatFormatting.RED;
+        }
+        if (mode == AmmoPackerBlockEntity.RedstoneMode.LOW) {
+            return ChatFormatting.AQUA;
+        }
+        return ChatFormatting.DARK_GRAY;
     }
 
     @Override
@@ -122,6 +126,7 @@ public class AmmoPackerScreen extends AbstractContainerScreen<AmmoPackerMenu> {
 
         drawSlot(graphics, x + 55, y + 34);
         drawSlot(graphics, x + 115, y + 34);
+        drawSlot(graphics, x + 147, y + 34);
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 drawSlot(graphics, x + 7 + col * 18, y + 83 + row * 18);
@@ -154,6 +159,7 @@ public class AmmoPackerScreen extends AbstractContainerScreen<AmmoPackerMenu> {
                         this.menu.getMode() == 0 ? "gui.taczammobox.pack" : "gui.taczammobox.unpack"),
                 8, 22, modeColor, false);
         graphics.drawString(this.font, Component.translatable("gui.taczammobox.sides"), 180, 6, 0x404040, false);
+        graphics.drawString(this.font, Component.translatable("gui.taczammobox.filter"), 140, 22, 0x404040, false);
         graphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 0x404040, false);
     }
 }

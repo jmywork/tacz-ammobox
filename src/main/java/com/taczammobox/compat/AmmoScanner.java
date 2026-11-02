@@ -13,8 +13,10 @@ import net.minecraft.resources.ResourceLocation;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -34,6 +36,39 @@ public final class AmmoScanner {
 
     public static int pruneMissing() {
         return scan(true);
+    }
+
+    /** Non-destructive preview of config entries whose TACZ ammo type is no longer loaded. */
+    public static List<ResourceLocation> findOrphans() {
+        Path file = AmmoTypes.configDir().resolve("ammo_boxes.json");
+        if (!Files.exists(file)) {
+            return List.of();
+        }
+        try {
+            JsonObject root = GSON.fromJson(Files.readString(file, StandardCharsets.UTF_8), JsonObject.class);
+            if (root == null || !root.has("entries") || !root.get("entries").isJsonArray()) {
+                return List.of();
+            }
+            Set<ResourceLocation> loaded = new HashSet<>();
+            for (var entry : TimelessAPI.getAllCommonAmmoIndex()) {
+                loaded.add(entry.getKey());
+            }
+            Set<ResourceLocation> orphans = new LinkedHashSet<>();
+            for (JsonElement element : root.getAsJsonArray("entries")) {
+                if (!element.isJsonObject() || !element.getAsJsonObject().has("ammo")) {
+                    continue;
+                }
+                ResourceLocation id = ResourceLocation.tryParse(
+                        element.getAsJsonObject().get("ammo").getAsString());
+                if (id != null && !loaded.contains(id) && !AmmoTypes.isBuiltin(id)) {
+                    orphans.add(id);
+                }
+            }
+            return new ArrayList<>(orphans);
+        } catch (RuntimeException | java.io.IOException exception) {
+            TaczAmmoBoxMod.LOGGER.error("Failed to list orphan ammo entries", exception);
+            return List.of();
+        }
     }
 
     private static int scan(boolean prune) {

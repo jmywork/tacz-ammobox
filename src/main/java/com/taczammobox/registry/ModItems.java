@@ -2,6 +2,7 @@ package com.taczammobox.registry;
 
 import com.taczammobox.AmmoType;
 import com.taczammobox.TaczAmmoBoxMod;
+import com.taczammobox.config.WasteSettings;
 import com.taczammobox.item.AmmoBoxItem;
 import com.taczammobox.item.CrateBlockItem;
 import com.taczammobox.item.DynamicCrateBlockItem;
@@ -45,16 +46,16 @@ public final class ModItems {
     static {
         for (AmmoType type : TYPES) {
             BOXES.put(type.ammoId(), ITEMS.register("box_" + type.itemName(),
-                    () -> new AmmoBoxItem(type, new Item.Properties().stacksTo(60))));
+                    () -> new AmmoBoxItem(type, new Item.Properties().stacksTo(WasteSettings.boxStackSize()))));
             if (ModBlocks.CRATES.containsKey(type.ammoId())) {
                 CRATES.put(type.ammoId(), ITEMS.register("crate_" + type.itemName(),
                         () -> new CrateBlockItem(ModBlocks.CRATES.get(type.ammoId()).get(), type,
-                                new Item.Properties().stacksTo(16))));
+                                new Item.Properties().stacksTo(WasteSettings.crateStackSize()))));
             } else {
                 // Config-added types share one dynamic crate block; the type is stored in its block entity.
                 CRATES.put(type.ammoId(), ITEMS.register("crate_" + type.itemName(),
                         () -> new DynamicCrateBlockItem(ModBlocks.DYNAMIC_CRATE.get(), type,
-                                new Item.Properties().stacksTo(16))));
+                                new Item.Properties().stacksTo(WasteSettings.crateStackSize()))));
             }
         }
     }

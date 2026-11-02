@@ -19,11 +19,19 @@ public final class ModKeyMappings {
             GLFW.GLFW_KEY_V,
             "key.categories.taczammobox");
 
+    public static final KeyMapping SORT_AMMO = new KeyMapping(
+            "key.taczammobox.sort",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_H,
+            "key.categories.taczammobox");
+
     private ModKeyMappings() {
     }
 
     @SubscribeEvent
     public static void register(RegisterKeyMappingsEvent event) {
         event.register(FILL_AMMO_BOX);
+        event.register(SORT_AMMO);
     }
 }

@@ -33,6 +33,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import java.io.IOException;
+import java.util.Map;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -53,15 +54,44 @@ public final class AmmoBoxCommand {
         dispatcher.register(Commands.literal("taczammobox")
                 .then(Commands.literal("help")
                         .executes(context -> showHelp(context.getSource())))
+                .then(Commands.literal("pack")
+                        .executes(context -> pack(context.getSource())))
+                .then(Commands.literal("packtoggle")
+                        .executes(context -> showPackToggle(context.getSource()))
+                        .then(Commands.argument("value", BoolArgumentType.bool())
+                                .requires(source -> source.hasPermission(2))
+                                .executes(context -> setPackToggle(context.getSource(),
+                                        BoolArgumentType.getBool(context, "value")))))
+                .then(Commands.literal("priority")
+                        .executes(context -> showPriority(context.getSource()))
+                        .then(Commands.argument("order", StringArgumentType.greedyString())
+                                .requires(source -> source.hasPermission(2))
+                                .executes(context -> setPriority(context.getSource(),
+                                        StringArgumentType.getString(context, "order")))))
                 .then(Commands.literal("dump")
                         .requires(source -> source.hasPermission(2))
                         .executes(context -> dump(context.getSource())))
                 .then(Commands.literal("scan")
                         .requires(source -> source.hasPermission(2))
                         .executes(context -> scan(context.getSource())))
+                .then(Commands.literal("clean")
+                        .requires(source -> source.hasPermission(2))
+                        .executes(context -> clean(context.getSource())))
+                .then(Commands.literal("cleanup")
+                        .requires(source -> source.hasPermission(2))
+                        .executes(context -> cleanup(context.getSource(), 64))
+                        .then(Commands.argument("radius", IntegerArgumentType.integer(1, 128))
+                                .executes(context -> cleanup(context.getSource(),
+                                        IntegerArgumentType.getInteger(context, "radius")))))
                 .then(Commands.literal("reload")
                         .requires(source -> source.hasPermission(2))
                         .executes(context -> reload(context.getSource())))
+                .then(Commands.literal("doctor")
+                        .requires(source -> source.hasPermission(2))
+                        .executes(context -> doctor(context.getSource())))
+                .then(Commands.literal("reloadrecipes")
+                        .requires(source -> source.hasPermission(2))
+                        .executes(context -> reloadRecipes(context.getSource())))
                 .then(Commands.literal("capacity")
                         .requires(source -> source.hasPermission(2))
                         .then(Commands.literal("held")
@@ -169,12 +199,63 @@ public final class AmmoBoxCommand {
         source.sendSuccess(() -> Component.translatable("command.taczammobox.help.absolute"), false);
         source.sendSuccess(() -> Component.translatable("command.taczammobox.help.list"), false);
         source.sendSuccess(() -> Component.translatable("command.taczammobox.help.docs"), false);
+        source.sendSuccess(() -> Component.translatable("command.taczammobox.help.sort"), false);
+        source.sendSuccess(() -> Component.translatable("command.taczammobox.help.priority"), false);
+        source.sendSuccess(() -> Component.translatable("command.taczammobox.help.doctor"), false);
+        source.sendSuccess(() -> Component.translatable("command.taczammobox.help.reloadrecipes"), false);
+        source.sendSuccess(() -> Component.translatable("command.taczammobox.help.cleanup"), false);
+        source.sendSuccess(() -> Component.translatable("command.taczammobox.help.clean"), false);
+        source.sendSuccess(() -> Component.translatable("command.taczammobox.help.packtoggle"), false);
+        return 1;
+    }
+
+    private static int pack(CommandSourceStack source) {
+        ServerPlayer player = source.getPlayer();
+        if (player == null) {
+            source.sendFailure(Component.translatable("command.taczammobox.capacity.player_only"));
+            return 0;
+        }
+        int packed = AmmoBoxHelper.packLooseAmmo(player.level(), player);
+        if (player.containerMenu != null) {
+            player.containerMenu.broadcastChanges();
+        }
+        TaczAmmoBoxMod.LOGGER.info("Pack command by {}: {} boxes", player.getGameProfile().getName(), packed);
+        source.sendSuccess(() -> Component.literal("pack result: " + packed + " boxes"), false);
+        return 1;
+    }
+
+    private static int showPriority(CommandSourceStack source) {
+        source.sendSuccess(() -> Component.translatable("command.taczammobox.priority",
+                String.join(", ", WasteSettings.boxPriority())), false);
+        return 1;
+    }
+
+    private static int setPriority(CommandSourceStack source, String raw) {
+        if (!WasteSettings.setBoxPriority(raw)) {
+            source.sendFailure(Component.translatable("command.taczammobox.priority.invalid"));
+            return 0;
+        }
+        source.sendSuccess(() -> Component.translatable("command.taczammobox.priority",
+                String.join(", ", WasteSettings.boxPriority())), true);
         return 1;
     }
 
     private static int showAutoRefill(CommandSourceStack source) {
         source.sendSuccess(() -> Component.translatable(
                 "command.taczammobox.autorefill", autoRefillState()), false);
+        return 1;
+    }
+
+    private static int showPackToggle(CommandSourceStack source) {
+        source.sendSuccess(() -> Component.translatable(
+                "command.taczammobox.packtoggle", autoRefillState()), false);
+        return 1;
+    }
+
+    private static int setPackToggle(CommandSourceStack source, boolean value) {
+        WasteSettings.setOneKeyPack(value);
+        source.sendSuccess(() -> Component.translatable(
+                "command.taczammobox.packtoggle", autoRefillState()), true);
         return 1;
     }
 
@@ -201,6 +282,30 @@ public final class AmmoBoxCommand {
             }
         }
         source.sendSuccess(() -> Component.literal("settings.json reloaded"), true);
+        return 1;
+    }
+
+    private static int doctor(CommandSourceStack source) {
+        source.sendSuccess(() -> Component.literal("[doctor] TACZ Ammo Box"), false);
+        for (String line : AmmoDoctor.report()) {
+            source.sendSuccess(() -> Component.literal(line), false);
+        }
+        return 1;
+    }
+
+    private static int reloadRecipes(CommandSourceStack source) {
+        var server = source.getServer();
+        if (server == null) {
+            source.sendFailure(Component.translatable("command.taczammobox.capacity.player_only"));
+            return 0;
+        }
+        server.reloadResources(server.getPackRepository().getSelectedIds())
+                .thenRun(() -> source.sendSuccess(
+                        () -> Component.translatable("command.taczammobox.reloadrecipes.done"), true))
+                .exceptionally(exception -> {
+                    source.sendFailure(Component.translatable("command.taczammobox.reloadrecipes.failed"));
+                    return null;
+                });
         return 1;
     }
 
@@ -368,17 +473,48 @@ public final class AmmoBoxCommand {
 
     private static int scan(CommandSourceStack source) {
         int added = AmmoScanner.appendMissing();
-        int removed = AmmoScanner.pruneMissing();
-        if (added < 0 || removed < 0) {
+        if (added < 0) {
             source.sendFailure(Component.literal("扫描失败，请查看日志"));
             return 0;
         }
-        if (added == 0 && removed == 0) {
-            source.sendSuccess(() -> Component.literal("没有发现缺失或失效的弹种"), true);
+        if (added == 0) {
+            source.sendSuccess(() -> Component.literal("没有发现缺失的弹种"), true);
         } else {
             source.sendSuccess(() -> Component.literal(
-                    "配置已更新：补充 " + added + " 个，清理 " + removed + " 个；重启游戏后生效"), true);
+                    "配置已追加 " + added + " 个弹种；重启游戏后生效"), true);
         }
+        return 1;
+    }
+
+    private static int clean(CommandSourceStack source) {
+        int removed = AmmoScanner.pruneMissing();
+        if (removed < 0) {
+            source.sendFailure(Component.literal("清理失败，请查看日志"));
+            return 0;
+        }
+        if (removed == 0) {
+            source.sendSuccess(() -> Component.literal("没有失效的弹种条目"), true);
+        } else {
+            source.sendSuccess(() -> Component.literal(
+                    "已清理 " + removed + " 个失效条目；重启后对应盒子/箱子会变成未知物品"), true);
+        }
+        return 1;
+    }
+
+    private static int cleanup(CommandSourceStack source, int radius) {
+        ServerPlayer player = source.getPlayer();
+        if (player == null) {
+            source.sendFailure(Component.translatable("command.taczammobox.capacity.player_only"));
+            return 0;
+        }
+        if (!(player.level() instanceof net.minecraft.server.level.ServerLevel level)) {
+            source.sendFailure(Component.literal("只能在服务器世界执行"));
+            return 0;
+        }
+        OrphanCleanup.Result result = OrphanCleanup.run(level, player, radius, true);
+        source.sendSuccess(() -> Component.literal(
+                "已清理 " + result.stacks() + " 组 / " + result.items()
+                        + " 个孤儿盒/箱，涉及 " + result.locations() + " 个位置"), true);
         return 1;
     }
 

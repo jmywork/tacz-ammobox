@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -65,6 +66,9 @@ public final class AmmoTypes {
     private static final List<AmmoType> ALL = new ArrayList<>();
     private static final Map<ResourceLocation, AmmoType> BY_ID = new LinkedHashMap<>();
     private static final Set<ResourceLocation> BUILTIN_IDS = new HashSet<>();
+    private static final Map<ResourceLocation, int[]> CAPACITY_BY_AMMO = new HashMap<>();
+    private static final Map<ResourceLocation, double[]> MULTIPLIER_BY_AMMO = new HashMap<>();
+    private static final Map<ResourceLocation, JsonObject> ENTRY_OBJECTS = new HashMap<>();
 
     private AmmoTypes() {
     }
@@ -73,6 +77,9 @@ public final class AmmoTypes {
         ALL.clear();
         BY_ID.clear();
         BUILTIN_IDS.clear();
+        CAPACITY_BY_AMMO.clear();
+        MULTIPLIER_BY_AMMO.clear();
+        ENTRY_OBJECTS.clear();
 
         Path dir = configDir();
         Path file = dir.resolve("ammo_boxes.json");
@@ -98,6 +105,7 @@ public final class AmmoTypes {
         sorted.sort(Comparator.comparing(type -> type.ammoId().toString()));
 
         Set<String> usedNames = new HashSet<>();
+        boolean changed = false;
         for (AmmoType type : sorted) {
             String unique = type.itemName();
             int suffix = 2;
@@ -109,6 +117,23 @@ public final class AmmoTypes {
                     : new AmmoType(type.ammoId(), unique, type.nameKey(), type.fallbackName(), type.color());
             ALL.add(resolved);
             BY_ID.put(resolved.ammoId(), resolved);
+
+            JsonObject entry = ENTRY_OBJECTS.get(resolved.ammoId());
+            if (entry != null && !AmmoTypes.isBuiltin(resolved.ammoId())) {
+                String stored = entry.has("itemName") ? entry.get("itemName").getAsString() : null;
+                if (!unique.equals(stored)) {
+                    entry.addProperty("itemName", unique);
+                    changed = true;
+                }
+            }
+        }
+        if (changed) {
+            try {
+                Files.createDirectories(file.getParent());
+                Files.writeString(file, GSON.toJson(root), StandardCharsets.UTF_8);
+            } catch (IOException exception) {
+                TaczAmmoBoxMod.LOGGER.error("Failed to persist fixed ammo item ids", exception);
+            }
         }
 
         TaczAmmoBoxMod.LOGGER.info("Registered {} packaged ammo types (builtin={})", ALL.size(), builtin);
@@ -130,9 +155,20 @@ public final class AmmoTypes {
         }
 
         AmmoType base = merged.get(ammoId);
-        String itemName = object.has("id")
-                ? sanitizeItemName(object.get("id").getAsString())
-                : (base != null ? base.itemName() : sanitizeItemName(ammoId.getPath()));
+        ENTRY_OBJECTS.put(ammoId, object);
+        String itemName;
+        if (base != null && AmmoTypes.isBuiltin(ammoId)) {
+            // Built-in item ids are part of the public registry contract.
+            itemName = base.itemName();
+        } else if (object.has("itemName")) {
+            itemName = sanitizeItemName(object.get("itemName").getAsString());
+        } else if (object.has("id")) {
+            itemName = sanitizeItemName(object.get("id").getAsString());
+        } else if (base != null) {
+            itemName = base.itemName();
+        } else {
+            itemName = sanitizeItemName(ammoId.getPath());
+        }
         String nameKey = object.has("nameKey")
                 ? object.get("nameKey").getAsString()
                 : (base != null ? base.nameKey() : "");
@@ -144,6 +180,104 @@ public final class AmmoTypes {
                 : (base != null ? base.color() : hashColor(ammoId.toString()));
 
         merged.put(ammoId, new AmmoType(ammoId, itemName, nameKey, fallback, color));
+        parseCapacity(object, ammoId);
+    }
+
+    /**
+     * Optional data-driven capacity for the standard TACZ ammo box:
+     * {@code "capacity": [360, 720, 1200]} or a single number for all levels.
+     * {@code "capacityMultiplier": [2.0, 2.0, 2.222]} works the same way.
+     */
+    private static void parseCapacity(JsonObject object, ResourceLocation ammoId) {
+        if (object.has("capacity")) {
+            int[] values = readIntLevels(object.get("capacity"));
+            if (values != null) {
+                CAPACITY_BY_AMMO.put(ammoId, values);
+            } else {
+                TaczAmmoBoxMod.LOGGER.warn("Invalid capacity for {}: {}", ammoId, object.get("capacity"));
+            }
+        }
+        if (object.has("capacityMultiplier")) {
+            double[] values = readDoubleLevels(object.get("capacityMultiplier"));
+            if (values != null) {
+                MULTIPLIER_BY_AMMO.put(ammoId, values);
+            } else {
+                TaczAmmoBoxMod.LOGGER.warn("Invalid capacityMultiplier for {}: {}",
+                        ammoId, object.get("capacityMultiplier"));
+            }
+        }
+    }
+
+    private static int[] readIntLevels(JsonElement element) {
+        int[] values = {-1, -1, -1};
+        if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isNumber()) {
+            int value = element.getAsInt();
+            if (value <= 0) {
+                return null;
+            }
+            values[0] = values[1] = values[2] = value;
+            return values;
+        }
+        if (!element.isJsonArray()) {
+            return null;
+        }
+        JsonArray array = element.getAsJsonArray();
+        if (array.size() > 3) {
+            return null;
+        }
+        for (int i = 0; i < array.size(); i++) {
+            if (!array.get(i).isJsonPrimitive() || !array.get(i).getAsJsonPrimitive().isNumber()) {
+                return null;
+            }
+            int value = array.get(i).getAsInt();
+            if (value > 0) {
+                values[i] = value;
+            }
+        }
+        return values;
+    }
+
+    private static double[] readDoubleLevels(JsonElement element) {
+        double[] values = {Double.NaN, Double.NaN, Double.NaN};
+        if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isNumber()) {
+            double value = element.getAsDouble();
+            if (!Double.isFinite(value) || value <= 0) {
+                return null;
+            }
+            values[0] = values[1] = values[2] = value;
+            return values;
+        }
+        if (!element.isJsonArray()) {
+            return null;
+        }
+        JsonArray array = element.getAsJsonArray();
+        if (array.size() > 3) {
+            return null;
+        }
+        for (int i = 0; i < array.size(); i++) {
+            if (!array.get(i).isJsonPrimitive() || !array.get(i).getAsJsonPrimitive().isNumber()) {
+                return null;
+            }
+            double value = array.get(i).getAsDouble();
+            if (Double.isFinite(value) && value > 0) {
+                values[i] = value;
+            }
+        }
+        return values;
+    }
+
+    /** @return data-driven capacity for level 0/1/2, or null. */
+    public static Integer capacityFor(ResourceLocation ammoId, int level) {
+        int[] values = CAPACITY_BY_AMMO.get(ammoId);
+        return values == null || level < 0 || level >= values.length || values[level] <= 0
+                ? null : values[level];
+    }
+
+    /** @return data-driven multiplier for level 0/1/2, or null. */
+    public static Double multiplierFor(ResourceLocation ammoId, int level) {
+        double[] values = MULTIPLIER_BY_AMMO.get(ammoId);
+        return values == null || level < 0 || level >= values.length || !Double.isFinite(values[level])
+                || values[level] <= 0 ? null : values[level];
     }
 
     private static JsonObject readOrCreate(Path dir, Path file) {
@@ -152,9 +286,9 @@ public final class AmmoTypes {
                 Files.createDirectories(dir);
                 JsonObject root = new JsonObject();
                 root.addProperty("_comment_cn",
-                        "builtin=true 注册 TACZ 默认 24 种; entries 里追加第三方弹种 {ammo,id,nameKey,name,color}. 客户端与服务端必须使用同一份文件.");
+                        "builtin=true 注册 TACZ 默认 24 种; entries 里追加第三方弹种 {ammo,id,itemName,nameKey,name,color,capacity,capacityMultiplier}. itemName 是固定物品 id 后缀，首次加载后请勿修改. capacity/capacityMultiplier 可写数字或 [铁,金,钻石] 数组. 客户端与服务端必须使用同一份文件.");
                 root.addProperty("_comment_en",
-                        "builtin=true registers the 24 TACZ defaults; add third-party ammo under entries as {ammo,id,nameKey,name,color}. The client and server must use the same file.");
+                        "builtin=true registers the 24 TACZ defaults; add third-party ammo under entries as {ammo,id,itemName,nameKey,name,color,capacity,capacityMultiplier}. itemName is the fixed item-id suffix; do not change it after first load. capacity/capacityMultiplier accept a number or [iron,gold,diamond]. The client and server must use the same file.");
                 root.addProperty("builtin", true);
                 root.add("entries", new JsonArray());
                 Files.writeString(file, GSON.toJson(root), StandardCharsets.UTF_8);

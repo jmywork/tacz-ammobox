@@ -14,6 +14,10 @@
 
 **服务端和客户端必须使用同一份 `ammo_boxes.json`，否则会缺物品或注册表不匹配。**
 
+`scan` 只追加，不删除已有条目。每个第三方条目应保持 `itemName` 不变；它是盒子/箱子的固定物品 ID 后缀。
+
+`scan` only appends entries. Keep each third-party entry's `itemName` unchanged; it is the fixed item-id suffix for boxes/crates.
+
 第三方弹种会自动生成盒/箱模型、标签和顶面图标；箱子可以放置，破坏后掉回对应弹种。
 
 ## English
@@ -34,8 +38,28 @@ Third-party types get generated box/crate models, labels and top icons. Their cr
 
 ## 移除枪包 / Removing a pack
 
-移除枪包后执行 `/taczammobox scan` 清理配置，重启后再分发一次配置。
-After removing a pack, run `/taczammobox scan`, restart, then redistribute the config.
+`/taczammobox scan` **不会**删除已移除枪包的条目。  
+默认保留条目，旧盒子/箱子仍然是物品，但会因为 TACZ 找不到弹种而成为孤儿。
+
+推荐顺序：
+
+1. 先不要执行 `clean`
+2. `/taczammobox cleanup` 清理玩家背包、Curios、已加载容器和掉落物里的孤儿盒/箱
+3. `/taczammobox clean` 删除失效条目
+4. 重启
+
+`/taczammobox cleanup` 默认半径 64，也可以写 `/taczammobox cleanup 128`。
+
+`scan` never removes entries. Removed gun packs leave orphan entries whose boxes/crates still exist but cannot be filled.
+
+Recommended order:
+
+1. Do not run `clean` yet
+2. `/taczammobox cleanup`
+3. `/taczammobox clean`
+4. Restart
+
+`/taczammobox cleanup` defaults to radius 64; use `/taczammobox cleanup 128` for a larger area.
 
 运行中不能热删除已注册物品。
 Registered items cannot be removed while the game is running.
