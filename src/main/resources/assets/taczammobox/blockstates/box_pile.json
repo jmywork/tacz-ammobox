@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "boxes=1": {"model": "taczammobox:block/box_pile"},
+    "boxes=2": {"model": "taczammobox:block/box_pile"},
+    "boxes=3": {"model": "taczammobox:block/box_pile"},
+    "boxes=4": {"model": "taczammobox:block/box_pile"},
+    "boxes=5": {"model": "taczammobox:block/box_pile"},
+    "boxes=6": {"model": "taczammobox:block/box_pile"}
+  }
+}
