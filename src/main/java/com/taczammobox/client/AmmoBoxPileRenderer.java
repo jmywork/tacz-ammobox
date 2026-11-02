@@ -29,57 +29,57 @@ import com.taczammobox.TaczAmmoBoxMod;
 @Mod.EventBusSubscriber(modid = TaczAmmoBoxMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class AmmoBoxPileRenderer implements BlockEntityRenderer<AmmoBoxPileBlockEntity> {
     private static final float[][] FULL = {
-            {4.0F, 2.67F, 0.0F}, {12.0F, 2.67F, 0.0F},
-            {4.0F, 8.0F, 0.0F}, {12.0F, 8.0F, 0.0F},
-            {4.0F, 13.33F, 0.0F}, {12.0F, 13.33F, 0.0F}
+            {4.5F, 2.67F, 0.0F}, {11.5F, 2.67F, 0.0F},
+            {4.5F, 8.0F, 0.0F}, {11.5F, 8.0F, 0.0F},
+            {4.5F, 13.33F, 0.0F}, {11.5F, 13.33F, 0.0F}
     };
     private static final float[][] ONE = {{8.0F, 8.0F, 0.0F}};
-    private static final float[][] TWO = {{4.0F, 8.0F, 0.0F}, {12.0F, 8.0F, 0.0F}};
+    private static final float[][] TWO = {{4.5F, 8.0F, 0.0F}, {11.5F, 8.0F, 0.0F}};
     private static final float[][] THREE = {
-            {4.0F, 8.0F, 0.0F}, {12.0F, 8.0F, 0.0F}, {8.0F, 8.0F, 1.0F}
+            {4.5F, 8.0F, 0.0F}, {11.5F, 8.0F, 0.0F}, {8.0F, 8.0F, 1.0F}
     };
     private static final float[][] FOUR = {
-            {4.0F, 5.33F, 0.0F}, {12.0F, 5.33F, 0.0F},
-            {4.0F, 10.67F, 0.0F}, {12.0F, 10.67F, 0.0F}
+            {4.5F, 5.33F, 0.0F}, {11.5F, 5.33F, 0.0F},
+            {4.5F, 10.67F, 0.0F}, {11.5F, 10.67F, 0.0F}
     };
     private static final float[][] FIVE = {
-            {4.0F, 5.33F, 0.0F}, {12.0F, 5.33F, 0.0F},
-            {4.0F, 10.67F, 0.0F}, {12.0F, 10.67F, 0.0F}, {8.0F, 8.0F, 1.0F}
+            {4.5F, 5.33F, 0.0F}, {11.5F, 5.33F, 0.0F},
+            {4.5F, 10.67F, 0.0F}, {11.5F, 10.67F, 0.0F}, {8.0F, 8.0F, 1.0F}
     };
     private static final float[][] ONE_TOP = {{8.0F, 8.0F, 1.0F}};
     private static final float[][] TWO_TOP = {
-            {4.0F, 8.0F, 1.0F}, {12.0F, 8.0F, 1.0F}
+            {4.5F, 8.0F, 1.0F}, {11.5F, 8.0F, 1.0F}
     };
     private static final float[][] NINE = {
-            {4.0F, 2.67F, 0.0F}, {12.0F, 2.67F, 0.0F},
-            {4.0F, 8.0F, 0.0F}, {12.0F, 8.0F, 0.0F},
-            {4.0F, 13.33F, 0.0F}, {12.0F, 13.33F, 0.0F},
+            {4.5F, 2.67F, 0.0F}, {11.5F, 2.67F, 0.0F},
+            {4.5F, 8.0F, 0.0F}, {11.5F, 8.0F, 0.0F},
+            {4.5F, 13.33F, 0.0F}, {11.5F, 13.33F, 0.0F},
             {8.0F, 2.67F, 1.0F}, {8.0F, 8.0F, 1.0F}, {8.0F, 13.33F, 1.0F}
     };
     private static final float[][] TEN = {
-            {4.0F, 2.67F, 0.0F}, {12.0F, 2.67F, 0.0F},
-            {4.0F, 8.0F, 0.0F}, {12.0F, 8.0F, 0.0F},
-            {4.0F, 13.33F, 0.0F}, {12.0F, 13.33F, 0.0F},
-            {4.0F, 5.33F, 1.0F}, {12.0F, 5.33F, 1.0F},
-            {4.0F, 10.67F, 1.0F}, {12.0F, 10.67F, 1.0F}
+            {4.5F, 2.67F, 0.0F}, {11.5F, 2.67F, 0.0F},
+            {4.5F, 8.0F, 0.0F}, {11.5F, 8.0F, 0.0F},
+            {4.5F, 13.33F, 0.0F}, {11.5F, 13.33F, 0.0F},
+            {4.5F, 5.33F, 1.0F}, {11.5F, 5.33F, 1.0F},
+            {4.5F, 10.67F, 1.0F}, {11.5F, 10.67F, 1.0F}
     };
     private static final float[][] ELEVEN = {
-            {4.0F, 2.67F, 0.0F}, {12.0F, 2.67F, 0.0F},
-            {4.0F, 8.0F, 0.0F}, {12.0F, 8.0F, 0.0F},
-            {4.0F, 13.33F, 0.0F}, {12.0F, 13.33F, 0.0F},
-            {4.0F, 2.67F, 1.0F}, {12.0F, 2.67F, 1.0F},
-            {4.0F, 8.0F, 1.0F}, {12.0F, 8.0F, 1.0F},
-            {4.0F, 13.33F, 1.0F}
+            {4.5F, 2.67F, 0.0F}, {11.5F, 2.67F, 0.0F},
+            {4.5F, 8.0F, 0.0F}, {11.5F, 8.0F, 0.0F},
+            {4.5F, 13.33F, 0.0F}, {11.5F, 13.33F, 0.0F},
+            {4.5F, 2.67F, 1.0F}, {11.5F, 2.67F, 1.0F},
+            {4.5F, 8.0F, 1.0F}, {11.5F, 8.0F, 1.0F},
+            {4.5F, 13.33F, 1.0F}
     };
     private static final float[][] TWELVE = {
-            {4.0F, 2.67F, 0.0F}, {12.0F, 2.67F, 0.0F},
-            {4.0F, 8.0F, 0.0F}, {12.0F, 8.0F, 0.0F},
-            {4.0F, 13.33F, 0.0F}, {12.0F, 13.33F, 0.0F},
-            {4.0F, 2.67F, 1.0F}, {12.0F, 2.67F, 1.0F},
-            {4.0F, 8.0F, 1.0F}, {12.0F, 8.0F, 1.0F},
-            {4.0F, 13.33F, 1.0F}, {12.0F, 13.33F, 1.0F}
+            {4.5F, 2.67F, 0.0F}, {11.5F, 2.67F, 0.0F},
+            {4.5F, 8.0F, 0.0F}, {11.5F, 8.0F, 0.0F},
+            {4.5F, 13.33F, 0.0F}, {11.5F, 13.33F, 0.0F},
+            {4.5F, 2.67F, 1.0F}, {11.5F, 2.67F, 1.0F},
+            {4.5F, 8.0F, 1.0F}, {11.5F, 8.0F, 1.0F},
+            {4.5F, 13.33F, 1.0F}, {11.5F, 13.33F, 1.0F}
     };
-    private static final float SHIFT_X = 4.0F;
+    private static final float SHIFT_X = 0.0F;
     private static final float SHIFT_Y = 4.0F;
     private static final float SHIFT_Z = 4.0F;
 
@@ -117,10 +117,10 @@ public class AmmoBoxPileRenderer implements BlockEntityRenderer<AmmoBoxPileBlock
             // ItemRenderer itself applies a -0.5 block translation after the
             // model transform, so compensate here and keep every box centered
             // on its grid cell.
-            pose.translate((slot[0] - 3.75F + SHIFT_X) / 16.0F,
+            pose.translate((slot[0] - 3.5F + SHIFT_X) / 16.0F,
                     slot[2] * 6.0F / 16.0F + SHIFT_Y / 16.0F,
                     (slot[1] - 3.75F + SHIFT_Z) / 16.0F);
-            pose.scale(0.5F, 0.5F, 0.5F);
+            pose.scale(0.4666667F, 0.5F, 0.5F);
             renderer.renderStatic(stack, ItemDisplayContext.NONE, packedLight, packedOverlay,
                     pose, buffer, pile.getLevel(), seed + i);
             pose.popPose();
@@ -171,3 +171,4 @@ public class AmmoBoxPileRenderer implements BlockEntityRenderer<AmmoBoxPileBlock
         return result;
     }
 }
+
