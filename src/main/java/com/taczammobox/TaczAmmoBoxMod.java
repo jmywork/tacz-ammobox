@@ -1,5 +1,6 @@
 package com.taczammobox;
 
+import com.taczammobox.compat.AutoFirePack;
 import com.taczammobox.config.WasteSettings;
 import com.taczammobox.network.ModNetwork;
 import com.taczammobox.registry.AmmoTypes;
@@ -23,6 +24,9 @@ public class TaczAmmoBoxMod {
         // Must run before ModItems is loaded: item ids have to exist at registry time.
         AmmoTypes.init();
         WasteSettings.load();
+        // TACZ scans <game dir>/tacz for gun packs at startup, so the attachment pack
+        // has to be on disk before the resource reload.
+        AutoFirePack.install();
 
         IEventBus modBus = context.getModEventBus();
         ModNetwork.register();

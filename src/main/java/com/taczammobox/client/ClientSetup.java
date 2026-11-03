@@ -5,6 +5,7 @@ import com.taczammobox.registry.ModMenus;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
@@ -18,6 +19,10 @@ public final class ClientSetup {
         event.enqueueWork(() -> {
             MenuScreens.register(ModMenus.PACKER.get(), AmmoPackerScreen::new);
             MenuScreens.register(ModMenus.LOADER.get(), AmmoLoaderScreen::new);
+            // Curios is optional; the renderer class is only touched when it is present.
+            if (ModList.get().isLoaded("curios")) {
+                AmmoBeltCurioRenderer.register();
+            }
         });
     }
 }

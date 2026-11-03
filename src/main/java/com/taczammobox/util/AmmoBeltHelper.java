@@ -7,6 +7,7 @@ import com.tacz.guns.api.item.IAmmo;
 import com.tacz.guns.api.item.IAmmoBox;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.resource.index.CommonGunIndex;
+import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.taczammobox.TaczAmmoBoxMod;
 import com.taczammobox.compat.CuriosCompat;
@@ -60,7 +61,13 @@ public final class AmmoBeltHelper {
         }
         GunData data = index.getGunData();
         ResourceLocation ammoId = data.getAmmoId();
+        // Tier magazines hold more than the gun's stock ammo_amount; the belt must fill up
+        // to the real capacity or it would stop feeding once the stock number is reached.
         int magazine = data.getAmmoAmount();
+        AutoFireTier tier = AutoFireTier.of(gunStack);
+        if (tier != null && data.getBolt() == Bolt.MANUAL_ACTION) {
+            magazine = tier.capacity();
+        }
         if (ammoId == null || magazine <= 0) {
             return;
         }

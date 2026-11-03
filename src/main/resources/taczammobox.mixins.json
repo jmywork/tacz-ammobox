@@ -5,7 +5,15 @@
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "DeployerHandlerMixin",
+    "AttachmentDataUtilsMixin",
+    "AttachmentsTagMixin",
+    "GunDataShootIntervalMixin",
+    "ModernKineticGunBoltMixin",
     "DeployerBlockEntityMixin"
+  ],
+  "client": [
+    "AnimationStateMachineMixin",
+    "SoundPlayManagerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
