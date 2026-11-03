@@ -19,6 +19,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class SoundPlayManagerMixin {
     @Inject(method = "playBoltSound", at = @At("HEAD"), cancellable = true)
     private static void taczammobox$skipBoltSound(LivingEntity entity, GunDisplayInstance display, CallbackInfo ci) {
+        if (!com.taczammobox.config.FeatureFlags.autoFire()) {
+            return;
+        }
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && AutoFireTier.of(player.getMainHandItem()) != null) {
             ci.cancel();

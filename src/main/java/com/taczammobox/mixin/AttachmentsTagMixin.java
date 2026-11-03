@@ -24,6 +24,9 @@ import java.util.Set;
 public abstract class AttachmentsTagMixin {
     @Inject(method = "getAllowAttachmentTags", at = @At("RETURN"), cancellable = true)
     private void taczammobox$allowAutoSear(ResourceLocation gunId, CallbackInfoReturnable<Set<String>> cir) {
+        if (!com.taczammobox.config.FeatureFlags.autoFire()) {
+            return;
+        }
         CommonGunIndex index = TimelessAPI.getCommonGunIndex(gunId).orElse(null);
         if (index == null || index.getGunData().getBolt() != Bolt.MANUAL_ACTION) {
             return;

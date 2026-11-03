@@ -36,6 +36,9 @@ public final class ModCreativeTabs {
                     .title(Component.translatable("itemGroup.taczammobox.easter_egg"))
                     .icon(() -> new ItemStack(ModItems.AMMO_BELT.get()))
                     .displayItems((parameters, output) -> {
+                        if (!com.taczammobox.config.FeatureFlags.easterEggTab()) {
+                            return;
+                        }
                         output.accept(ModItems.AMMO_BELT.get());
                         for (AutoFireTier tier : AutoFireTier.values()) {
                             ItemStack attachment = AttachmentItemBuilder.create().setId(tier.id()).build();

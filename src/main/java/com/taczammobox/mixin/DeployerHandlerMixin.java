@@ -40,6 +40,9 @@ public class DeployerHandlerMixin {
     @Inject(method = "shouldActivate", at = @At("HEAD"), cancellable = true, remap = false)
     private static void taczammobox$shouldActivate(ItemStack held, Level world, BlockPos targetPos,
                                                    Direction facing, CallbackInfoReturnable<Boolean> cir) {
+        if (!com.taczammobox.config.FeatureFlags.createCompat()) {
+            return;
+        }
         if (!(held.getItem() instanceof PackagedAmmo pkg)) {
             return;
         }
@@ -69,6 +72,9 @@ public class DeployerHandlerMixin {
     @Inject(method = "activate", at = @At("HEAD"), cancellable = true, remap = false)
     private static void taczammobox$activate(DeployerFakePlayer player, Vec3 vec, BlockPos clickedPos,
                                              Vec3 extensionVector, @Coerce Object mode, CallbackInfo ci) {
+        if (!com.taczammobox.config.FeatureFlags.createCompat()) {
+            return;
+        }
         Level level = player.level();
         if (level.isClientSide) {
             return;

@@ -274,6 +274,7 @@ public final class AmmoBoxCommand {
 
     private static int reload(CommandSourceStack source) {
         WasteSettings.load();
+        com.taczammobox.config.FeatureFlags.load();
         AmmoBoxHelper.clearCapacityCache();
         com.taczammobox.compat.DCSharpCompat.clearCache();
         if (source.getServer() != null) {
@@ -281,7 +282,7 @@ public final class AmmoBoxCommand {
                 ModNetwork.sendSettings(player);
             }
         }
-        source.sendSuccess(() -> Component.literal("settings.json reloaded"), true);
+        source.sendSuccess(() -> Component.literal("settings.json + features.json reloaded"), true);
         return 1;
     }
 

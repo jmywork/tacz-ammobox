@@ -22,12 +22,16 @@ public abstract class AttachmentDataUtilsMixin {
     @Inject(method = "getAmmoCountWithAttachment", at = @At("RETURN"), cancellable = true)
     private static void taczammobox$autoSearCapacity(ItemStack gunStack, GunData gunData,
             CallbackInfoReturnable<Integer> cir) {
-        if (gunData.getBolt() != Bolt.MANUAL_ACTION) {
+        if (!com.taczammobox.config.FeatureFlags.capacityOverride()
+                || gunData.getBolt() != Bolt.MANUAL_ACTION) {
             return;
         }
-        AutoFireTier tier = AutoFireTier.of(gunStack);
-        if (tier != null) {
-            cir.setReturnValue(tier.capacity());
+        Integer capacity = com.taczammobox.util.FeatureGuard.get("capacityOverride", () -> {
+            AutoFireTier tier = AutoFireTier.of(gunStack);
+            return tier == null ? null : tier.capacity();
+        }, null);
+        if (capacity != null) {
+            cir.setReturnValue(capacity);
         }
     }
 }

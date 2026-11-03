@@ -23,13 +23,19 @@ public abstract class GunDataShootIntervalMixin {
     @Inject(method = "getShootInterval", at = @At("RETURN"), cancellable = true)
     private void taczammobox$tierShootInterval(LivingEntity shooter, FireMode fireMode, ItemStack gunStack,
             CallbackInfoReturnable<Long> cir) {
+        if (!com.taczammobox.config.FeatureFlags.rpmOverride()) {
+            return;
+        }
         GunData data = (GunData) (Object) this;
         if (data.getBolt() != Bolt.MANUAL_ACTION) {
             return;
         }
-        AutoFireTier tier = AutoFireTier.of(gunStack);
-        if (tier != null) {
-            cir.setReturnValue(tier.shootInterval());
+        Long interval = com.taczammobox.util.FeatureGuard.get("rpmOverride", () -> {
+            AutoFireTier tier = AutoFireTier.of(gunStack);
+            return tier == null ? null : tier.shootInterval();
+        }, null);
+        if (interval != null) {
+            cir.setReturnValue(interval);
         }
     }
 }

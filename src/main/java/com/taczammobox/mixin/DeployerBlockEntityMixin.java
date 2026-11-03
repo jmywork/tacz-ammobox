@@ -41,6 +41,9 @@ public abstract class DeployerBlockEntityMixin {
 
     @Inject(method = "activate", at = @At("HEAD"), cancellable = true, remap = false)
     private void taczammobox$fillFromPackage(CallbackInfo ci) {
+        if (!com.taczammobox.config.FeatureFlags.createCompat()) {
+            return;
+        }
         if (player == null) {
             return;
         }

@@ -39,6 +39,9 @@ public final class AmmoBeltHelper {
                 || event.player.isSpectator()) {
             return;
         }
+        if (!com.taczammobox.config.FeatureFlags.belt()) {
+            return;
+        }
         feed(event.player);
     }
 

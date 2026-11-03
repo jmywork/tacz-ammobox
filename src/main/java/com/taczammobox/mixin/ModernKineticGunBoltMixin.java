@@ -24,7 +24,8 @@ public abstract class ModernKineticGunBoltMixin {
     @Inject(method = "startBolt", at = @At("HEAD"), cancellable = true)
     private void taczammobox$skipBoltScript(ShooterDataHolder holder, ItemStack gunStack, LivingEntity shooter,
             CallbackInfoReturnable<Boolean> cir) {
-        if (AutoFireTier.of(gunStack) == null || shooter instanceof FakePlayer) {
+        if (!com.taczammobox.config.FeatureFlags.autoFire()
+                || AutoFireTier.of(gunStack) == null || shooter instanceof FakePlayer) {
             return;
         }
         holder.isBolting = false;
