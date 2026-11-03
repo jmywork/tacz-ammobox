@@ -11,6 +11,7 @@ import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.taczammobox.TaczAmmoBoxMod;
 import com.taczammobox.compat.CuriosCompat;
+import com.taczammobox.config.WasteSettings;
 import com.taczammobox.item.AmmoBeltItem;
 import com.taczammobox.item.PackagedAmmo;
 import net.minecraft.resources.ResourceLocation;
@@ -86,11 +87,19 @@ public final class AmmoBeltHelper {
             return;
         }
         if (stored <= 0) {
+            int cap = WasteSettings.beltMaxStore();
+            if (cap > 0 && stored >= cap) {
+                return;
+            }
             int loaded = consumeAmmo(player, ammoId);
             if (loaded <= 0) {
                 return;
             }
             stored = loaded;
+            int maxStore = WasteSettings.beltMaxStore();
+            if (maxStore > 0 && stored > maxStore) {
+                stored = maxStore;
+            }
             AmmoBeltItem.store(belt, ammoId, stored);
         }
 

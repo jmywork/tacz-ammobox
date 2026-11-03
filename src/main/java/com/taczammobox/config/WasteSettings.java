@@ -39,6 +39,8 @@ public final class WasteSettings {
     private static int packerTicks = DEFAULT_TICKS;
     private static int loaderTicks = DEFAULT_TICKS;
     private static int boxStackSize = 64;
+    /** Maximum rounds the ammo belt may cache; 0 = unlimited. */
+    private static int beltMaxStore = 0;
     private static int crateStackSize = 64;
     private static String capacityRounding = "round";
     private static List<String> boxPriority = new ArrayList<>(BOX_PRIORITY_OPTIONS);
@@ -77,6 +79,10 @@ public final class WasteSettings {
 
     public static int boxStackSize() {
         return boxStackSize;
+    }
+
+    public static int beltMaxStore() {
+        return beltMaxStore;
     }
 
     public static int crateStackSize() {
@@ -266,6 +272,7 @@ public final class WasteSettings {
             if (root.has("oneKeyPack")) {
                 oneKeyPack = root.get("oneKeyPack").getAsBoolean();
             }
+            beltMaxStore = root.has("beltMaxStore") ? Math.max(0, root.get("beltMaxStore").getAsInt()) : 0;
             boxStackSize = clampStack(root.has("boxStackSize")
                     ? root.get("boxStackSize").getAsInt() : 64);
             crateStackSize = clampStack(root.has("crateStackSize")
@@ -340,9 +347,9 @@ public final class WasteSettings {
             Files.createDirectories(file.getParent());
             JsonObject root = new JsonObject();
             root.addProperty("_comment_cn",
-                    "waste: true=盒/箱装不满时消耗并浪费剩余, false=必须整组/整包装得下. autoRefill: 主手用完后是否自动从背包补同类物品. oneKeyPack: 是否允许 H/一键打包. boxStackSize/crateStackSize: 盒/箱最大堆叠, 1-64. boxPriority: 装填目标搜索顺序 main_hand/inventory/curios/open_container. packerTicks/loaderTicks: 每次操作耗时(tick), 20 tick = 1 秒, 范围 1-200. capacityRounding: 小数倍率取整方式 round/floor/ceil. ammoBoxCapacity: 绝对容量覆盖. ammoBoxCapacityMultiplier: 容量倍率覆盖. 键为 item_id / item_id#level / item_id#level#ammo.");
+                    "waste: true=盒/箱装不满时消耗并浪费剩余, false=必须整组/整包装得下. autoRefill: 主手用完后是否自动从背包补同类物品. oneKeyPack: 是否允许 H/一键打包. boxStackSize/crateStackSize: 盒/箱最大堆叠, 1-64. beltMaxStore: 弹链最多缓存多少发, 0=不限. boxPriority: 装填目标搜索顺序 main_hand/inventory/curios/open_container. packerTicks/loaderTicks: 每次操作耗时(tick), 20 tick = 1 秒, 范围 1-200. capacityRounding: 小数倍率取整方式 round/floor/ceil. ammoBoxCapacity: 绝对容量覆盖. ammoBoxCapacityMultiplier: 容量倍率覆盖. 键为 item_id / item_id#level / item_id#level#ammo.");
             root.addProperty("_comment_en",
-                    "waste: true=consume a box even when it only partially fits and discard the rest, false=require the whole package to fit. autoRefill: pull a matching item back to the main hand after a fill. oneKeyPack: allow H/one-key packing. boxStackSize/crateStackSize: maximum box/crate stack size, 1-64. boxPriority: target search order main_hand/inventory/curios/open_container. packerTicks/loaderTicks: ticks per operation, 20 ticks = 1 second, range 1-200. capacityRounding: round/floor/ceil for fractional multipliers. ammoBoxCapacity: absolute capacity overrides. ammoBoxCapacityMultiplier: capacity multipliers. Keys are item_id / item_id#level / item_id#level#ammo.");
+                    "waste: true=consume a box even when it only partially fits and discard the rest, false=require the whole package to fit. autoRefill: pull a matching item back to the main hand after a fill. oneKeyPack: allow H/one-key packing. boxStackSize/crateStackSize: maximum box/crate stack size, 1-64. beltMaxStore: max rounds cached in the ammo belt, 0 = unlimited. boxPriority: target search order main_hand/inventory/curios/open_container. packerTicks/loaderTicks: ticks per operation, 20 ticks = 1 second, range 1-200. capacityRounding: round/floor/ceil for fractional multipliers. ammoBoxCapacity: absolute capacity overrides. ammoBoxCapacityMultiplier: capacity multipliers. Keys are item_id / item_id#level / item_id#level#ammo.");
 
             JsonArray examplesCn = new JsonArray();
             examplesCn.add("把所有 TACZ 弹药盒容量改成 2 倍: \"ammoBoxCapacityMultiplier\": { \"tacz:ammo_box\": 2.0 }");
@@ -371,6 +378,7 @@ public final class WasteSettings {
             root.addProperty("oneKeyPack", oneKeyPack);
             root.addProperty("boxStackSize", boxStackSize);
             root.addProperty("crateStackSize", crateStackSize);
+            root.addProperty("beltMaxStore", beltMaxStore);
             root.addProperty("packerTicks", packerTicks);
             root.addProperty("loaderTicks", loaderTicks);
             root.addProperty("capacityRounding", capacityRounding);

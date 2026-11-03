@@ -31,7 +31,7 @@ public final class AutoFirePack {
     public static void install() {
         Path root = FMLPaths.GAMEDIR.get().resolve("tacz").resolve(PACK_DIR);
         write(root.resolve("gunpack.meta.json"), META);
-        for (AutoFireTier tier : AutoFireTier.values()) {
+        for (AutoFireTier tier : AutoFireTier.all()) {
             String path = tier.path();
             write(root.resolve("data/taczammobox/index/attachments/" + path + ".json"), index(tier));
             write(root.resolve("data/taczammobox/data/attachments/" + path + "_data.json"), data(tier));

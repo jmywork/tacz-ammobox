@@ -69,6 +69,20 @@ public final class FeatureFlags {
         return safeMode;
     }
 
+    /**
+     * Runtime-only shutdown of the auto-fire feature, used by the compatibility self check
+     * when a TACZ update removed something we rely on. The file is left untouched so the
+     * user can still see their configured value.
+     */
+    public static void disableAutoFire(String reason) {
+        if (autoFire) {
+            autoFire = false;
+            capacityOverride = false;
+            rpmOverride = false;
+            TaczAmmoBoxMod.LOGGER.warn("[taczammobox] auto-fire disabled at runtime: {}", reason);
+        }
+    }
+
     public static void load() {
         Path file = file();
         try {

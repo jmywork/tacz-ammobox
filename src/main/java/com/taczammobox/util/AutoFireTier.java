@@ -1,20 +1,35 @@
 package com.taczammobox.util;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.taczammobox.TaczAmmoBoxMod;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.fml.loading.FMLPaths;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * The three auto-fire magazine tiers. Each tier is a separate attachment id so the
- * player can pick one in the refit screen; capacity and RPM are enforced in code
- * instead of the gun's extended-mag level table.
+ * The three auto-fire magazine tiers.
+ *
+ * <p>Capacity and RPM live in {@code config/taczammobox/autofire.json} so pack authors can
+ * rebalance them without a code change. Defaults match 0.3.0: 30/400, 45/600, 60/1200.</p>
  */
-public enum AutoFireTier {
-    TIER_1("auto_sear", 1, 30, 400),
-    TIER_2("auto_sear_2", 2, 45, 600),
-    TIER_3("auto_sear_3", 3, 60, 1200);
+public final class AutoFireTier {
+    public static final int MAX_RPM = 1200;
+
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final List<AutoFireTier> ALL = new ArrayList<>();
 
     private final String path;
     private final ResourceLocation id;
@@ -22,7 +37,7 @@ public enum AutoFireTier {
     private final int capacity;
     private final int rpm;
 
-    AutoFireTier(String path, int level, int capacity, int rpm) {
+    private AutoFireTier(String path, int level, int capacity, int rpm) {
         this.path = path;
         this.id = new ResourceLocation(TaczAmmoBoxMod.MOD_ID, path);
         this.level = level;
@@ -53,14 +68,18 @@ public enum AutoFireTier {
 
     /** Shoot interval in milliseconds. */
     public long shootInterval() {
-        return 60000L / rpm;
+        return 60000L / Math.max(1, rpm);
+    }
+
+    public static List<AutoFireTier> all() {
+        return List.copyOf(ALL);
     }
 
     public static AutoFireTier of(ResourceLocation attachmentId) {
         if (attachmentId == null) {
             return null;
         }
-        for (AutoFireTier tier : values()) {
+        for (AutoFireTier tier : ALL) {
             if (tier.id.equals(attachmentId)) {
                 return tier;
             }
@@ -75,5 +94,109 @@ public enum AutoFireTier {
             return null;
         }
         return of(gun.getAttachmentId(gunStack, AttachmentType.EXTENDED_MAG));
+    }
+
+    /** Loads (and rewrites) the tier table; call before the gun pack is generated. */
+    public static void init() {
+        ALL.clear();
+        Path file = file();
+        try {
+            if (Files.exists(file)) {
+                JsonObject root = JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8)).getAsJsonObject();
+                JsonArray tiers = root.has("tiers") ? root.getAsJsonArray("tiers") : null;
+                if (tiers != null) {
+                    int index = 0;
+                    for (JsonElement element : tiers) {
+                        if (!element.isJsonObject()) {
+                            continue;
+                        }
+                        JsonObject tier = element.getAsJsonObject();
+                        String id = tier.has("id") ? tier.get("id").getAsString() : defaultPath(index);
+                        int level = tier.has("level") ? tier.get("level").getAsInt() : index + 1;
+                        int capacity = tier.has("capacity") ? tier.get("capacity").getAsInt() : defaultCapacity(index);
+                        int rpm = tier.has("rpm") ? tier.get("rpm").getAsInt() : defaultRpm(index);
+                        if (index < 3) {
+                            ALL.add(new AutoFireTier(id, clamp(level, 1, 3), clamp(capacity, 1, 2000),
+                                    clamp(rpm, 1, MAX_RPM)));
+                        }
+                        index++;
+                    }
+                }
+            }
+        } catch (Exception exception) {
+            TaczAmmoBoxMod.LOGGER.error("Failed to read autofire.json, using defaults", exception);
+        }
+        if (ALL.isEmpty()) {
+            for (int i = 0; i < 3; i++) {
+                ALL.add(new AutoFireTier(defaultPath(i), i + 1, defaultCapacity(i), defaultRpm(i)));
+            }
+        }
+        save();
+        TaczAmmoBoxMod.LOGGER.info("[taczammobox] auto-fire tiers: {}", describe());
+    }
+
+    private static String defaultPath(int index) {
+        return index == 0 ? "auto_sear" : "auto_sear_" + (index + 1);
+    }
+
+    private static int defaultCapacity(int index) {
+        return switch (index) {
+            case 1 -> 45;
+            case 2 -> 60;
+            default -> 30;
+        };
+    }
+
+    private static int defaultRpm(int index) {
+        return switch (index) {
+            case 1 -> 600;
+            case 2 -> 1200;
+            default -> 400;
+        };
+    }
+
+    private static int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    private static void save() {
+        Path file = file();
+        try {
+            Files.createDirectories(file.getParent());
+            JsonObject root = new JsonObject();
+            root.addProperty("_comment_cn",
+                    "三级自动击发弹匣的参数。capacity 弹容，rpm 射速(上限 1200)；level 影响 tooltip 与贴图（1-3）。修改后重启游戏生效，枪包在启动时生成。");
+            root.addProperty("_comment_en",
+                    "Auto-fire magazine tiers. capacity = rounds, rpm = fire rate (max 1200); level drives the tooltip and model (1-3). Restart the game after editing; the TACZ gun pack is generated at startup.");
+
+            JsonArray tiers = new JsonArray();
+            for (AutoFireTier tier : ALL) {
+                JsonObject entry = new JsonObject();
+                entry.addProperty("id", tier.path);
+                entry.addProperty("level", tier.level);
+                entry.addProperty("capacity", tier.capacity);
+                entry.addProperty("rpm", tier.rpm);
+                tiers.add(entry);
+            }
+            root.add("tiers", tiers);
+            Files.writeString(file, GSON.toJson(root), StandardCharsets.UTF_8);
+        } catch (Exception exception) {
+            TaczAmmoBoxMod.LOGGER.error("Failed to save autofire.json", exception);
+        }
+    }
+
+    private static Path file() {
+        return FMLPaths.CONFIGDIR.get().resolve("taczammobox").resolve("autofire.json");
+    }
+
+    public static String describe() {
+        StringBuilder builder = new StringBuilder();
+        for (AutoFireTier tier : ALL) {
+            if (builder.length() > 0) {
+                builder.append(", ");
+            }
+            builder.append(tier.path).append('=').append(tier.capacity).append('r').append('/').append(tier.rpm);
+        }
+        return builder.toString();
     }
 }

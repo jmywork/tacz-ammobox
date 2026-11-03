@@ -40,7 +40,7 @@ public final class ModCreativeTabs {
                             return;
                         }
                         output.accept(ModItems.AMMO_BELT.get());
-                        for (AutoFireTier tier : AutoFireTier.values()) {
+                        for (AutoFireTier tier : AutoFireTier.all()) {
                             ItemStack attachment = AttachmentItemBuilder.create().setId(tier.id()).build();
                             if (!attachment.isEmpty()) {
                                 output.accept(attachment);

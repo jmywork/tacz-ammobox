@@ -275,6 +275,11 @@ public final class AmmoBoxCommand {
     private static int reload(CommandSourceStack source) {
         WasteSettings.load();
         com.taczammobox.config.FeatureFlags.load();
+        com.taczammobox.util.AutoFireTier.init();
+        com.taczammobox.compat.CompatSelfCheck.run();
+        if (com.taczammobox.config.FeatureFlags.autoFire()) {
+            com.taczammobox.compat.AutoFirePack.install();
+        }
         AmmoBoxHelper.clearCapacityCache();
         com.taczammobox.compat.DCSharpCompat.clearCache();
         if (source.getServer() != null) {

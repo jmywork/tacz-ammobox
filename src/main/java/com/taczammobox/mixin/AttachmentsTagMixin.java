@@ -33,7 +33,7 @@ public abstract class AttachmentsTagMixin {
         }
         Set<String> original = cir.getReturnValue();
         Set<String> copy = original == null ? new HashSet<>() : new HashSet<>(original);
-        for (AutoFireTier tier : AutoFireTier.values()) {
+        for (AutoFireTier tier : AutoFireTier.all()) {
             copy.add(tier.id().toString());
         }
         cir.setReturnValue(copy);
