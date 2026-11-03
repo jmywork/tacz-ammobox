@@ -66,6 +66,9 @@ tasks.withType(JavaCompile).configureEach {
 
 processResources {
     inputs.property 'version', project.version
+    // Non-ASCII text in mods.toml (the Chinese display name) must survive token
+    // expansion; without this Gradle reads/writes with the platform charset.
+    filteringCharset = 'UTF-8'
     filesMatching('META-INF/mods.toml') {
         expand 'version': project.version
     }

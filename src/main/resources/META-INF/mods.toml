@@ -5,7 +5,7 @@ license="GPL-3.0-only"
 [[mods]]
 modId="taczammobox"
 version="${version}"
-displayName="TACZ Ammo Box"
+displayName="TACZ：弹药压制"
 authors="jmywork"
 logoFile="icon.png"
 description='''Ammo packaging and automated ammo-box filling for Timeless and Classics Zero.'''
