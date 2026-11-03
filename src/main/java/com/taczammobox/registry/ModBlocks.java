@@ -2,6 +2,7 @@ package com.taczammobox.registry;
 
 import com.taczammobox.AmmoType;
 import com.taczammobox.TaczAmmoBoxMod;
+import com.taczammobox.block.AmmoBoxPileBlock;
 import com.taczammobox.block.AmmoLoaderBlock;
 import com.taczammobox.block.AmmoPackerBlock;
 import com.taczammobox.block.CrateBlock;
@@ -42,6 +43,12 @@ public final class ModBlocks {
             () -> new DynamicCrateBlock(BlockBehaviour.Properties.of()
                     .strength(1.2F)
                     .sound(SoundType.WOOD)));
+
+    public static final RegistryObject<Block> BOX_PILE = BLOCKS.register("box_pile",
+            () -> new AmmoBoxPileBlock(BlockBehaviour.Properties.of()
+                    .strength(0.8F)
+                    .sound(SoundType.WOOD)
+                    .noOcclusion()));
 
     static {
         for (AmmoType type : AmmoTypes.all()) {

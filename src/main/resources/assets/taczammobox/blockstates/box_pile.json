@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "boxes=1": {"model": "taczammobox:block/box_pile"},
+    "boxes=2": {"model": "taczammobox:block/box_pile"},
+    "boxes=3": {"model": "taczammobox:block/box_pile"},
+    "boxes=4": {"model": "taczammobox:block/box_pile"},
+    "boxes=5": {"model": "taczammobox:block/box_pile"},
+    "boxes=6": {"model": "taczammobox:block/box_pile"},
+    "boxes=7": {"model": "taczammobox:block/box_pile"},
+    "boxes=8": {"model": "taczammobox:block/box_pile"},
+    "boxes=9": {"model": "taczammobox:block/box_pile"},
+    "boxes=10": {"model": "taczammobox:block/box_pile"},
+    "boxes=11": {"model": "taczammobox:block/box_pile"},
+    "boxes=12": {"model": "taczammobox:block/box_pile"}
+  }
+}

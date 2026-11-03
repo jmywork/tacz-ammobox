@@ -3,6 +3,7 @@ package com.taczammobox.registry;
 import com.taczammobox.AmmoType;
 import com.taczammobox.TaczAmmoBoxMod;
 import com.taczammobox.config.WasteSettings;
+import com.taczammobox.item.AmmoBeltItem;
 import com.taczammobox.item.AmmoBoxItem;
 import com.taczammobox.item.CrateBlockItem;
 import com.taczammobox.item.DynamicCrateBlockItem;
@@ -42,6 +43,9 @@ public final class ModItems {
 
     public static final RegistryObject<Item> LOADER =
             ITEMS.register("ammo_loader", () -> new BlockItem(ModBlocks.LOADER.get(), new Item.Properties()));
+
+    public static final RegistryObject<Item> AMMO_BELT =
+            ITEMS.register("ammo_belt", () -> new AmmoBeltItem(new Item.Properties().stacksTo(1)));
 
     static {
         for (AmmoType type : TYPES) {

@@ -1,6 +1,7 @@
 package com.taczammobox.registry;
 
 import com.taczammobox.TaczAmmoBoxMod;
+import com.taczammobox.block.AmmoBoxPileBlockEntity;
 import com.taczammobox.block.AmmoLoaderBlockEntity;
 import com.taczammobox.block.AmmoPackerBlockEntity;
 import com.taczammobox.block.DynamicCrateBlockEntity;
@@ -25,6 +26,10 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<DynamicCrateBlockEntity>> DYNAMIC_CRATE =
             BLOCK_ENTITIES.register("crate_dynamic",
                     () -> BlockEntityType.Builder.of(DynamicCrateBlockEntity::new, ModBlocks.DYNAMIC_CRATE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<AmmoBoxPileBlockEntity>> BOX_PILE =
+            BLOCK_ENTITIES.register("box_pile",
+                    () -> BlockEntityType.Builder.of(AmmoBoxPileBlockEntity::new, ModBlocks.BOX_PILE.get()).build(null));
 
     private ModBlockEntities() {
     }
