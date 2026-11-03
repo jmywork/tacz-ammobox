@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.4.0 (development)
+
+本版定位：**把已有的自动供弹链路做稳、做可配，再补新内容**。以下为已完成的底座部分，新内容确定后追加。
+
+### 稳定性
+
+- 新增 `config/taczammobox/features.json` 特性开关：`autoFire`、`capacityOverride`、`rpmOverride`、`belt`、`easterEggTab`、`createCompat`、`safeMode`，默认全开，行为与 0.3.0 一致
+- 新增 `FeatureGuard`：任一挂钩首次抛出意外异常时只停用该特性并记录一条日志，不再刷屏或拖垮游戏
+- 新增启动自检 `CompatSelfCheck`：反射校验 TACZ 关键方法与字段，缺失时自动关闭 auto-fire 并打印缺失项
+- 8 个 TACZ/Create mixin 全部受特性开关控制，`safeMode` 可整体退回「原版 TACZ + 我们的物品」
+- `/taczammobox doctor` 输出特性表与已停用特性
+
+### 配置
+
+- 新增 `config/taczammobox/autofire.json`：三档弹匣的 `capacity` / `rpm` / `level` 可配，默认 30/400、45/600、60/1200，射速上限 1200
+- `settings.json` 新增 `beltMaxStore`：弹链最多缓存多少发，0 为不限
+- `/taczammobox reload` 现在重载 `settings.json`、`features.json`、`autofire.json`，重跑自检并重新生成 TACZ 枪包文件
+- 特性开关与弹匣参数随登录和 reload 同步给客户端，客户端不再使用与服务端不同的配置；协议版本升至 6，双端需一起更新
+
+### JEI
+
+- 新增「自动击发弹匣」分类：展示实际加载的拉栓枪与三级弹匣的弹容/射速对应关系
+
+### 文档
+
+- 新增 `docs/automation.md`：包装 → 装填 → 弹链 → 弹匣 → 哨戒臂的完整链路图
+- 新增 `docs/compat.md`：mixin 矩阵、开关与降级说明、TACZ 更新后的处理顺序
+- 新增 `docs/troubleshooting.md`：按症状分类的排查表与反馈所需信息
+
 ## 0.3.0
 
 0.3.0 合并了原计划单独发布的 0.2.1 盒堆，两者一起发布。中文名正式定为「TACZ：弹药压制」，英文名保持「TACZ Ammo Box」。

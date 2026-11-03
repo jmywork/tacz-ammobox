@@ -1,4 +1,53 @@
-﻿# 0.3.0 发布检查清单
+# 发布检查清单
+
+> 本文按版本累积。0.3.0 段是基线回归项，0.4.0 段是在其之上的新增验收项；发版时两段都要过。
+
+## 0.4.0 新增验收（稳定性与配置）
+
+### 配置文件
+
+- [ ] 启动后生成 `config/taczammobox/features.json`，含中英注释与示例
+- [ ] 启动后生成 `config/taczammobox/autofire.json`，三档默认 30/400、45/600、60/1200
+- [ ] `settings.json` 出现 `beltMaxStore` 字段（默认 0）
+- [ ] 启动日志出现 `[taczammobox] features: ...` 与 `auto-fire tiers: ...`
+- [ ] 启动日志出现 `TACZ compatibility check passed`
+
+### 特性开关
+
+- [ ] `/taczammobox doctor` 末尾输出 `features:` 与 `guards:`
+- [ ] `rpmOverride: false` + reload 后，三级弹匣射速回到枪械原版
+- [ ] `capacityOverride: false` + reload 后，弹容回到枪械原版
+- [ ] `belt: false` + reload 后，弹链不再自动补弹
+- [ ] `createCompat: false` + reload 后，部署器不再识别盒/箱
+- [ ] `safeMode: true` + reload 后，无拉栓跳过、无射速/弹容覆盖，物品与机器仍可用
+- [ ] `easterEggTab: false` 后，彩蛋分类为空
+
+### 弹匣参数
+
+- [ ] 改 `autofire.json` 的 `rpm` 后 `/taczammobox reload`，射速变化
+- [ ] 改 `capacity` 后 reload，HUD 弹容变化
+- [ ] `rpm` 超过 1200 被钳制到 1200
+- [ ] `capacity` 为 0 或负数被钳制到 1
+
+### 弹链储备
+
+- [ ] `beltMaxStore: 120` 时，弹链储备停在 120 不再增长
+- [ ] `beltMaxStore: 0` 时不限制
+
+### 双端同步
+
+- [ ] 服务端改 `features.json` 并 reload，已连接客户端行为同步变化
+- [ ] 客户端本地 `features.json` 与服务端不一致时，以服务端为准
+- [ ] 客户端/服务端 jar 版本不一致时连接被拒绝（协议版本 6）
+
+### JEI 与文档
+
+- [ ] JEI 中出现「自动击发弹匣」分类，三级各一条
+- [ ] 分类里显示适用枪型（实际加载的拉栓枪）与弹容/射速
+- [ ] 关闭 `autoFire` 后 JEI 分类不再出现
+- [ ] README 的三条文档链接可打开，代码块渲染正常
+
+## 0.3.0 基线回归
 
 > 0.3.0 包含原计划单独发布的 0.2.1 盒堆（已合并）与自动供弹弹链。
 
