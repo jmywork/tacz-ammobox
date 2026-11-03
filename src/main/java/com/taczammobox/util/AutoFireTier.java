@@ -96,6 +96,21 @@ public final class AutoFireTier {
         return of(gun.getAttachmentId(gunStack, AttachmentType.EXTENDED_MAG));
     }
 
+    /** Client-side apply of the server's capacity/RPM values; never writes the local file. */
+    public static void applyFromServer(int[] capacities, int[] rpms) {
+        if (capacities.length != ALL.size() || rpms.length != ALL.size()) {
+            return;
+        }
+        List<AutoFireTier> updated = new ArrayList<>();
+        for (int index = 0; index < ALL.size(); index++) {
+            AutoFireTier tier = ALL.get(index);
+            updated.add(new AutoFireTier(tier.path, tier.level, clamp(capacities[index], 1, 2000),
+                    clamp(rpms[index], 1, MAX_RPM)));
+        }
+        ALL.clear();
+        ALL.addAll(updated);
+    }
+
     /** Loads (and rewrites) the tier table; call before the gun pack is generated. */
     public static void init() {
         ALL.clear();

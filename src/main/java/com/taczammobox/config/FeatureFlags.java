@@ -83,6 +83,19 @@ public final class FeatureFlags {
         }
     }
 
+    /** Client-side apply of the server's values; never writes the local file. */
+    public static void applyFromServer(boolean autoFireValue, boolean capacityOverrideValue,
+            boolean rpmOverrideValue, boolean beltValue, boolean easterEggTabValue,
+            boolean createCompatValue, boolean safeModeValue) {
+        autoFire = autoFireValue;
+        capacityOverride = capacityOverrideValue;
+        rpmOverride = rpmOverrideValue;
+        belt = beltValue;
+        easterEggTab = easterEggTabValue;
+        createCompat = createCompatValue;
+        safeMode = safeModeValue;
+    }
+
     public static void load() {
         Path file = file();
         try {

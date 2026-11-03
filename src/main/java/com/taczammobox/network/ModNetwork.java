@@ -13,7 +13,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import java.util.List;
 
 public final class ModNetwork {
-    private static final String VERSION = "5";
+    private static final String VERSION = "6";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(TaczAmmoBoxMod.MOD_ID, "main"),
@@ -78,8 +78,23 @@ public final class ModNetwork {
     }
 
     public static void sendSettings(ServerPlayer player) {
-        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new SettingsPacket(WasteSettings.waste(), WasteSettings.packerTicks(), WasteSettings.loaderTicks()));
+        int[] capacities = new int[3];
+        int[] rpms = new int[3];
+        var tiers = com.taczammobox.util.AutoFireTier.all();
+        for (int i = 0; i < Math.min(3, tiers.size()); i++) {
+            capacities[i] = tiers.get(i).capacity();
+            rpms[i] = tiers.get(i).rpm();
+        }
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new SettingsPacket(
+                WasteSettings.waste(), WasteSettings.packerTicks(), WasteSettings.loaderTicks(),
+                com.taczammobox.config.FeatureFlags.autoFire(),
+                com.taczammobox.config.FeatureFlags.capacityOverride(),
+                com.taczammobox.config.FeatureFlags.rpmOverride(),
+                com.taczammobox.config.FeatureFlags.belt(),
+                com.taczammobox.config.FeatureFlags.easterEggTab(),
+                com.taczammobox.config.FeatureFlags.createCompat(),
+                com.taczammobox.config.FeatureFlags.safeMode(),
+                capacities, rpms));
     }
 
     public static void sendConfig(ServerPlayer player) {
