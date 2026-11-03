@@ -22,13 +22,21 @@ public final class TaczAmmoBoxJeiPlugin implements IModPlugin {
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
         var helper = registration.getJeiHelpers().getGuiHelper();
-        registration.addRecipeCategories(new PackerCategory(helper), new LoaderCategory(helper));
+        registration.addRecipeCategories(new PackerCategory(helper), new LoaderCategory(helper),
+                new AutoFireCategory(helper));
     }
 
     @Override
     public void registerRecipes(IRecipeRegistration registration) {
         registration.addRecipes(PackerCategory.TYPE, PackerCategory.recipes());
         registration.addRecipes(LoaderCategory.TYPE, LoaderCategory.recipes());
+        if (com.taczammobox.config.FeatureFlags.autoFire()) {
+            try {
+                registration.addRecipes(AutoFireCategory.TYPE, AutoFireCategory.recipes());
+            } catch (Throwable throwable) {
+                TaczAmmoBoxMod.LOGGER.warn("[taczammobox] auto-fire JEI page disabled", throwable);
+            }
+        }
     }
 
     @Override

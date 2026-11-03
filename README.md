@@ -12,6 +12,7 @@ TACZ（Timeless and Classics Zero）的弹药包装附属。把散装弹药装�
 English: [README.en.md](README.en.md)
 
 容量 API 和数据驱动配置见 [docs/api.md](docs/api.md)。
+自动化链路见 [docs/automation.md](docs/automation.md)，兼容性与降级说明见 [docs/compat.md](docs/compat.md)，出问题先看 [docs/troubleshooting.md](docs/troubleshooting.md)。
 
 ## 从源码构建
 

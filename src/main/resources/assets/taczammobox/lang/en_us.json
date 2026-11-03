@@ -4,7 +4,11 @@
   "item.taczammobox.box": "%s Ammo Box",
   "item.taczammobox.box.place": "Right-click air to unpack; sneak-right-click block to place; right-click pile to take; sneak-right-click pile to add",
   "item.taczammobox.crate": "%s Ammo Crate",
-  "item.taczammobox.ammo_belt": "Automatic Ammo Belt",
+  
+  "jei.taczammobox.auto_fire": "Auto-Fire Magazine",
+  "jei.taczammobox.auto_fire.capacity": "Capacity: %s rounds",
+  "jei.taczammobox.auto_fire.rpm": "Fire rate: %s RPM",
+"item.taczammobox.ammo_belt": "Automatic Ammo Belt",
   "item.taczammobox.ammo_belt.desc": "Automatically feeds the main-hand gun from compressed ammo boxes in your inventory when its magazine is below full. No manual reload required.",
   "item.taczammobox.ammo_belt.buffer": "Reserve: %2$s rounds (%1$s)",
   "item.taczammobox.ammo_belt.empty": "Reserve: empty",
