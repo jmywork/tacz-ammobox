@@ -1,5 +1,6 @@
 {
   "itemGroup.taczammobox": "TACZ Ammo Box",
+  "itemGroup.taczammobox.easter_egg": "TACZ Ammo Box · Easter Eggs",
   "item.taczammobox.box": "%s Ammo Box",
   "item.taczammobox.box.place": "Right-click air to unpack; sneak-right-click block to place; right-click pile to take; sneak-right-click pile to add",
   "item.taczammobox.crate": "%s Ammo Crate",
