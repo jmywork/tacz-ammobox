@@ -210,11 +210,10 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
                     graphics.renderItem(items[0].copyWithCount(1), iconX, iconY);
                     int available = countAvailable(requirement.ingredient());
                     boolean enough = available >= requirement.count();
-                    String text = String.valueOf(requirement.count());
-                    graphics.drawString(font, text, iconX + 16 - font.width(text), iconY + 8,
-                            enough ? 0xFFFFFFFF : 0xFFFF5555, true);
+                    graphics.drawString(font, String.valueOf(requirement.count()), iconX + 17, iconY + 4,
+                            enough ? 0xFF303030 : 0xFFB00000, false);
                     perLine++;
-                    iconX += 26;
+                    iconX += 30;
                     if (perLine >= ICONS_PER_LINE) {
                         perLine = 0;
                         iconX = x + RECIPE_X + 4;
