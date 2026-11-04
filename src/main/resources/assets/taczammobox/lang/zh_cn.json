@@ -15,14 +15,14 @@
 
   
   
-  "gui.taczammobox.ammo_assembler.ammo": "弹药",
+  
+  "gui.taczammobox.ammo_assembler.lock.on": "锁定配方：开",
+  "gui.taczammobox.ammo_assembler.lock.off": "锁定配方：关",
+"gui.taczammobox.ammo_assembler.ammo": "弹药",
   "gui.taczammobox.ammo_assembler.recipes": "配方",
   "gui.taczammobox.ammo_assembler.output": "产物",
 "gui.taczammobox.ammo_assembler.requires": "所需材料",
 "block.taczammobox.ammo_assembler": "弹药装配机",
-  "item.taczammobox.casing": "弹壳",
-  "item.taczammobox.powder": "发射药",
-  "item.taczammobox.primer": "底火",
 "item.taczammobox.ammo_chain": "供弹弹链",
   "item.taczammobox.ammo_chain.desc": "携带后，TACZ 枪换弹时直接消耗盒装/箱装弹药，不再需要弹药盒。换弹动作与冷却照常。",
   "item.taczammobox.ammo_chain.buffer": "储备：%2$s 发（%1$s）",

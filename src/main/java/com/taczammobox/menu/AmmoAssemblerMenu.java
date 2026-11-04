@@ -2,6 +2,7 @@ package com.taczammobox.menu;
 
 import com.taczammobox.block.AmmoAssemblerBlockEntity;
 import com.taczammobox.util.AssemblerRecipes;
+import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -9,16 +10,18 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.items.ItemStackHandler;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraftforge.items.SlotItemHandler;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
+/** No machine slots: inputs and outputs are handled by automation, the GUI only selects. */
 public class AmmoAssemblerMenu extends AbstractContainerMenu {
-    public static final int GRID_X = 8;
-    public static final int GRID_Y = 126;
-    public static final int RECIPE_BUTTON_OFFSET = 1000;
+    public static final int AMMO_BUTTON_OFFSET = 1000;
+    public static final int RECIPE_BUTTON_OFFSET = 100000;
+    public static final int BUTTON_REDSTONE = 7;
+    public static final int BUTTON_LOCK = 8;
 
     private final AmmoAssemblerBlockEntity assembler;
     private final ContainerData data;
@@ -30,27 +33,29 @@ public class AmmoAssemblerMenu extends AbstractContainerMenu {
         this.data = data;
         addDataSlots(data);
 
-        ItemStackHandler handler = assembler.getInventory();
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
-                addSlot(new SlotItemHandler(handler, col + row * 3,
-                        GRID_X + col * 18, GRID_Y + row * 18));
-            }
+        // nine hidden read-only slots so the client sees the machine's input contents
+        var machineInventory = assembler.getInventory();
+        for (int slot = 0; slot < AmmoAssemblerBlockEntity.INPUT_SLOTS; slot++) {
+            addSlot(new SlotItemHandler(machineInventory, slot, -2000, -2000) {
+                @Override
+                public boolean mayPickup(Player player) {
+                    return false;
+                }
+
+                @Override
+                public boolean mayPlace(ItemStack stack) {
+                    return false;
+                }
+            });
         }
-        addSlot(new SlotItemHandler(handler, AmmoAssemblerBlockEntity.SLOT_OUTPUT, 78, 144) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return false;
-            }
-        });
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 190 + row * 18));
+                addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 140 + row * 18));
             }
         }
         for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(inventory, col, 8 + col * 18, 244));
+            addSlot(new Slot(inventory, col, 8 + col * 18, 200));
         }
     }
 
@@ -79,6 +84,33 @@ public class AmmoAssemblerMenu extends AbstractContainerMenu {
 
     public int getSelectedRecipe() {
         return data.get(1);
+    }
+
+    public boolean isLocked() {
+        return data.get(3) != 0;
+    }
+
+    public net.minecraft.core.Direction getFacing() {
+        return assembler.getBlockState().getValue(com.taczammobox.block.AmmoAssemblerBlock.FACING);
+    }
+
+    public int countAvailable(Ingredient ingredient) {
+        int found = 0;
+        for (int slot = 0; slot < AmmoAssemblerBlockEntity.INPUT_SLOTS; slot++) {
+            ItemStack stack = slots.get(slot).getItem();
+            if (!stack.isEmpty() && ingredient.test(stack)) {
+                found += stack.getCount();
+            }
+        }
+        return found;
+    }
+
+    public AmmoAssemblerBlockEntity.SideMode getSide(Direction direction) {
+        return AmmoAssemblerBlockEntity.SideMode.values()[data.get(4 + direction.ordinal())];
+    }
+
+    public AmmoAssemblerBlockEntity.RedstoneMode getRedstoneMode() {
+        return AmmoAssemblerBlockEntity.RedstoneMode.values()[data.get(10)];
     }
 
     @Nullable
@@ -111,35 +143,23 @@ public class AmmoAssemblerMenu extends AbstractContainerMenu {
     public boolean clickMenuButton(Player player, int id) {
         if (id >= RECIPE_BUTTON_OFFSET) {
             assembler.selectRecipe(id - RECIPE_BUTTON_OFFSET);
+        } else if (id >= AMMO_BUTTON_OFFSET) {
+            assembler.selectAmmo(id - AMMO_BUTTON_OFFSET);
+        } else if (id == BUTTON_LOCK) {
+            assembler.toggleLock();
+        } else if (id == BUTTON_REDSTONE) {
+            assembler.cycleRedstone();
+        } else if (id >= 1 && id <= 6) {
+            assembler.cycleSide(Direction.values()[id - 1]);
         } else {
-            assembler.selectAmmo(id);
+            return false;
         }
         return true;
     }
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        Slot slot = slots.get(index);
-        if (!slot.hasItem()) {
-            return ItemStack.EMPTY;
-        }
-        ItemStack stack = slot.getItem();
-        ItemStack copy = stack.copy();
-
-        if (index < 10) {
-            if (!moveItemStackTo(stack, 10, slots.size(), true)) {
-                return ItemStack.EMPTY;
-            }
-        } else if (!moveItemStackTo(stack, 0, 9, false)) {
-            return ItemStack.EMPTY;
-        }
-
-        if (stack.isEmpty()) {
-            slot.setByPlayer(ItemStack.EMPTY);
-        } else {
-            slot.setChanged();
-        }
-        return copy;
+        return ItemStack.EMPTY;
     }
 
     @Override

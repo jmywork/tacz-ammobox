@@ -20,43 +20,71 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
+import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.items.wrapper.RangedWrapper;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
 /**
- * Recipe-driven ammo assembler.
+ * Recipe-driven ammo assembler with no player crafting slots.
  *
- * <p>Selection is two-step, matching the three-pane screen: pick an ammo type, then one of
- * its recipes. The machine matches the selected recipe's ingredients in its 3x3 grid,
- * consumes them and emits the recipe output.</p>
+ * <p>Automation feeds the nine input slots from the sides marked INPUT; the machine matches
+ * the selected gun-smith-table recipe, consumes its ingredients and pushes the result into
+ * the three output slots, which are extracted or pushed out of the OUTPUT faces. A lock
+ * switch freezes the current ammo/recipe selection.</p>
  */
 public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvider {
     public static final int INPUT_SLOTS = 9;
-    public static final int SLOT_OUTPUT = 9;
-    public static final int SLOTS = 10;
+    public static final int OUTPUT_SLOTS = 3;
+    public static final int SLOTS = INPUT_SLOTS + OUTPUT_SLOTS;
+
+    public enum SideMode {
+        INPUT,
+        OUTPUT,
+        DISABLED
+    }
+
+    public enum RedstoneMode {
+        IGNORE,
+        HIGH,
+        LOW
+    }
 
     private int selectedAmmo = -1;
     private int selectedRecipe = -1;
     private int progress;
+    private boolean locked;
+
+    private final SideMode[] sides = {SideMode.OUTPUT, SideMode.INPUT, SideMode.INPUT,
+            SideMode.INPUT, SideMode.INPUT, SideMode.INPUT};
+    private RedstoneMode redstoneMode = RedstoneMode.IGNORE;
 
     private final ItemStackHandler inventory = new ItemStackHandler(SLOTS) {
-        @Override
-        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-            if (slot == SLOT_OUTPUT) {
-                return stack;
-            }
-            return super.insertItem(slot, stack, simulate);
-        }
-
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
         }
     };
 
-    private final LazyOptional<IItemHandler> handler = LazyOptional.of(() -> inventory);
+    private final IItemHandler inputView = new RangedWrapper(inventory, 0, INPUT_SLOTS) {
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return ItemStack.EMPTY;
+        }
+    };
+
+    private final IItemHandler outputView = new RangedWrapper(inventory, INPUT_SLOTS, SLOTS) {
+        @Override
+        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            return stack;
+        }
+    };
+
+    private final LazyOptional<IItemHandler> inputOptional = LazyOptional.of(() -> inputView);
+    private final LazyOptional<IItemHandler> outputOptional = LazyOptional.of(() -> outputView);
 
     private final ContainerData data = new ContainerData() {
         @Override
@@ -65,6 +93,9 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
                 case 0 -> selectedAmmo;
                 case 1 -> selectedRecipe;
                 case 2 -> progress;
+                case 3 -> locked ? 1 : 0;
+                case 4, 5, 6, 7, 8, 9 -> sides[index - 4].ordinal();
+                case 10 -> redstoneMode.ordinal();
                 default -> 0;
             };
         }
@@ -75,6 +106,11 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
                 case 0 -> selectedAmmo = value;
                 case 1 -> selectedRecipe = value;
                 case 2 -> progress = Math.max(0, value);
+                case 3 -> locked = value != 0;
+                case 4, 5, 6, 7, 8, 9 -> sides[index - 4] =
+                        SideMode.values()[Math.floorMod(value, SideMode.values().length)];
+                case 10 -> redstoneMode =
+                        RedstoneMode.values()[Math.floorMod(value, RedstoneMode.values().length)];
                 default -> {
                 }
             }
@@ -82,7 +118,7 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
 
         @Override
         public int getCount() {
-            return 3;
+            return 11;
         }
     };
 
@@ -102,15 +138,30 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
         return level == null ? List.of() : AssemblerRecipes.groups(level);
     }
 
-    public int getSelectedAmmo() {
-        return selectedAmmo;
+    public boolean isLocked() {
+        return locked;
     }
 
-    public int getSelectedRecipe() {
-        return selectedRecipe;
+    public void cycleSide(Direction direction) {
+        int index = direction.ordinal();
+        sides[index] = SideMode.values()[(sides[index].ordinal() + 1) % SideMode.values().length];
+        setChanged();
+    }
+
+    public void cycleRedstone() {
+        redstoneMode = RedstoneMode.values()[(redstoneMode.ordinal() + 1) % RedstoneMode.values().length];
+        setChanged();
+    }
+
+    public void toggleLock() {
+        locked = !locked;
+        setChanged();
     }
 
     public void selectAmmo(int index) {
+        if (locked) {
+            return;
+        }
         List<AssemblerRecipes.Group> groups = groups();
         selectedAmmo = index >= 0 && index < groups.size() ? index : -1;
         selectedRecipe = -1;
@@ -119,6 +170,9 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
     }
 
     public void selectRecipe(int index) {
+        if (locked) {
+            return;
+        }
         AssemblerRecipes.Group group = selectedGroup();
         if (group == null) {
             return;
@@ -148,8 +202,22 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
         return entry == null ? 1 : Math.max(1, entry.ticks());
     }
 
+    private boolean redstoneAllows(Level level, BlockPos pos) {
+        boolean powered = level.hasNeighborSignal(pos);
+        return switch (redstoneMode) {
+            case IGNORE -> true;
+            case HIGH -> powered;
+            case LOW -> !powered;
+        };
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, AmmoAssemblerBlockEntity assembler) {
         if (!com.taczammobox.config.FeatureFlags.ammoFactory()) {
+            return;
+        }
+        assembler.pushOutputs(level, pos);
+        if (!assembler.redstoneAllows(level, pos)) {
+            assembler.reset();
             return;
         }
         AssemblerRecipes.Entry entry = assembler.selectedEntry();
@@ -165,6 +233,7 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
         if (assembler.progress >= Math.max(1, entry.ticks())) {
             assembler.craft(entry);
             assembler.progress = 0;
+            assembler.pushOutputs(level, pos);
         }
         assembler.setChanged();
     }
@@ -190,12 +259,9 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
     }
 
     private boolean canOutput(ItemStack result) {
-        ItemStack out = inventory.getStackInSlot(SLOT_OUTPUT);
-        if (out.isEmpty()) {
-            return true;
-        }
-        return ItemStack.isSameItemSameTags(out, result)
-                && out.getCount() + result.getCount() <= out.getMaxStackSize();
+        ItemStack remainder = ItemHandlerHelper.insertItemStacked(new RangedWrapper(inventory, INPUT_SLOTS, SLOTS),
+                result.copy(), true);
+        return remainder.isEmpty();
     }
 
     private void craft(AssemblerRecipes.Entry entry) {
@@ -211,12 +277,31 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
                 remaining -= taken;
             }
         }
-        ItemStack result = entry.output().copy();
-        ItemStack out = inventory.getStackInSlot(SLOT_OUTPUT);
-        if (out.isEmpty()) {
-            inventory.setStackInSlot(SLOT_OUTPUT, result);
-        } else {
-            out.grow(result.getCount());
+        ItemHandlerHelper.insertItemStacked(new RangedWrapper(inventory, INPUT_SLOTS, SLOTS),
+                entry.output().copy(), false);
+    }
+
+    private void pushOutputs(Level level, BlockPos pos) {
+        IItemHandlerModifiable outputs = new RangedWrapper(inventory, INPUT_SLOTS, SLOTS);
+        for (Direction direction : Direction.values()) {
+            if (sides[direction.ordinal()] != SideMode.OUTPUT) {
+                continue;
+            }
+            BlockEntity neighbour = level.getBlockEntity(pos.relative(direction));
+            if (neighbour == null || neighbour == this) {
+                continue;
+            }
+            neighbour.getCapability(ForgeCapabilities.ITEM_HANDLER, direction.getOpposite())
+                    .ifPresent(target -> {
+                        for (int slot = 0; slot < OUTPUT_SLOTS; slot++) {
+                            ItemStack stack = outputs.getStackInSlot(slot);
+                            if (stack.isEmpty()) {
+                                continue;
+                            }
+                            ItemStack remainder = ItemHandlerHelper.insertItem(target, stack.copy(), false);
+                            outputs.setStackInSlot(slot, remainder);
+                        }
+                    });
         }
     }
 
@@ -228,8 +313,11 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
     }
 
     public int comparatorOutput() {
-        int max = maxProgress();
-        return max <= 0 ? 0 : Math.min(15, progress * 15 / max);
+        int stored = 0;
+        for (int slot = 0; slot < OUTPUT_SLOTS; slot++) {
+            stored += inventory.getStackInSlot(INPUT_SLOTS + slot).getCount();
+        }
+        return Math.min(15, stored);
     }
 
     @Override
@@ -239,6 +327,13 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
         tag.putInt("Progress", progress);
         tag.putInt("SelectedAmmo", selectedAmmo);
         tag.putInt("SelectedRecipe", selectedRecipe);
+        tag.putBoolean("Locked", locked);
+        int[] sideValues = new int[6];
+        for (int index = 0; index < 6; index++) {
+            sideValues[index] = sides[index].ordinal();
+        }
+        tag.putIntArray("Sides", sideValues);
+        tag.putInt("Redstone", redstoneMode.ordinal());
     }
 
     @Override
@@ -250,6 +345,14 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
         progress = tag.getInt("Progress");
         selectedAmmo = tag.getInt("SelectedAmmo");
         selectedRecipe = tag.getInt("SelectedRecipe");
+        locked = tag.getBoolean("Locked");
+        int[] sideValues = tag.getIntArray("Sides");
+        if (sideValues.length == 6) {
+            for (int index = 0; index < 6; index++) {
+                sides[index] = SideMode.values()[Math.floorMod(sideValues[index], SideMode.values().length)];
+            }
+        }
+        redstoneMode = RedstoneMode.values()[Math.floorMod(tag.getInt("Redstone"), RedstoneMode.values().length)];
     }
 
     @Override
@@ -265,8 +368,12 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
 
     @Override
     public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction side) {
-        if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return handler.cast();
+        if (capability == ForgeCapabilities.ITEM_HANDLER && side != null) {
+            return switch (sides[side.ordinal()]) {
+                case INPUT -> inputOptional.cast();
+                case OUTPUT -> outputOptional.cast();
+                case DISABLED -> LazyOptional.empty();
+            };
         }
         return super.getCapability(capability, side);
     }
@@ -274,6 +381,7 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        handler.invalidate();
+        inputOptional.invalidate();
+        outputOptional.invalidate();
     }
 }

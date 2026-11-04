@@ -15,14 +15,14 @@
 
   
   
-  "gui.taczammobox.ammo_assembler.ammo": "Ammo",
+  
+  "gui.taczammobox.ammo_assembler.lock.on": "Recipe locked: on",
+  "gui.taczammobox.ammo_assembler.lock.off": "Recipe locked: off",
+"gui.taczammobox.ammo_assembler.ammo": "Ammo",
   "gui.taczammobox.ammo_assembler.recipes": "Recipes",
   "gui.taczammobox.ammo_assembler.output": "Output",
 "gui.taczammobox.ammo_assembler.requires": "Requires",
 "block.taczammobox.ammo_assembler": "Ammo Assembler",
-  "item.taczammobox.casing": "Casing",
-  "item.taczammobox.powder": "Propellant",
-  "item.taczammobox.primer": "Primer",
 "item.taczammobox.ammo_chain": "Ammo Feed Belt",
   "item.taczammobox.ammo_chain.desc": "While carried, TACZ guns reload straight from boxed or crated ammo instead of ammo boxes. The reload animation and cooldown still apply.",
   "item.taczammobox.ammo_chain.buffer": "Reserve: %2$s rounds (%1$s)",

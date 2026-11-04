@@ -54,14 +54,6 @@ public final class ModItems {
     public static final RegistryObject<Item> AMMO_CHAIN =
             ITEMS.register("ammo_chain", () -> new AmmoChainItem(new Item.Properties().stacksTo(1)));
 
-    public static final RegistryObject<Item> CASING =
-            ITEMS.register("casing", () -> new Item(new Item.Properties()));
-
-    public static final RegistryObject<Item> POWDER =
-            ITEMS.register("powder", () -> new Item(new Item.Properties()));
-
-    public static final RegistryObject<Item> PRIMER =
-            ITEMS.register("primer", () -> new Item(new Item.Properties()));
 
     static {
         for (AmmoType type : TYPES) {

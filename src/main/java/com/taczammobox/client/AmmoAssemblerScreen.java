@@ -1,11 +1,15 @@
 package com.taczammobox.client;
 
+import com.taczammobox.block.AmmoAssemblerBlockEntity;
 import com.taczammobox.menu.AmmoAssemblerMenu;
 import com.taczammobox.util.AssemblerRecipes;
-import net.minecraft.client.Minecraft;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -13,58 +17,155 @@ import net.minecraft.world.item.crafting.Ingredient;
 import java.util.List;
 
 /**
- * Three panes: ammo types, the recipes of the selected ammo, and the output of the selected
- * recipe, mirroring how JEI presents gun-smith-table recipes.
- *
- * <p>Recipe rows are two lines tall so long ingredient lists fit; ingredients the machine
- * does not have enough of are drawn in red.</p>
+ * House style (light panel, side-config buttons on the right) plus the three selection
+ * panes: ammo types, their recipes and the selected output.
  */
 public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMenu> {
-    private static final int PANEL_W = 210;
-    private static final int PANEL_H = 268;
+    private static final String[] FACE_KEYS = {"up", "down", "left", "right", "front", "back"};
+
+    private static final int PANEL_W = 300;
+    private static final int PANEL_H = 224;
 
     private static final int AMMO_X = 8;
-    private static final int RECIPE_X = 60;
-    private static final int OUT_X = 154;
-    private static final int AMMO_W = 48;
+    private static final int AMMO_W = 44;
+    private static final int RECIPE_X = 56;
     private static final int RECIPE_W = 92;
-    private static final int OUT_W = 52;
-
+    private static final int OUT_X = 152;
+    private static final int OUT_W = 40;
     private static final int LIST_Y = 18;
-    private static final int LIST_H = 100;
+    private static final int LIST_H = 104;
+
     private static final int AMMO_ROW_H = 18;
     private static final int AMMO_VISIBLE = 5;
-    private static final int RECIPE_ROW_H = 30;
+    private static final int RECIPE_ROW_H = 34;
     private static final int RECIPE_VISIBLE = 3;
     private static final int ICONS_PER_LINE = 5;
 
     private int ammoScroll;
     private int recipeScroll;
 
+    private final Button[] sideButtons = new Button[6];
+    private final Direction[] shownDirections = new Direction[6];
+    private Button redstoneButton;
+    private Button lockButton;
+
     public AmmoAssemblerScreen(AmmoAssemblerMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
         this.imageWidth = PANEL_W;
         this.imageHeight = PANEL_H;
-        this.inventoryLabelY = 178;
+        this.inventoryLabelY = 128;
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        Direction front = menu.getFacing();
+        this.shownDirections[0] = Direction.UP;
+        this.shownDirections[1] = Direction.DOWN;
+        this.shownDirections[2] = front.getClockWise();
+        this.shownDirections[3] = front.getCounterClockWise();
+        this.shownDirections[4] = front;
+        this.shownDirections[5] = front.getOpposite();
+
+        for (int i = 0; i < sideButtons.length; i++) {
+            int id = 1 + shownDirections[i].ordinal();
+            sideButtons[i] = addRenderableWidget(Button.builder(Component.empty(), button -> click(id))
+                    .bounds(leftPos + 200, topPos + 18 + i * 20, 94, 18).build());
+        }
+        redstoneButton = addRenderableWidget(Button.builder(Component.empty(),
+                        button -> click(AmmoAssemblerMenu.BUTTON_REDSTONE))
+                .bounds(leftPos + 200, topPos + 148, 94, 18).build());
+        lockButton = addRenderableWidget(Button.builder(Component.empty(),
+                        button -> click(AmmoAssemblerMenu.BUTTON_LOCK))
+                .bounds(leftPos + 200, topPos + 170, 94, 18).build());
+        updateLabels();
+    }
+
+    private void click(int id) {
+        if (minecraft != null && minecraft.gameMode != null) {
+            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, id);
+        }
+    }
+
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        updateLabels();
+    }
+
+    private void updateLabels() {
+        for (int i = 0; i < sideButtons.length; i++) {
+            if (sideButtons[i] == null) {
+                continue;
+            }
+            AmmoAssemblerBlockEntity.SideMode mode = menu.getSide(shownDirections[i]);
+            MutableComponent label = Component.translatable("gui.taczammobox.side." + FACE_KEYS[i]);
+            label.append(" ").append(Component.translatable("gui.taczammobox.side." + mode.name().toLowerCase()));
+            sideButtons[i].setMessage(label.withStyle(color(mode)));
+        }
+        if (redstoneButton != null) {
+            AmmoAssemblerBlockEntity.RedstoneMode mode = menu.getRedstoneMode();
+            redstoneButton.setMessage(Component.translatable(
+                    "gui.taczammobox.redstone." + mode.name().toLowerCase()).withStyle(redstoneColor(mode)));
+        }
+        if (lockButton != null) {
+            lockButton.setMessage(Component.translatable(menu.isLocked()
+                    ? "gui.taczammobox.ammo_assembler.lock.on"
+                    : "gui.taczammobox.ammo_assembler.lock.off")
+                    .withStyle(menu.isLocked() ? ChatFormatting.GOLD : ChatFormatting.DARK_GRAY));
+        }
+    }
+
+    private static ChatFormatting color(AmmoAssemblerBlockEntity.SideMode mode) {
+        if (mode == AmmoAssemblerBlockEntity.SideMode.INPUT) {
+            return ChatFormatting.GREEN;
+        }
+        if (mode == AmmoAssemblerBlockEntity.SideMode.OUTPUT) {
+            return ChatFormatting.GOLD;
+        }
+        return ChatFormatting.DARK_GRAY;
+    }
+
+    private static ChatFormatting redstoneColor(AmmoAssemblerBlockEntity.RedstoneMode mode) {
+        if (mode == AmmoAssemblerBlockEntity.RedstoneMode.HIGH) {
+            return ChatFormatting.RED;
+        }
+        if (mode == AmmoAssemblerBlockEntity.RedstoneMode.LOW) {
+            return ChatFormatting.AQUA;
+        }
+        return ChatFormatting.DARK_GRAY;
     }
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         int x = leftPos;
         int y = topPos;
-        var font = Minecraft.getInstance().font;
-        graphics.fill(x, y, x + PANEL_W, y + PANEL_H, 0xFF262A30);
-        graphics.fill(x + 2, y + 2, x + PANEL_W - 2, y + PANEL_H - 2, 0xFF343B44);
+        var font = minecraft.font;
 
+        graphics.fill(x, y, x + PANEL_W, y + PANEL_H, 0xFFC6C6C6);
+        graphics.fill(x, y, x + PANEL_W, y + 1, 0xFF373737);
+        graphics.fill(x, y + PANEL_H - 1, x + PANEL_W, y + PANEL_H, 0xFF373737);
+        graphics.fill(x, y, x + 1, y + PANEL_H, 0xFF373737);
+        graphics.fill(x + PANEL_W - 1, y, x + PANEL_W, y + PANEL_H, 0xFF373737);
+
+        // right-side configuration strip
+        graphics.fill(x + 196, y, x + PANEL_W, y + PANEL_H, 0xFFB8B8B8);
+        graphics.fill(x + 196, y, x + 197, y + PANEL_H, 0xFF373737);
+
+        // pane backgrounds
         pane(graphics, x + AMMO_X - 2, y + LIST_Y - 2, AMMO_W + 4, LIST_H + 4);
         pane(graphics, x + RECIPE_X - 2, y + LIST_Y - 2, RECIPE_W + 4, LIST_H + 4);
         pane(graphics, x + OUT_X - 2, y + LIST_Y - 2, OUT_W + 4, LIST_H + 4);
-        graphics.drawString(font, Component.translatable("gui.taczammobox.ammo_assembler.ammo"),
-                x + AMMO_X, y + 6, 0xFFAEB7C2, false);
-        graphics.drawString(font, Component.translatable("gui.taczammobox.ammo_assembler.recipes"),
-                x + RECIPE_X, y + 6, 0xFFAEB7C2, false);
-        graphics.drawString(font, Component.translatable("gui.taczammobox.ammo_assembler.output"),
-                x + OUT_X, y + 6, 0xFFAEB7C2, false);
+
+        // player inventory slots
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 9; col++) {
+                drawSlot(graphics, x + 7 + col * 18, y + 139 + row * 18);
+            }
+        }
+        for (int col = 0; col < 9; col++) {
+            drawSlot(graphics, x + 7 + col * 18, y + 199);
+        }
 
         // column 1: ammo types
         List<AssemblerRecipes.Group> groups = menu.groups();
@@ -77,12 +178,12 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
             int rowY = y + LIST_Y + row * AMMO_ROW_H;
             if (index == selectedAmmo) {
                 graphics.fill(x + AMMO_X - 1, rowY - 1, x + AMMO_X + AMMO_W + 1, rowY + AMMO_ROW_H - 1,
-                        0xFF55606D);
+                        0xFF9A9A9A);
             }
             graphics.renderItem(groups.get(index).display(), x + AMMO_X + 2, rowY);
         }
 
-        // column 2: recipes of the selected ammo, two icon lines per recipe
+        // column 2: recipes of the selected ammo
         AssemblerRecipes.Group group = menu.selectedGroup();
         int selectedRecipe = menu.getSelectedRecipe();
         if (group != null) {
@@ -95,7 +196,7 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
                 int rowY = y + LIST_Y + row * RECIPE_ROW_H;
                 if (index == selectedRecipe) {
                     graphics.fill(x + RECIPE_X - 1, rowY - 1, x + RECIPE_X + RECIPE_W + 1,
-                            rowY + RECIPE_ROW_H - 1, 0xFF55606D);
+                            rowY + RECIPE_ROW_H - 1, 0xFF9A9A9A);
                 }
                 AssemblerRecipes.Entry entry = recipes.get(index);
                 int iconX = x + RECIPE_X + 2;
@@ -107,71 +208,73 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
                         continue;
                     }
                     graphics.renderItem(items[0], iconX, iconY);
-                    boolean enough = countAvailable(requirement.ingredient()) >= requirement.count();
-                    graphics.drawString(font, String.valueOf(requirement.count()), iconX + 9, iconY + 9,
-                            enough ? 0xFFFFFF55 : 0xFFFF5555, true);
+                    int available = countAvailable(requirement.ingredient());
+                    drawCount(graphics, font, iconX, iconY, requirement.count(),
+                            available >= requirement.count());
                     perLine++;
                     iconX += 17;
                     if (perLine >= ICONS_PER_LINE) {
                         perLine = 0;
                         iconX = x + RECIPE_X + 2;
-                        iconY += 14;
+                        iconY += 16;
                     }
                 }
             }
         }
 
-        // column 3: output preview and count only
+        // column 3: output preview and count
         AssemblerRecipes.Entry entry = menu.selectedEntry();
         if (entry != null) {
-            graphics.renderItem(entry.output(), x + OUT_X + 17, y + LIST_Y + 12);
+            graphics.renderItem(entry.output(), x + OUT_X + 12, y + LIST_Y + 14);
             String count = "x" + entry.output().getCount();
             graphics.drawString(font, count, x + OUT_X + (OUT_W - font.width(count)) / 2,
-                    y + LIST_Y + 36, 0xFFFFFFFF, false);
+                    y + LIST_Y + 38, 0x404040, false);
         }
 
-        // input grid, output slot, progress
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
-                frame(graphics, x + AmmoAssemblerMenu.GRID_X - 1 + col * 18,
-                        y + AmmoAssemblerMenu.GRID_Y - 1 + row * 18);
-            }
-        }
-        frame(graphics, x + 77, y + 143);
+        // progress
         int progress = menu.getProgress();
         int max = menu.getMaxProgress();
-        int width = max <= 0 ? 0 : Math.min(32, progress * 32 / max);
-        graphics.fill(x + 44, y + 152, x + 76, y + 160, 0xFF23272D);
+        int width = max <= 0 ? 0 : Math.min(60, progress * 60 / max);
+        graphics.fill(x + 8, y + 126, x + 68, y + 133, 0xFF8B8B8B);
         if (width > 0) {
-            graphics.fill(x + 44, y + 152, x + 44 + width, y + 160, 0xFFE29B2A);
+            graphics.fill(x + 8, y + 126, x + 8 + width, y + 133, 0xFF6FBF4A);
         }
-    }
-
-    private int countAvailable(Ingredient ingredient) {
-        int found = 0;
-        for (int index = 0; index < 9 && index < menu.slots.size(); index++) {
-            ItemStack stack = menu.slots.get(index).getItem();
-            if (!stack.isEmpty() && ingredient.test(stack)) {
-                found += stack.getCount();
-            }
-        }
-        return found;
     }
 
     private static void pane(GuiGraphics graphics, int x, int y, int w, int h) {
-        graphics.fill(x, y, x + w, y + h, 0xFF23272D);
+        graphics.fill(x, y, x + w, y + h, 0xFFB8B8B8);
+        graphics.fill(x, y, x + w, y + 1, 0xFF8B8B8B);
+        graphics.fill(x, y + h - 1, x + w, y + h, 0xFF8B8B8B);
     }
 
-    private static void frame(GuiGraphics graphics, int x, int y) {
-        graphics.fill(x, y, x + 18, y + 18, 0xFF171A1E);
-        graphics.fill(x + 1, y + 1, x + 17, y + 17, 0xFF4A515B);
+    private static void drawSlot(GuiGraphics graphics, int x, int y) {
+        graphics.fill(x - 1, y - 1, x + 17, y + 17, 0xFF373737);
+        graphics.fill(x, y, x + 16, y + 16, 0xFF8B8B8B);
+    }
+
+    private static void drawCount(GuiGraphics graphics, net.minecraft.client.gui.Font font,
+                                  int x, int y, int count, boolean enough) {
+        String text = String.valueOf(count);
+        int textX = x + 17 - font.width(text);
+        graphics.fill(textX - 1, y + 8, x + 17, y + 17, 0x80000000);
+        graphics.drawString(font, text, textX, y + 9, enough ? 0xFFFFFF55 : 0xFFFF5555, false);
+    }
+
+    private int countAvailable(Ingredient ingredient) {
+        return menu.countAvailable(ingredient);
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics);
-        super.render(graphics, mouseX, mouseY, partialTick);
-        renderTooltip(graphics, mouseX, mouseY);
+    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        graphics.drawString(font, title, titleLabelX, titleLabelY, 0x404040, false);
+        graphics.drawString(font, Component.translatable("gui.taczammobox.ammo_assembler.ammo"),
+                AMMO_X, 6, 0x404040, false);
+        graphics.drawString(font, Component.translatable("gui.taczammobox.ammo_assembler.recipes"),
+                RECIPE_X, 6, 0x404040, false);
+        graphics.drawString(font, Component.translatable("gui.taczammobox.ammo_assembler.output"),
+                OUT_X, 6, 0x404040, false);
+        graphics.drawString(font, Component.translatable("gui.taczammobox.sides"), 200, 6, 0x404040, false);
+        graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
     @Override
@@ -179,11 +282,11 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
         if (button == 0) {
             int localX = (int) mouseX - leftPos;
             int localY = (int) mouseY - topPos;
-            if (localY >= LIST_Y && localY < LIST_Y + LIST_H) {
+            if (localY >= LIST_Y && localY < LIST_Y + LIST_H && !menu.isLocked()) {
                 if (localX >= AMMO_X && localX < AMMO_X + AMMO_W) {
                     int index = ammoScroll + (localY - LIST_Y) / AMMO_ROW_H;
                     if (index < menu.groups().size()) {
-                        click(index);
+                        click(AmmoAssemblerMenu.AMMO_BUTTON_OFFSET + index);
                         return true;
                     }
                 }
@@ -200,12 +303,6 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
             }
         }
         return super.mouseClicked(mouseX, mouseY, button);
-    }
-
-    private void click(int id) {
-        if (minecraft != null && minecraft.gameMode != null) {
-            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, id);
-        }
     }
 
     @Override

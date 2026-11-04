@@ -24,9 +24,6 @@ public final class ModCreativeTabs {
                 output.accept(ModItems.LOADER.get());
                 output.accept(ModItems.AMMO_CHAIN.get());
                 output.accept(ModItems.ASSEMBLER.get());
-                output.accept(ModItems.CASING.get());
-                output.accept(ModItems.POWDER.get());
-                output.accept(ModItems.PRIMER.get());
                 ModItems.BOXES.values().forEach(box -> output.accept(box.get()));
                 ModItems.CRATES.values().forEach(crate -> output.accept(crate.get()));
             })
