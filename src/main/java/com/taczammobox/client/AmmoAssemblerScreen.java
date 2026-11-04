@@ -23,12 +23,12 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
     private static final int AMMO_Y = 18;
     private static final int AMMO_W = 48;
     private static final int RECIPE_X = 60;
-    private static final int RECIPE_W = 80;
+    private static final int RECIPE_W = 92;
     private static final int LIST_H = 78;
     private static final int ROW_H = 18;
     private static final int VISIBLE_ROWS = 4;
-    private static final int OUT_X = 148;
-    private static final int OUT_W = 54;
+    private static final int OUT_X = 154;
+    private static final int OUT_W = 52;
 
     private int ammoScroll;
     private int recipeScroll;
@@ -90,9 +90,7 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
                             0xFF55606D);
                 }
                 AssemblerRecipes.Entry entry = recipes.get(index);
-                graphics.drawString(font, "x" + entry.output().getCount(), x + RECIPE_X + 2, rowY + 5,
-                        0xFFE6E6E6, false);
-                int iconX = x + RECIPE_X + 24;
+                int iconX = x + RECIPE_X + 2;
                 for (AssemblerRecipes.IngredientStack requirement : entry.inputs()) {
                     ItemStack[] items = requirement.ingredient().getItems();
                     if (items.length == 0) {
@@ -114,28 +112,10 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
         // column 3: output of the selected recipe
         AssemblerRecipes.Entry entry = menu.selectedEntry();
         if (entry != null) {
-            graphics.renderItem(entry.output(), x + OUT_X + 16, y + AMMO_Y + 6);
-            graphics.drawString(font, "x" + entry.output().getCount(), x + OUT_X + 34, y + AMMO_Y + 10,
-                    0xFFFFFFFF, false);
-            int reqY = y + AMMO_Y + 28;
-            graphics.drawString(font, Component.translatable("gui.taczammobox.ammo_assembler.requires"),
-                    x + OUT_X + 2, reqY, 0xFFAEB7C2, false);
-            int iconX = x + OUT_X + 2;
-            int iconY = reqY + 10;
-            for (AssemblerRecipes.IngredientStack requirement : entry.inputs()) {
-                ItemStack[] items = requirement.ingredient().getItems();
-                if (items.length == 0) {
-                    continue;
-                }
-                graphics.renderItem(items[0], iconX, iconY);
-                graphics.drawString(font, String.valueOf(requirement.count()), iconX + 9, iconY + 9,
-                        0xFFFFFF55, true);
-                iconX += 17;
-                if (iconX > x + OUT_X + OUT_W - 16) {
-                    iconX = x + OUT_X + 2;
-                    iconY += 17;
-                }
-            }
+            graphics.renderItem(entry.output(), x + OUT_X + 17, y + AMMO_Y + 10);
+            String count = "x" + entry.output().getCount();
+            graphics.drawString(font, count, x + OUT_X + (OUT_W - font.width(count)) / 2,
+                    y + AMMO_Y + 32, 0xFFFFFFFF, false);
         }
 
         // input grid, output slot, progress
