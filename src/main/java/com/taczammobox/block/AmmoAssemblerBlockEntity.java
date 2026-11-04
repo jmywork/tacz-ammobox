@@ -191,6 +191,9 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
     }
 
     public void toggleLock() {
+        if (!locked && selectedEntry() == null) {
+            return;
+        }
         locked = !locked;
         setChanged();
     }

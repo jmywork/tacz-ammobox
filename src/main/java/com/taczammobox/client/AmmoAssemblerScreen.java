@@ -109,6 +109,7 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
                     "gui.taczammobox.redstone." + mode.name().toLowerCase()).withStyle(redstoneColor(mode)));
         }
         if (lockButton != null) {
+            lockButton.active = menu.isLocked() || menu.selectedEntry() != null;
             lockButton.setMessage(Component.translatable(menu.isLocked()
                     ? "gui.taczammobox.ammo_assembler.lock.on"
                     : "gui.taczammobox.ammo_assembler.lock.off")
