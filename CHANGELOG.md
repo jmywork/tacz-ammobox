@@ -4,6 +4,11 @@
 
 本版定位：**把已有的自动供弹链路做稳、做可配，再补新内容**。以下为已完成的底座部分，新内容确定后追加。
 
+### 新内容
+
+- **供弹弹链**（`taczammobox:ammo_chain`）：生存可合成。携带后枪械换弹不再需要 TACZ 弹药盒，直接从我们的盒装/箱装弹药、TACZ 原生弹药盒或散装弹药中取弹，余弹缓存在弹链 NBT 中；换弹动作与冷却保持原版，没有“无需换弹”的效果
+- 弹药来源覆盖背包、Curios 与精妙背包的一层容器，嵌套背包不计入
+
 ### 稳定性
 
 - 新增 `config/taczammobox/features.json` 特性开关：`autoFire`、`capacityOverride`、`rpmOverride`、`belt`、`easterEggTab`、`createCompat`、`safeMode`，默认全开，行为与 0.3.0 一致
