@@ -13,7 +13,9 @@
   "jei.taczammobox.ammo_chain.info1": "While carried, guns reload straight from boxed, crated, TACZ ammo boxes or loose rounds instead of ammo boxes.",
   "jei.taczammobox.ammo_chain.info2": "The reload animation and cooldown stay vanilla; leftover rounds are cached in the belt.",
 
-  "block.taczammobox.ammo_assembler": "Ammo Assembler",
+  
+  "gui.taczammobox.ammo_assembler.requires": "Requires",
+"block.taczammobox.ammo_assembler": "Ammo Assembler",
   "item.taczammobox.casing": "Casing",
   "item.taczammobox.powder": "Propellant",
   "item.taczammobox.primer": "Primer",

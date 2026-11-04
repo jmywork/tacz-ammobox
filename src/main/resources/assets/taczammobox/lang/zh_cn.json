@@ -13,7 +13,9 @@
   "jei.taczammobox.ammo_chain.info1": "携带后，枪械换弹时直接消耗盒装/箱装弹药、弹药盒或散装弹药，不再需要 TACZ 弹药盒。",
   "jei.taczammobox.ammo_chain.info2": "换弹动作与冷却保持原版；用不完的弹药缓存在弹链里。",
 
-  "block.taczammobox.ammo_assembler": "弹药装配机",
+  
+  "gui.taczammobox.ammo_assembler.requires": "所需材料",
+"block.taczammobox.ammo_assembler": "弹药装配机",
   "item.taczammobox.casing": "弹壳",
   "item.taczammobox.powder": "发射药",
   "item.taczammobox.primer": "底火",

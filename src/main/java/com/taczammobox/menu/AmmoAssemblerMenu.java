@@ -1,8 +1,7 @@
 package com.taczammobox.menu;
 
-import com.tacz.guns.api.item.IAmmo;
 import com.taczammobox.block.AmmoAssemblerBlockEntity;
-import com.taczammobox.item.PackagedAmmo;
+import com.taczammobox.util.AssemblerRecipes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -13,7 +12,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
+import javax.annotation.Nullable;
+import java.util.List;
+
 public class AmmoAssemblerMenu extends AbstractContainerMenu {
+    public static final int GRID_X = 110;
+    public static final int GRID_Y = 18;
+
     private final AmmoAssemblerBlockEntity assembler;
     private final ContainerData data;
 
@@ -25,11 +30,13 @@ public class AmmoAssemblerMenu extends AbstractContainerMenu {
         addDataSlots(data);
 
         ItemStackHandler handler = assembler.getInventory();
-        addSlot(new SlotItemHandler(handler, AmmoAssemblerBlockEntity.SLOT_CASING, 26, 17));
-        addSlot(new SlotItemHandler(handler, AmmoAssemblerBlockEntity.SLOT_POWDER, 44, 17));
-        addSlot(new SlotItemHandler(handler, AmmoAssemblerBlockEntity.SLOT_PRIMER, 62, 17));
-        addSlot(new SlotItemHandler(handler, AmmoAssemblerBlockEntity.SLOT_TEMPLATE, 26, 41));
-        addSlot(new SlotItemHandler(handler, AmmoAssemblerBlockEntity.SLOT_OUTPUT, 116, 29) {
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                addSlot(new SlotItemHandler(handler, col + row * 3,
+                        GRID_X + col * 18, GRID_Y + row * 18));
+            }
+        }
+        addSlot(new SlotItemHandler(handler, AmmoAssemblerBlockEntity.SLOT_OUTPUT, 176, 36) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return false;
@@ -38,11 +45,11 @@ public class AmmoAssemblerMenu extends AbstractContainerMenu {
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
+                addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 150 + row * 18));
             }
         }
         for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(inventory, col, 8 + col * 18, 142));
+            addSlot(new Slot(inventory, col, 8 + col * 18, 208));
         }
     }
 
@@ -61,12 +68,34 @@ public class AmmoAssemblerMenu extends AbstractContainerMenu {
         throw new IllegalStateException("Missing ammo assembler at " + pos);
     }
 
-    public int getProgress() {
+    public List<AssemblerRecipes.Entry> recipes() {
+        return assembler.entries();
+    }
+
+    public int getSelectedIndex() {
         return data.get(0);
     }
 
+    @Nullable
+    public AssemblerRecipes.Entry selectedEntry() {
+        List<AssemblerRecipes.Entry> entries = recipes();
+        int index = getSelectedIndex();
+        return index >= 0 && index < entries.size() ? entries.get(index) : null;
+    }
+
+    public int getProgress() {
+        return data.get(1);
+    }
+
     public int getMaxProgress() {
-        return Math.max(1, data.get(1));
+        AssemblerRecipes.Entry entry = selectedEntry();
+        return entry == null ? 1 : Math.max(1, entry.ticks());
+    }
+
+    @Override
+    public boolean clickMenuButton(Player player, int id) {
+        assembler.select(id);
+        return true;
     }
 
     @Override
@@ -78,27 +107,11 @@ public class AmmoAssemblerMenu extends AbstractContainerMenu {
         ItemStack stack = slot.getItem();
         ItemStack copy = stack.copy();
 
-        if (index < 5) {
-            if (!moveItemStackTo(stack, 5, slots.size(), true)) {
+        if (index < 10) {
+            if (!moveItemStackTo(stack, 10, slots.size(), true)) {
                 return ItemStack.EMPTY;
             }
-        } else if (stack.is(com.taczammobox.registry.ModItems.CASING.get())) {
-            if (!moveItemStackTo(stack, 0, 1, false)) {
-                return ItemStack.EMPTY;
-            }
-        } else if (stack.is(com.taczammobox.registry.ModItems.POWDER.get())) {
-            if (!moveItemStackTo(stack, 1, 2, false)) {
-                return ItemStack.EMPTY;
-            }
-        } else if (stack.is(com.taczammobox.registry.ModItems.PRIMER.get())) {
-            if (!moveItemStackTo(stack, 2, 3, false)) {
-                return ItemStack.EMPTY;
-            }
-        } else if (stack.getItem() instanceof IAmmo || stack.getItem() instanceof PackagedAmmo) {
-            if (!moveItemStackTo(stack, 3, 4, false)) {
-                return ItemStack.EMPTY;
-            }
-        } else {
+        } else if (!moveItemStackTo(stack, 0, 9, false)) {
             return ItemStack.EMPTY;
         }
 

@@ -277,6 +277,7 @@ public final class AmmoBoxCommand {
         com.taczammobox.config.FeatureFlags.load();
         com.taczammobox.util.AutoFireTier.init();
         com.taczammobox.config.AmmoFactorySettings.load();
+        com.taczammobox.util.AssemblerRecipes.invalidate();
         com.taczammobox.compat.CompatSelfCheck.run();
         if (com.taczammobox.config.FeatureFlags.autoFire()) {
             com.taczammobox.compat.AutoFirePack.install();
