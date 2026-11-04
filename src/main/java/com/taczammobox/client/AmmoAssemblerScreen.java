@@ -157,6 +157,8 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
         pane(graphics, x + AMMO_X - 2, y + LIST_Y - 2, AMMO_W + 4, LIST_H + 4);
         pane(graphics, x + RECIPE_X - 2, y + LIST_Y - 2, RECIPE_W + 4, LIST_H + 4);
         pane(graphics, x + OUT_X - 2, y + LIST_Y - 2, OUT_W + 4, LIST_H + 4);
+        divider(graphics, x + AMMO_X + AMMO_W + 2, y + LIST_Y - 2, y + LIST_Y + LIST_H + 2);
+        divider(graphics, x + RECIPE_X + RECIPE_W + 2, y + LIST_Y - 2, y + LIST_Y + LIST_H + 2);
 
         // player inventory slots
         for (int row = 0; row < 3; row++) {
@@ -260,6 +262,11 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
         if (width > 0) {
             graphics.fill(x + 8, y + 152, x + 8 + width, y + 159, 0xFF6FBF4A);
         }
+    }
+
+    private static void divider(GuiGraphics graphics, int x, int top, int bottom) {
+        graphics.fill(x, top, x + 1, bottom, 0xFF8B8B8B);
+        graphics.fill(x + 1, top, x + 2, bottom, 0xFFB8B8B8);
     }
 
     private static void pane(GuiGraphics graphics, int x, int y, int w, int h) {
