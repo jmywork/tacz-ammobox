@@ -1,6 +1,7 @@
 package com.taczammobox.registry;
 
 import com.taczammobox.TaczAmmoBoxMod;
+import com.taczammobox.menu.AmmoAssemblerMenu;
 import com.taczammobox.menu.AmmoLoaderMenu;
 import com.taczammobox.menu.AmmoPackerMenu;
 import net.minecraft.world.inventory.MenuType;
@@ -16,6 +17,9 @@ public final class ModMenus {
 
     public static final RegistryObject<MenuType<AmmoPackerMenu>> PACKER =
             MENUS.register("ammo_packer", () -> IForgeMenuType.create(AmmoPackerMenu::new));
+
+    public static final RegistryObject<MenuType<AmmoAssemblerMenu>> ASSEMBLER =
+            MENUS.register("ammo_assembler", () -> IForgeMenuType.create(AmmoAssemblerMenu::new));
 
     public static final RegistryObject<MenuType<AmmoLoaderMenu>> LOADER =
             MENUS.register("ammo_loader", () -> IForgeMenuType.create(AmmoLoaderMenu::new));

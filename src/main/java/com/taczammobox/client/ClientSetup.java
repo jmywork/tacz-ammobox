@@ -19,6 +19,7 @@ public final class ClientSetup {
         event.enqueueWork(() -> {
             MenuScreens.register(ModMenus.PACKER.get(), AmmoPackerScreen::new);
             MenuScreens.register(ModMenus.LOADER.get(), AmmoLoaderScreen::new);
+        MenuScreens.register(ModMenus.ASSEMBLER.get(), AmmoAssemblerScreen::new);
             // Curios is optional; the renderer class is only touched when it is present.
             if (ModList.get().isLoaded("curios")) {
                 AmmoBeltCurioRenderer.register();

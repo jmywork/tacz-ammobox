@@ -1,6 +1,7 @@
 package com.taczammobox.registry;
 
 import com.taczammobox.TaczAmmoBoxMod;
+import com.taczammobox.block.AmmoAssemblerBlockEntity;
 import com.taczammobox.block.AmmoBoxPileBlockEntity;
 import com.taczammobox.block.AmmoLoaderBlockEntity;
 import com.taczammobox.block.AmmoPackerBlockEntity;
@@ -18,6 +19,10 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<AmmoPackerBlockEntity>> PACKER =
             BLOCK_ENTITIES.register("ammo_packer",
                     () -> BlockEntityType.Builder.of(AmmoPackerBlockEntity::new, ModBlocks.PACKER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<AmmoAssemblerBlockEntity>> ASSEMBLER =
+            BLOCK_ENTITIES.register("ammo_assembler",
+                    () -> BlockEntityType.Builder.of(AmmoAssemblerBlockEntity::new, ModBlocks.ASSEMBLER.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<AmmoLoaderBlockEntity>> LOADER =
             BLOCK_ENTITIES.register("ammo_loader",

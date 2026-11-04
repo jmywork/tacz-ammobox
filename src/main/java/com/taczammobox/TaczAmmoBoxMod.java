@@ -2,6 +2,7 @@ package com.taczammobox;
 
 import com.taczammobox.compat.AutoFirePack;
 import com.taczammobox.compat.CompatSelfCheck;
+import com.taczammobox.config.AmmoFactorySettings;
 import com.taczammobox.config.FeatureFlags;
 import com.taczammobox.config.WasteSettings;
 import com.taczammobox.util.AutoFireTier;
@@ -29,6 +30,7 @@ public class TaczAmmoBoxMod {
         WasteSettings.load();
         FeatureFlags.load();
         AutoFireTier.init();
+        AmmoFactorySettings.load();
         CompatSelfCheck.run();
         LOGGER.info("[taczammobox] features: {}", FeatureFlags.describe());
         // TACZ scans <game dir>/tacz for gun packs at startup, so the attachment pack
