@@ -39,7 +39,7 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
     private static final int AMMO_VISIBLE = 5;
     private static final int RECIPE_ROW_H = 44;
     private static final int RECIPE_VISIBLE = 2;
-    private static final int ICONS_PER_LINE = 3;
+    private static final int ICONS_PER_LINE = 4;
 
     private int ammoScroll;
     private int recipeScroll;
@@ -199,7 +199,7 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
                             rowY + RECIPE_ROW_H - 1, 0xFF9A9A9A);
                 }
                 AssemblerRecipes.Entry entry = recipes.get(index);
-                int iconX = x + RECIPE_X + 2;
+                int iconX = x + RECIPE_X + 4;
                 int iconY = rowY + 3;
                 int perLine = 0;
                 for (AssemblerRecipes.IngredientStack requirement : entry.inputs()) {
@@ -210,13 +210,14 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
                     graphics.renderItem(items[0].copyWithCount(1), iconX, iconY);
                     int available = countAvailable(requirement.ingredient());
                     boolean enough = available >= requirement.count();
-                    graphics.drawString(font, "x" + requirement.count(), iconX + 17, iconY + 4,
-                            enough ? 0xFF3B3B3B : 0xFFAA0000, false);
+                    String text = String.valueOf(requirement.count());
+                    graphics.drawString(font, text, iconX + 16 - font.width(text), iconY + 8,
+                            enough ? 0xFFFFFFFF : 0xFFFF5555, true);
                     perLine++;
-                    iconX += 40;
+                    iconX += 26;
                     if (perLine >= ICONS_PER_LINE) {
                         perLine = 0;
-                        iconX = x + RECIPE_X + 2;
+                        iconX = x + RECIPE_X + 4;
                         iconY += 20;
                     }
                 }
