@@ -9,6 +9,7 @@
     "AttachmentsTagMixin",
     "GunDataShootIntervalMixin",
     "ModernKineticGunBoltMixin",
+    "AbstractGunItemReloadMixin",
     "DeployerBlockEntityMixin"
   ],
   "client": [

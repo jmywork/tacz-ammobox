@@ -27,6 +27,7 @@ public final class FeatureFlags {
     private static boolean capacityOverride = true;
     private static boolean rpmOverride = true;
     private static boolean belt = true;
+    private static boolean ammoChain = true;
     private static boolean easterEggTab = true;
     private static boolean createCompat = true;
     private static boolean safeMode = false;
@@ -52,6 +53,11 @@ public final class FeatureFlags {
     /** Ammo belt auto-feeding. */
     public static boolean belt() {
         return belt && !safeMode;
+    }
+
+    /** Feed belt: reload from boxed/crated ammo instead of TACZ ammo boxes. */
+    public static boolean ammoChain() {
+        return ammoChain && !safeMode;
     }
 
     /** Show the easter-egg creative tab contents. */
@@ -108,6 +114,7 @@ public final class FeatureFlags {
             capacityOverride = bool(root, "capacityOverride", capacityOverride);
             rpmOverride = bool(root, "rpmOverride", rpmOverride);
             belt = bool(root, "belt", belt);
+            ammoChain = bool(root, "ammoChain", ammoChain);
             easterEggTab = bool(root, "easterEggTab", easterEggTab);
             createCompat = bool(root, "createCompat", createCompat);
             safeMode = bool(root, "safeMode", safeMode);
@@ -148,6 +155,7 @@ public final class FeatureFlags {
             root.addProperty("capacityOverride", capacityOverride);
             root.addProperty("rpmOverride", rpmOverride);
             root.addProperty("belt", belt);
+            root.addProperty("ammoChain", ammoChain);
             root.addProperty("easterEggTab", easterEggTab);
             root.addProperty("createCompat", createCompat);
             root.addProperty("safeMode", safeMode);

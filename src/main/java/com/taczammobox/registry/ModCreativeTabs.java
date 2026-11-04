@@ -22,6 +22,7 @@ public final class ModCreativeTabs {
             .displayItems((parameters, output) -> {
                 output.accept(ModItems.PACKER.get());
                 output.accept(ModItems.LOADER.get());
+                output.accept(ModItems.AMMO_CHAIN.get());
                 ModItems.BOXES.values().forEach(box -> output.accept(box.get()));
                 ModItems.CRATES.values().forEach(crate -> output.accept(crate.get()));
             })
