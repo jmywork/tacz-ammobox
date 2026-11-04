@@ -45,6 +45,9 @@ public final class ModItems {
     public static final RegistryObject<Item> LOADER =
             ITEMS.register("ammo_loader", () -> new BlockItem(ModBlocks.LOADER.get(), new Item.Properties()));
 
+    public static final RegistryObject<Item> ASSEMBLER =
+            ITEMS.register("ammo_assembler", () -> new BlockItem(ModBlocks.ASSEMBLER.get(), new Item.Properties()));
+
     public static final RegistryObject<Item> AMMO_BELT =
             ITEMS.register("ammo_belt", () -> new AmmoBeltItem(new Item.Properties().stacksTo(1)));
 
