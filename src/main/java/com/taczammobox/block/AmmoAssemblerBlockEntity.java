@@ -57,6 +57,7 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
     private int selectedRecipe = -1;
     private int progress;
     private boolean locked;
+    private int pullCooldown;
 
     private final SideMode[] sides = {SideMode.OUTPUT, SideMode.INPUT, SideMode.INPUT,
             SideMode.INPUT, SideMode.INPUT, SideMode.INPUT};
@@ -261,6 +262,10 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
             assembler.reset();
             return;
         }
+        if (--assembler.pullCooldown <= 0) {
+            assembler.pullCooldown = 10;
+            assembler.pullIngredients(level, pos, entry);
+        }
         if (!assembler.hasIngredients(entry) || !assembler.canOutput(entry.output())) {
             assembler.reset();
             return;
@@ -272,6 +277,50 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
             assembler.pushOutputs(level, pos);
         }
         assembler.setChanged();
+    }
+
+    /** Pulls just enough of each required ingredient from containers on INPUT faces. */
+    private void pullIngredients(Level level, BlockPos pos, AssemblerRecipes.Entry entry) {
+        IItemHandler inputs = new RangedWrapper(inventory, 0, INPUT_SLOTS);
+        for (Direction direction : Direction.values()) {
+            if (sides[direction.ordinal()] != SideMode.INPUT) {
+                continue;
+            }
+            BlockEntity neighbour = level.getBlockEntity(pos.relative(direction));
+            if (neighbour == null || neighbour == this) {
+                continue;
+            }
+            neighbour.getCapability(ForgeCapabilities.ITEM_HANDLER, direction.getOpposite())
+                    .ifPresent(source -> pullFrom(source, inputs, entry));
+        }
+    }
+
+    private void pullFrom(IItemHandler source, IItemHandler inputs, AssemblerRecipes.Entry entry) {
+        for (AssemblerRecipes.IngredientStack requirement : entry.inputs()) {
+            int need = requirement.count() - countMatching(requirement.ingredient());
+            if (need <= 0) {
+                continue;
+            }
+            for (int slot = 0; slot < source.getSlots() && need > 0; slot++) {
+                ItemStack stack = source.getStackInSlot(slot);
+                if (stack.isEmpty() || !requirement.ingredient().test(stack)) {
+                    continue;
+                }
+                int take = Math.min(need, stack.getCount());
+                ItemStack extracted = source.extractItem(slot, take, true);
+                if (extracted.isEmpty()) {
+                    continue;
+                }
+                ItemStack remainder = ItemHandlerHelper.insertItemStacked(inputs, extracted, true);
+                int accepted = extracted.getCount() - remainder.getCount();
+                if (accepted <= 0) {
+                    continue;
+                }
+                ItemStack actual = source.extractItem(slot, accepted, false);
+                ItemHandlerHelper.insertItemStacked(inputs, actual, false);
+                need -= actual.getCount();
+            }
+        }
     }
 
     private boolean hasIngredients(AssemblerRecipes.Entry entry) {
