@@ -9,7 +9,10 @@
   "jei.taczammobox.auto_fire.capacity": "Capacity: %s rounds",
   "jei.taczammobox.auto_fire.rpm": "Fire rate: %s RPM",
 
-  "item.taczammobox.ammo_chain": "Ammo Feed Belt",
+  
+  "jei.taczammobox.ammo_chain.info1": "While carried, guns reload straight from boxed, crated, TACZ ammo boxes or loose rounds instead of ammo boxes.",
+  "jei.taczammobox.ammo_chain.info2": "The reload animation and cooldown stay vanilla; leftover rounds are cached in the belt.",
+"item.taczammobox.ammo_chain": "Ammo Feed Belt",
   "item.taczammobox.ammo_chain.desc": "While carried, TACZ guns reload straight from boxed or crated ammo instead of ammo boxes. The reload animation and cooldown still apply.",
   "item.taczammobox.ammo_chain.buffer": "Reserve: %2$s rounds (%1$s)",
   "item.taczammobox.ammo_chain.empty": "Reserve: empty",

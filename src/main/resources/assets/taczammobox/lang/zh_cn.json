@@ -9,7 +9,10 @@
   "jei.taczammobox.auto_fire.capacity": "弹容 %s 发",
   "jei.taczammobox.auto_fire.rpm": "射速 %s RPM",
 
-  "item.taczammobox.ammo_chain": "供弹弹链",
+  
+  "jei.taczammobox.ammo_chain.info1": "携带后，枪械换弹时直接消耗盒装/箱装弹药、弹药盒或散装弹药，不再需要 TACZ 弹药盒。",
+  "jei.taczammobox.ammo_chain.info2": "换弹动作与冷却保持原版；用不完的弹药缓存在弹链里。",
+"item.taczammobox.ammo_chain": "供弹弹链",
   "item.taczammobox.ammo_chain.desc": "携带后，TACZ 枪换弹时直接消耗盒装/箱装弹药，不再需要弹药盒。换弹动作与冷却照常。",
   "item.taczammobox.ammo_chain.buffer": "储备：%2$s 发（%1$s）",
   "item.taczammobox.ammo_chain.empty": "储备：空",

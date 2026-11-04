@@ -37,6 +37,9 @@ public final class TaczAmmoBoxJeiPlugin implements IModPlugin {
                 TaczAmmoBoxMod.LOGGER.warn("[taczammobox] auto-fire JEI page disabled", throwable);
             }
         }
+        registration.addIngredientInfo(ModItems.AMMO_CHAIN.get(),
+                net.minecraft.network.chat.Component.translatable("jei.taczammobox.ammo_chain.info1"),
+                net.minecraft.network.chat.Component.translatable("jei.taczammobox.ammo_chain.info2"));
     }
 
     @Override
