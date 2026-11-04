@@ -86,6 +86,42 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
     private final LazyOptional<IItemHandler> inputOptional = LazyOptional.of(() -> inputView);
     private final LazyOptional<IItemHandler> outputOptional = LazyOptional.of(() -> outputView);
 
+    /** Some pipes query without a side; expose inputs for insert and outputs for extract. */
+    private final IItemHandler combinedView = new IItemHandler() {
+        @Override
+        public int getSlots() {
+            return SLOTS;
+        }
+
+        @Override
+        public ItemStack getStackInSlot(int slot) {
+            return inventory.getStackInSlot(slot);
+        }
+
+        @Override
+        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            return slot < INPUT_SLOTS ? inventory.insertItem(slot, stack, simulate) : stack;
+        }
+
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return slot >= INPUT_SLOTS ? inventory.extractItem(slot, amount, simulate) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return inventory.getSlotLimit(slot);
+        }
+
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) {
+            return slot < INPUT_SLOTS && inventory.isItemValid(slot, stack);
+        }
+    };
+
+    private final LazyOptional<IItemHandler> combinedOptional = LazyOptional.of(() -> combinedView);
+    private final boolean[] loggedSides = new boolean[7];
+
     private final ContainerData data = new ContainerData() {
         @Override
         public int get(int index) {
@@ -368,8 +404,14 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
 
     @Override
     public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction side) {
-        if (capability == ForgeCapabilities.ITEM_HANDLER && side != null) {
-            return switch (sides[side.ordinal()]) {
+        if (capability == ForgeCapabilities.ITEM_HANDLER) {
+            if (side == null) {
+                logSide(null);
+                return combinedOptional.cast();
+            }
+            SideMode mode = sides[side.ordinal()];
+            logSide(side);
+            return switch (mode) {
                 case INPUT -> inputOptional.cast();
                 case OUTPUT -> outputOptional.cast();
                 case DISABLED -> LazyOptional.empty();
@@ -378,10 +420,23 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
         return super.getCapability(capability, side);
     }
 
+    private void logSide(@Nullable Direction side) {
+        int index = side == null ? 6 : side.ordinal();
+        if (loggedSides[index]) {
+            return;
+        }
+        loggedSides[index] = true;
+        com.taczammobox.TaczAmmoBoxMod.LOGGER.info(
+                "[taczammobox] assembler at {}: side {} queried item handler (mode={})",
+                worldPosition, side == null ? "none" : side,
+                side == null ? "combined" : sides[side.ordinal()]);
+    }
+
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
         inputOptional.invalidate();
         outputOptional.invalidate();
+        combinedOptional.invalidate();
     }
 }
