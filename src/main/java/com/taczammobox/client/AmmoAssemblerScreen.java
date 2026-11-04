@@ -23,14 +23,14 @@ import java.util.List;
 public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMenu> {
     private static final String[] FACE_KEYS = {"up", "down", "left", "right", "front", "back"};
 
-    private static final int PANEL_W = 340;
+    private static final int PANEL_W = 384;
     private static final int PANEL_H = 256;
 
     private static final int AMMO_X = 8;
     private static final int AMMO_W = 44;
     private static final int RECIPE_X = 56;
-    private static final int RECIPE_W = 128;
-    private static final int OUT_X = 188;
+    private static final int RECIPE_W = 172;
+    private static final int OUT_X = 232;
     private static final int OUT_W = 48;
     private static final int LIST_Y = 30;
     private static final int LIST_H = 120;
@@ -70,14 +70,14 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
         for (int i = 0; i < sideButtons.length; i++) {
             int id = 1 + shownDirections[i].ordinal();
             sideButtons[i] = addRenderableWidget(Button.builder(Component.empty(), button -> click(id))
-                    .bounds(leftPos + 240, topPos + 28 + i * 20, 94, 18).build());
+                    .bounds(leftPos + 284, topPos + 28 + i * 20, 94, 18).build());
         }
         redstoneButton = addRenderableWidget(Button.builder(Component.empty(),
                         button -> click(AmmoAssemblerMenu.BUTTON_REDSTONE))
-                .bounds(leftPos + 240, topPos + 152, 94, 18).build());
+                .bounds(leftPos + 284, topPos + 152, 94, 18).build());
         lockButton = addRenderableWidget(Button.builder(Component.empty(),
                         button -> click(AmmoAssemblerMenu.BUTTON_LOCK))
-                .bounds(leftPos + 240, topPos + 174, 94, 18).build());
+                .bounds(leftPos + 284, topPos + 174, 94, 18).build());
         updateLabels();
     }
 
@@ -149,8 +149,8 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
         graphics.fill(x + PANEL_W - 1, y, x + PANEL_W, y + PANEL_H, 0xFF373737);
 
         // right-side configuration strip
-        graphics.fill(x + 236, y, x + PANEL_W, y + PANEL_H, 0xFFB8B8B8);
-        graphics.fill(x + 236, y, x + 237, y + PANEL_H, 0xFF373737);
+        graphics.fill(x + 280, y, x + PANEL_W, y + PANEL_H, 0xFFB8B8B8);
+        graphics.fill(x + 280, y, x + 281, y + PANEL_H, 0xFF373737);
 
         // pane backgrounds
         pane(graphics, x + AMMO_X - 2, y + LIST_Y - 2, AMMO_W + 4, LIST_H + 4);
@@ -285,7 +285,7 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
                 RECIPE_X, 20, 0x404040, false);
         graphics.drawString(font, Component.translatable("gui.taczammobox.ammo_assembler.output"),
                 OUT_X, 20, 0x404040, false);
-        graphics.drawString(font, Component.translatable("gui.taczammobox.sides"), 240, 12, 0x404040, false);
+        graphics.drawString(font, Component.translatable("gui.taczammobox.sides"), 284, 12, 0x404040, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
