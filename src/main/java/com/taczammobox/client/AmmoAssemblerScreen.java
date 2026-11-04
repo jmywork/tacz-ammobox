@@ -24,7 +24,7 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
     private static final String[] FACE_KEYS = {"up", "down", "left", "right", "front", "back"};
 
     private static final int PANEL_W = 340;
-    private static final int PANEL_H = 228;
+    private static final int PANEL_H = 256;
 
     private static final int AMMO_X = 8;
     private static final int AMMO_W = 44;
@@ -33,11 +33,11 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
     private static final int OUT_X = 188;
     private static final int OUT_W = 48;
     private static final int LIST_Y = 30;
-    private static final int LIST_H = 92;
+    private static final int LIST_H = 120;
 
     private static final int AMMO_ROW_H = 18;
     private static final int AMMO_VISIBLE = 5;
-    private static final int RECIPE_ROW_H = 44;
+    private static final int RECIPE_ROW_H = 58;
     private static final int RECIPE_VISIBLE = 2;
     private static final int ICONS_PER_LINE = 4;
 
@@ -53,7 +53,7 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
         super(menu, inventory, title);
         this.imageWidth = PANEL_W;
         this.imageHeight = PANEL_H;
-        this.inventoryLabelY = 132;
+        this.inventoryLabelY = 164;
     }
 
     @Override
@@ -160,11 +160,11 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
         // player inventory slots
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                drawSlot(graphics, x + 7 + col * 18, y + 143 + row * 18);
+                drawSlot(graphics, x + 7 + col * 18, y + 171 + row * 18);
             }
         }
         for (int col = 0; col < 9; col++) {
-            drawSlot(graphics, x + 7 + col * 18, y + 203);
+            drawSlot(graphics, x + 7 + col * 18, y + 231);
         }
 
         // column 1: ammo types
@@ -220,7 +220,7 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
                     int textWidth = font.width(text);
                     int cell = 17 + textWidth + 5;
                     if (iconX + cell > paneRight) {
-                        if (line >= 1) {
+                        if (line >= 2) {
                             continue;
                         }
                         line = 1;
@@ -255,9 +255,9 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
         int progress = menu.getProgress();
         int max = menu.getMaxProgress();
         int width = max <= 0 ? 0 : Math.min(60, progress * 60 / max);
-        graphics.fill(x + 8, y + 124, x + 68, y + 131, 0xFF8B8B8B);
+        graphics.fill(x + 8, y + 152, x + 68, y + 159, 0xFF8B8B8B);
         if (width > 0) {
-            graphics.fill(x + 8, y + 124, x + 8 + width, y + 131, 0xFF6FBF4A);
+            graphics.fill(x + 8, y + 152, x + 8 + width, y + 159, 0xFF6FBF4A);
         }
     }
 
