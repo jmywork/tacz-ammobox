@@ -199,26 +199,45 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
                             rowY + RECIPE_ROW_H - 1, 0xFF9A9A9A);
                 }
                 AssemblerRecipes.Entry entry = recipes.get(index);
-                int iconX = x + RECIPE_X + 4;
+                int baseX = x + RECIPE_X + 4;
+                int iconX = baseX;
                 int iconY = rowY + 3;
-                int perLine = 0;
+                int paneRight = x + RECIPE_X + RECIPE_W - 2;
+                int line = 0;
+                int drawn = 0;
+                int total = 0;
+                for (AssemblerRecipes.IngredientStack requirement : entry.inputs()) {
+                    if (requirement.ingredient().getItems().length > 0) {
+                        total++;
+                    }
+                }
                 for (AssemblerRecipes.IngredientStack requirement : entry.inputs()) {
                     ItemStack[] items = requirement.ingredient().getItems();
                     if (items.length == 0) {
                         continue;
                     }
+                    String text = String.valueOf(requirement.count());
+                    int textWidth = font.width(text);
+                    int cell = 17 + textWidth + 5;
+                    if (iconX + cell > paneRight) {
+                        if (line >= 1) {
+                            continue;
+                        }
+                        line = 1;
+                        iconX = baseX;
+                        iconY += 20;
+                    }
                     graphics.renderItem(items[0].copyWithCount(1), iconX, iconY);
                     int available = countAvailable(requirement.ingredient());
                     boolean enough = available >= requirement.count();
-                    graphics.drawString(font, String.valueOf(requirement.count()), iconX + 17, iconY + 4,
+                    graphics.drawString(font, text, iconX + 17, iconY + 4,
                             enough ? 0xFF303030 : 0xFFB00000, false);
-                    perLine++;
-                    iconX += 30;
-                    if (perLine >= ICONS_PER_LINE) {
-                        perLine = 0;
-                        iconX = x + RECIPE_X + 4;
-                        iconY += 20;
-                    }
+                    drawn++;
+                    iconX += cell;
+                }
+                if (drawn < total) {
+                    graphics.drawString(font, "+" + (total - drawn), Math.min(iconX, paneRight - 8),
+                            iconY + 4, 0xFF606060, false);
                 }
             }
         }
