@@ -16,8 +16,9 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 public class AmmoAssemblerMenu extends AbstractContainerMenu {
-    public static final int GRID_X = 110;
-    public static final int GRID_Y = 18;
+    public static final int GRID_X = 8;
+    public static final int GRID_Y = 104;
+    public static final int RECIPE_BUTTON_OFFSET = 1000;
 
     private final AmmoAssemblerBlockEntity assembler;
     private final ContainerData data;
@@ -36,7 +37,7 @@ public class AmmoAssemblerMenu extends AbstractContainerMenu {
                         GRID_X + col * 18, GRID_Y + row * 18));
             }
         }
-        addSlot(new SlotItemHandler(handler, AmmoAssemblerBlockEntity.SLOT_OUTPUT, 176, 36) {
+        addSlot(new SlotItemHandler(handler, AmmoAssemblerBlockEntity.SLOT_OUTPUT, 78, 122) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return false;
@@ -45,11 +46,11 @@ public class AmmoAssemblerMenu extends AbstractContainerMenu {
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 150 + row * 18));
+                addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 168 + row * 18));
             }
         }
         for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(inventory, col, 8 + col * 18, 208));
+            addSlot(new Slot(inventory, col, 8 + col * 18, 226));
         }
     }
 
@@ -68,23 +69,37 @@ public class AmmoAssemblerMenu extends AbstractContainerMenu {
         throw new IllegalStateException("Missing ammo assembler at " + pos);
     }
 
-    public List<AssemblerRecipes.Entry> recipes() {
-        return assembler.entries();
+    public List<AssemblerRecipes.Group> groups() {
+        return assembler.groups();
     }
 
-    public int getSelectedIndex() {
+    public int getSelectedAmmo() {
         return data.get(0);
+    }
+
+    public int getSelectedRecipe() {
+        return data.get(1);
+    }
+
+    @Nullable
+    public AssemblerRecipes.Group selectedGroup() {
+        List<AssemblerRecipes.Group> groups = groups();
+        int index = getSelectedAmmo();
+        return index >= 0 && index < groups.size() ? groups.get(index) : null;
     }
 
     @Nullable
     public AssemblerRecipes.Entry selectedEntry() {
-        List<AssemblerRecipes.Entry> entries = recipes();
-        int index = getSelectedIndex();
-        return index >= 0 && index < entries.size() ? entries.get(index) : null;
+        AssemblerRecipes.Group group = selectedGroup();
+        if (group == null) {
+            return null;
+        }
+        int index = getSelectedRecipe();
+        return index >= 0 && index < group.recipes().size() ? group.recipes().get(index) : null;
     }
 
     public int getProgress() {
-        return data.get(1);
+        return data.get(2);
     }
 
     public int getMaxProgress() {
@@ -94,7 +109,11 @@ public class AmmoAssemblerMenu extends AbstractContainerMenu {
 
     @Override
     public boolean clickMenuButton(Player player, int id) {
-        assembler.select(id);
+        if (id >= RECIPE_BUTTON_OFFSET) {
+            assembler.selectRecipe(id - RECIPE_BUTTON_OFFSET);
+        } else {
+            assembler.selectAmmo(id);
+        }
         return true;
     }
 

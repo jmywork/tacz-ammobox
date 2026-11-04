@@ -14,7 +14,11 @@
   "jei.taczammobox.ammo_chain.info2": "The reload animation and cooldown stay vanilla; leftover rounds are cached in the belt.",
 
   
-  "gui.taczammobox.ammo_assembler.requires": "Requires",
+  
+  "gui.taczammobox.ammo_assembler.ammo": "Ammo",
+  "gui.taczammobox.ammo_assembler.recipes": "Recipes",
+  "gui.taczammobox.ammo_assembler.output": "Output",
+"gui.taczammobox.ammo_assembler.requires": "Requires",
 "block.taczammobox.ammo_assembler": "Ammo Assembler",
   "item.taczammobox.casing": "Casing",
   "item.taczammobox.powder": "Propellant",

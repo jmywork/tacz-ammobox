@@ -28,16 +28,17 @@ import java.util.List;
 /**
  * Recipe-driven ammo assembler.
  *
- * <p>The player picks one entry from {@link AssemblerRecipes}; the machine then matches the
- * required ingredients in its nine input slots, consumes them and emits the recipe output
- * after the recipe's craft time. No hard-coded recipe shape.</p>
+ * <p>Selection is two-step, matching the three-pane screen: pick an ammo type, then one of
+ * its recipes. The machine matches the selected recipe's ingredients in its 3x3 grid,
+ * consumes them and emits the recipe output.</p>
  */
 public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvider {
     public static final int INPUT_SLOTS = 9;
     public static final int SLOT_OUTPUT = 9;
     public static final int SLOTS = 10;
 
-    private int selectedIndex = -1;
+    private int selectedAmmo = -1;
+    private int selectedRecipe = -1;
     private int progress;
 
     private final ItemStackHandler inventory = new ItemStackHandler(SLOTS) {
@@ -61,19 +62,21 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
         @Override
         public int get(int index) {
             return switch (index) {
-                case 0 -> selectedIndex;
-                case 1 -> progress;
-                case 2 -> maxProgress();
+                case 0 -> selectedAmmo;
+                case 1 -> selectedRecipe;
+                case 2 -> progress;
                 default -> 0;
             };
         }
 
         @Override
         public void set(int index, int value) {
-            if (index == 0) {
-                selectedIndex = value;
-            } else if (index == 1) {
-                progress = Math.max(0, value);
+            switch (index) {
+                case 0 -> selectedAmmo = value;
+                case 1 -> selectedRecipe = value;
+                case 2 -> progress = Math.max(0, value);
+                default -> {
+                }
             }
         }
 
@@ -95,31 +98,49 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
         return data;
     }
 
-    public int getSelectedIndex() {
-        return selectedIndex;
+    public List<AssemblerRecipes.Group> groups() {
+        return level == null ? List.of() : AssemblerRecipes.groups(level);
     }
 
-    public void select(int index) {
-        List<AssemblerRecipes.Entry> entries = entries();
-        selectedIndex = index >= 0 && index < entries.size() ? index : -1;
+    public int getSelectedAmmo() {
+        return selectedAmmo;
+    }
+
+    public int getSelectedRecipe() {
+        return selectedRecipe;
+    }
+
+    public void selectAmmo(int index) {
+        List<AssemblerRecipes.Group> groups = groups();
+        selectedAmmo = index >= 0 && index < groups.size() ? index : -1;
+        selectedRecipe = -1;
         progress = 0;
         setChanged();
     }
 
-    public List<AssemblerRecipes.Entry> entries() {
-        if (level == null) {
-            return List.of();
+    public void selectRecipe(int index) {
+        AssemblerRecipes.Group group = selectedGroup();
+        if (group == null) {
+            return;
         }
-        return AssemblerRecipes.all(level);
+        selectedRecipe = index >= 0 && index < group.recipes().size() ? index : -1;
+        progress = 0;
+        setChanged();
+    }
+
+    @Nullable
+    public AssemblerRecipes.Group selectedGroup() {
+        List<AssemblerRecipes.Group> groups = groups();
+        return selectedAmmo >= 0 && selectedAmmo < groups.size() ? groups.get(selectedAmmo) : null;
     }
 
     @Nullable
     public AssemblerRecipes.Entry selectedEntry() {
-        List<AssemblerRecipes.Entry> entries = entries();
-        if (selectedIndex < 0 || selectedIndex >= entries.size()) {
+        AssemblerRecipes.Group group = selectedGroup();
+        if (group == null || selectedRecipe < 0 || selectedRecipe >= group.recipes().size()) {
             return null;
         }
-        return entries.get(selectedIndex);
+        return group.recipes().get(selectedRecipe);
     }
 
     public int maxProgress() {
@@ -216,7 +237,8 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
         super.saveAdditional(tag);
         tag.put("Inventory", inventory.serializeNBT());
         tag.putInt("Progress", progress);
-        tag.putInt("Selected", selectedIndex);
+        tag.putInt("SelectedAmmo", selectedAmmo);
+        tag.putInt("SelectedRecipe", selectedRecipe);
     }
 
     @Override
@@ -226,7 +248,8 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
             inventory.deserializeNBT(tag.getCompound("Inventory"));
         }
         progress = tag.getInt("Progress");
-        selectedIndex = tag.getInt("Selected");
+        selectedAmmo = tag.getInt("SelectedAmmo");
+        selectedRecipe = tag.getInt("SelectedRecipe");
     }
 
     @Override
