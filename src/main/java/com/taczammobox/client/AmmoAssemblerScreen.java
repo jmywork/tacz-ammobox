@@ -23,15 +23,15 @@ import java.util.List;
 public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMenu> {
     private static final String[] FACE_KEYS = {"up", "down", "left", "right", "front", "back"};
 
-    private static final int PANEL_W = 300;
+    private static final int PANEL_W = 340;
     private static final int PANEL_H = 228;
 
     private static final int AMMO_X = 8;
     private static final int AMMO_W = 44;
     private static final int RECIPE_X = 56;
-    private static final int RECIPE_W = 92;
-    private static final int OUT_X = 152;
-    private static final int OUT_W = 40;
+    private static final int RECIPE_W = 128;
+    private static final int OUT_X = 188;
+    private static final int OUT_W = 48;
     private static final int LIST_Y = 30;
     private static final int LIST_H = 92;
 
@@ -39,7 +39,7 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
     private static final int AMMO_VISIBLE = 5;
     private static final int RECIPE_ROW_H = 44;
     private static final int RECIPE_VISIBLE = 2;
-    private static final int ICONS_PER_LINE = 4;
+    private static final int ICONS_PER_LINE = 3;
 
     private int ammoScroll;
     private int recipeScroll;
@@ -70,14 +70,14 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
         for (int i = 0; i < sideButtons.length; i++) {
             int id = 1 + shownDirections[i].ordinal();
             sideButtons[i] = addRenderableWidget(Button.builder(Component.empty(), button -> click(id))
-                    .bounds(leftPos + 200, topPos + 28 + i * 20, 94, 18).build());
+                    .bounds(leftPos + 240, topPos + 28 + i * 20, 94, 18).build());
         }
         redstoneButton = addRenderableWidget(Button.builder(Component.empty(),
                         button -> click(AmmoAssemblerMenu.BUTTON_REDSTONE))
-                .bounds(leftPos + 200, topPos + 152, 94, 18).build());
+                .bounds(leftPos + 240, topPos + 152, 94, 18).build());
         lockButton = addRenderableWidget(Button.builder(Component.empty(),
                         button -> click(AmmoAssemblerMenu.BUTTON_LOCK))
-                .bounds(leftPos + 200, topPos + 174, 94, 18).build());
+                .bounds(leftPos + 240, topPos + 174, 94, 18).build());
         updateLabels();
     }
 
@@ -149,8 +149,8 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
         graphics.fill(x + PANEL_W - 1, y, x + PANEL_W, y + PANEL_H, 0xFF373737);
 
         // right-side configuration strip
-        graphics.fill(x + 196, y, x + PANEL_W, y + PANEL_H, 0xFFB8B8B8);
-        graphics.fill(x + 196, y, x + 197, y + PANEL_H, 0xFF373737);
+        graphics.fill(x + 236, y, x + PANEL_W, y + PANEL_H, 0xFFB8B8B8);
+        graphics.fill(x + 236, y, x + 237, y + PANEL_H, 0xFF373737);
 
         // pane backgrounds
         pane(graphics, x + AMMO_X - 2, y + LIST_Y - 2, AMMO_W + 4, LIST_H + 4);
@@ -200,19 +200,20 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
                 }
                 AssemblerRecipes.Entry entry = recipes.get(index);
                 int iconX = x + RECIPE_X + 2;
-                int iconY = rowY + 1;
+                int iconY = rowY + 3;
                 int perLine = 0;
                 for (AssemblerRecipes.IngredientStack requirement : entry.inputs()) {
                     ItemStack[] items = requirement.ingredient().getItems();
                     if (items.length == 0) {
                         continue;
                     }
-                    graphics.renderItem(items[0], iconX, iconY);
+                    graphics.renderItem(items[0].copyWithCount(1), iconX, iconY);
                     int available = countAvailable(requirement.ingredient());
-                    drawCount(graphics, font, iconX, iconY, requirement.count(),
-                            available >= requirement.count());
+                    boolean enough = available >= requirement.count();
+                    graphics.drawString(font, "x" + requirement.count(), iconX + 17, iconY + 4,
+                            enough ? 0xFF3B3B3B : 0xFFAA0000, false);
                     perLine++;
-                    iconX += 17;
+                    iconX += 40;
                     if (perLine >= ICONS_PER_LINE) {
                         perLine = 0;
                         iconX = x + RECIPE_X + 2;
@@ -225,7 +226,7 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
         // column 3: output preview and count
         AssemblerRecipes.Entry entry = menu.selectedEntry();
         if (entry != null) {
-            graphics.renderItem(entry.output(), x + OUT_X + 12, y + LIST_Y + 14);
+            graphics.renderItem(entry.output().copyWithCount(1), x + OUT_X + 12, y + LIST_Y + 14);
             String count = "x" + entry.output().getCount();
             graphics.drawString(font, count, x + OUT_X + (OUT_W - font.width(count)) / 2,
                     y + LIST_Y + 38, 0x404040, false);
@@ -252,14 +253,6 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
         graphics.fill(x, y, x + 16, y + 16, 0xFF8B8B8B);
     }
 
-    private static void drawCount(GuiGraphics graphics, net.minecraft.client.gui.Font font,
-                                  int x, int y, int count, boolean enough) {
-        String text = String.valueOf(count);
-        int textX = x + 16 - font.width(text);
-        graphics.fill(textX - 1, y + 8, x + 16, y + 16, 0xB0000000);
-        graphics.drawString(font, text, textX, y + 8, enough ? 0xFFFFFF55 : 0xFFFF5555, true);
-    }
-
     private int countAvailable(Ingredient ingredient) {
         return menu.countAvailable(ingredient);
     }
@@ -273,7 +266,7 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
                 RECIPE_X, 20, 0x404040, false);
         graphics.drawString(font, Component.translatable("gui.taczammobox.ammo_assembler.output"),
                 OUT_X, 20, 0x404040, false);
-        graphics.drawString(font, Component.translatable("gui.taczammobox.sides"), 200, 12, 0x404040, false);
+        graphics.drawString(font, Component.translatable("gui.taczammobox.sides"), 240, 12, 0x404040, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
