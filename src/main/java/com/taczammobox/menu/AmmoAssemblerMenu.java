@@ -17,7 +17,7 @@ import java.util.List;
 
 public class AmmoAssemblerMenu extends AbstractContainerMenu {
     public static final int GRID_X = 8;
-    public static final int GRID_Y = 104;
+    public static final int GRID_Y = 126;
     public static final int RECIPE_BUTTON_OFFSET = 1000;
 
     private final AmmoAssemblerBlockEntity assembler;
@@ -37,7 +37,7 @@ public class AmmoAssemblerMenu extends AbstractContainerMenu {
                         GRID_X + col * 18, GRID_Y + row * 18));
             }
         }
-        addSlot(new SlotItemHandler(handler, AmmoAssemblerBlockEntity.SLOT_OUTPUT, 78, 122) {
+        addSlot(new SlotItemHandler(handler, AmmoAssemblerBlockEntity.SLOT_OUTPUT, 78, 144) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return false;
@@ -46,11 +46,11 @@ public class AmmoAssemblerMenu extends AbstractContainerMenu {
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 168 + row * 18));
+                addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 190 + row * 18));
             }
         }
         for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(inventory, col, 8 + col * 18, 226));
+            addSlot(new Slot(inventory, col, 8 + col * 18, 244));
         }
     }
 
