@@ -54,6 +54,8 @@ public final class AmmoBoxCommand {
         dispatcher.register(Commands.literal("taczammobox")
                 .then(Commands.literal("help")
                         .executes(context -> showHelp(context.getSource())))
+                .then(Commands.literal("selftest")
+                        .executes(context -> selftest(context.getSource())))
                 .then(Commands.literal("pack")
                         .executes(context -> pack(context.getSource())))
                 .then(Commands.literal("packtoggle")
@@ -206,6 +208,51 @@ public final class AmmoBoxCommand {
         source.sendSuccess(() -> Component.translatable("command.taczammobox.help.cleanup"), false);
         source.sendSuccess(() -> Component.translatable("command.taczammobox.help.clean"), false);
         source.sendSuccess(() -> Component.translatable("command.taczammobox.help.packtoggle"), false);
+        return 1;
+    }
+
+    private static int selftest(CommandSourceStack source) {
+        ServerPlayer player = source.getPlayer();
+        if (player == null) {
+            source.sendFailure(Component.translatable("command.taczammobox.capacity.player_only"));
+            return 0;
+        }
+        ItemStack hand = player.getMainHandItem();
+        int ownBoxes = 0;
+        int taczBoxes = 0;
+        int loose = 0;
+        int packaged = 0;
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.isEmpty()) {
+                continue;
+            }
+            if (stack.getItem() instanceof com.taczammobox.item.PackagedAmmo) {
+                packaged++;
+            } else if (stack.getItem() instanceof IAmmoBox) {
+                if (BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace()
+                        .equals(TaczAmmoBoxMod.MOD_ID)) {
+                    ownBoxes++;
+                } else {
+                    taczBoxes++;
+                }
+            } else if (stack.getItem() instanceof com.tacz.guns.api.item.IAmmo) {
+                loose++;
+            }
+        }
+        String handId = hand.isEmpty() ? "empty"
+                : BuiltInRegistries.ITEM.getKey(hand.getItem()).toString();
+        String handLine = "[selftest] hand=" + handId
+                + " pkg=" + (hand.getItem() instanceof com.taczammobox.item.PackagedAmmo)
+                + " iammo=" + (hand.getItem() instanceof com.tacz.guns.api.item.IAmmo)
+                + " iammobox=" + (hand.getItem() instanceof IAmmoBox);
+        String invLine = "[selftest] inventory: ourBoxes=" + ownBoxes
+                + " taczBoxes=" + taczBoxes + " looseAmmo=" + loose + " packaged=" + packaged;
+        String settingsLine = "[selftest] oneKeyPack=" + WasteSettings.oneKeyPack()
+                + " autoRefill=" + WasteSettings.autoRefill();
+        source.sendSuccess(() -> Component.literal(handLine), false);
+        source.sendSuccess(() -> Component.literal(invLine), false);
+        source.sendSuccess(() -> Component.literal(settingsLine), false);
+        TaczAmmoBoxMod.LOGGER.info("{}\n{}\n{}", handLine, invLine, settingsLine);
         return 1;
     }
 

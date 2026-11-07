@@ -7,6 +7,7 @@ import com.tacz.guns.api.item.IAmmo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
@@ -30,6 +31,7 @@ public final class ClientInput {
             return;
         }
         if (ModKeyMappings.SORT_AMMO.consumeClick()) {
+            TaczAmmoBoxMod.LOGGER.info("[key] pack pressed");
             ModNetwork.sendPack();
         }
         if (!(minecraft.player.getMainHandItem().getItem() instanceof PackagedAmmo)
@@ -37,6 +39,8 @@ public final class ClientInput {
             return;
         }
         if (ModKeyMappings.FILL_AMMO_BOX.consumeClick()) {
+            TaczAmmoBoxMod.LOGGER.info("[key] fill pressed (hand={})",
+                    BuiltInRegistries.ITEM.getKey(minecraft.player.getMainHandItem().getItem()));
             ModNetwork.sendFill();
         }
     }
