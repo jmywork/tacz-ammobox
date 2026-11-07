@@ -31,10 +31,10 @@ import java.util.List;
 public abstract class CreativeTabFilterMixin
         extends EffectRenderingInventoryScreen<CreativeModeInventoryScreen.ItemPickerMenu> {
 
-    /** Rail geometry: square 20px buttons just left of the panel, 2px apart. */
-    private static final int BUTTON_SIZE = 20;
-    private static final int BUTTON_STEP = 22;
-    private static final int RAIL_GAP = 4;
+    /** Rail geometry: 32x26 tabs stacked flush against the left edge of the panel. */
+    private static final int BUTTON_WIDTH = 32;
+    private static final int BUTTON_STEP = 26;
+    private static final int RAIL_GAP = 0;
 
     @Unique
     private static boolean taczammobox$showEasterEgg;
@@ -58,8 +58,8 @@ public abstract class CreativeTabFilterMixin
 
     @Inject(method = "init", at = @At("TAIL"))
     private void taczammobox$addFilterRail(CallbackInfo ci) {
-        int x = Math.max(2, this.leftPos - BUTTON_SIZE - RAIL_GAP);
-        int y = this.topPos + 8;
+        int x = Math.max(2, this.leftPos - BUTTON_WIDTH - RAIL_GAP);
+        int y = this.topPos + 6;
         this.taczammobox$normalButton = new CreativeFilterButton(x, y,
                 new ItemStack(ModItems.PACKER.get()),
                 Component.translatable("gui.taczammobox.creative.normal"),
