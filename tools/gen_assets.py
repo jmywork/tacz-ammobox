@@ -36,6 +36,7 @@ SIZE = 32
 
 TYPES = [
     ("12g", "12 GAUGE", "#C2574A"),
+    ("300blk", ".300 BLK", "#6F7A55"),
     ("22wmr", ".22 WMR", "#D8B25E"),
     ("30_06", ".30-06", "#B98A4E"),
     ("308", ".308", "#C49A54"),
@@ -67,6 +68,7 @@ FONT_REGULAR = "C:/Windows/Fonts/arial.ttf"
 # Big, readable code printed on the 32px label. Full caliber stays in the tooltip.
 SHORT = {
     "12g": "12G",
+    "300blk": "300B",
     "22wmr": "22W",
     "30_06": "3006",
     "308": "308",
@@ -303,8 +305,9 @@ def draw_box_top_art(item_id: str, color_hex: str):
     accent = rgb(color_hex)
     icon = tacz_ammo_icon(item_id)
     if icon is not None:
-        icon = icon.resize((SIZE - 4, SIZE - 4), Image.LANCZOS)
-        img.alpha_composite(icon, (2, 2))
+        # Paste at native resolution: TACZ 1.2.0 redrew the ammo icons with a
+        # thin text strip, and any downscale smears it into two colour bands.
+        img.alpha_composite(icon, (0, 0))
         return img
     style = bullet_style(item_id)
     if style == "shotgun":
@@ -339,11 +342,10 @@ def draw_crate_top_art(item_id: str, color_hex: str):
     draw.rectangle([2, 2, SIZE - 3, SIZE - 3], fill=rgb("#2E3236"), outline=rgb("#5A5F63"))
     icon = tacz_ammo_icon(item_id)
     if icon is not None:
-        icon = icon.resize((SIZE - 4, SIZE - 4), Image.LANCZOS)
         # The crate top UV is read from the front, so rotate the icon 180° to
         # keep the TACZ lettering upright when looking at the labeled side.
         icon = icon.rotate(180)
-        img.alpha_composite(icon, (2, 2))
+        img.alpha_composite(icon, (0, 0))
         return img
     style = bullet_style(item_id)
     if style == "shotgun":
@@ -530,7 +532,7 @@ def write_block_assets(item_id: str):
     })
 
 
-TACZ_JAR = ROOT / "libs" / "tacz-1.20.1-1.1.8-hotfix2.jar"
+TACZ_JAR = ROOT / "libs" / "tacz-forge-1.20.1-1.2.0.jar"
 _STACK_CACHE = {}
 
 

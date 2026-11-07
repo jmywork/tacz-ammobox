@@ -35,10 +35,11 @@ import java.util.Set;
 public final class AmmoTypes {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    /** TACZ 1.1.8 default pack ammo: id suffix and a deterministic display colour. */
+    /** TACZ 1.2.0 default pack ammo: id suffix and a deterministic display colour. */
     private static final String[][] BUILTINS = {
             {"12g", "#B06B4F"},
             {"22wmr", "#CBB07A"},
+            {"300blk", "#7F8A62"},
             {"30_06", "#AE8E57"},
             {"308", "#A88F5C"},
             {"338", "#8B8F9A"},
@@ -286,9 +287,9 @@ public final class AmmoTypes {
                 Files.createDirectories(dir);
                 JsonObject root = new JsonObject();
                 root.addProperty("_comment_cn",
-                        "builtin=true 注册 TACZ 默认 24 种; entries 里追加第三方弹种 {ammo,id,itemName,nameKey,name,color,capacity,capacityMultiplier}. itemName 是固定物品 id 后缀，首次加载后请勿修改. capacity/capacityMultiplier 可写数字或 [铁,金,钻石] 数组. 客户端与服务端必须使用同一份文件.");
+                        "builtin=true 注册 TACZ 默认 25 种; entries 里追加第三方弹种 {ammo,id,itemName,nameKey,name,color,capacity,capacityMultiplier}. itemName 是固定物品 id 后缀，首次加载后请勿修改. capacity/capacityMultiplier 可写数字或 [铁,金,钻石] 数组. 客户端与服务端必须使用同一份文件.");
                 root.addProperty("_comment_en",
-                        "builtin=true registers the 24 TACZ defaults; add third-party ammo under entries as {ammo,id,itemName,nameKey,name,color,capacity,capacityMultiplier}. itemName is the fixed item-id suffix; do not change it after first load. capacity/capacityMultiplier accept a number or [iron,gold,diamond]. The client and server must use the same file.");
+                        "builtin=true registers the 25 TACZ defaults; add third-party ammo under entries as {ammo,id,itemName,nameKey,name,color,capacity,capacityMultiplier}. itemName is the fixed item-id suffix; do not change it after first load. capacity/capacityMultiplier accept a number or [iron,gold,diamond]. The client and server must use the same file.");
                 root.addProperty("builtin", true);
                 root.add("entries", new JsonArray());
                 Files.writeString(file, GSON.toJson(root), StandardCharsets.UTF_8);
