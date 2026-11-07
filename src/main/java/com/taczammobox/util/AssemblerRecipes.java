@@ -49,6 +49,11 @@ public final class AssemblerRecipes {
         return cache;
     }
 
+    /** Uncached snapshot: JEI runs on the client and must not share the server-side cache. */
+    public static List<Group> collect(Level level) {
+        return build(level);
+    }
+
     private static List<Group> build(Level level) {
         Map<ResourceLocation, List<Entry>> byAmmo = new LinkedHashMap<>();
         if (level != null) {

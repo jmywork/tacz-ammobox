@@ -84,6 +84,10 @@ public class AmmoAssemblerMenu extends AbstractContainerMenu {
         return data.get(3) != 0;
     }
 
+    public net.minecraft.core.BlockPos getPos() {
+        return assembler.getBlockPos();
+    }
+
     public Direction getFacing() {
         return assembler.getBlockState().getValue(com.taczammobox.block.AmmoAssemblerBlock.FACING);
     }

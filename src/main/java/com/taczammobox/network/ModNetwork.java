@@ -13,7 +13,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import java.util.List;
 
 public final class ModNetwork {
-    private static final String VERSION = "6";
+    private static final String VERSION = "7";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(TaczAmmoBoxMod.MOD_ID, "main"),
@@ -54,6 +54,16 @@ public final class ModNetwork {
                 .consumerMainThread(ConfigSyncPacket::handle)
                 .add();
 
+        CHANNEL.messageBuilder(AssemblerTransferPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(AssemblerTransferPacket::encode)
+                .decoder(AssemblerTransferPacket::decode)
+                .consumerMainThread((message, contextSupplier) -> {
+                    var context = contextSupplier.get();
+                    message.handle(context.getSender());
+                    context.setPacketHandled(true);
+                })
+                .add();
+
         CHANNEL.messageBuilder(SortPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(SortPacket::encode)
                 .decoder(SortPacket::decode)
@@ -75,6 +85,12 @@ public final class ModNetwork {
 
     public static void sendPack() {
         CHANNEL.sendToServer(new SortPacket());
+    }
+
+    public static void sendAssemblerTransfer(net.minecraft.core.BlockPos pos,
+                                             net.minecraft.resources.ResourceLocation recipeId,
+                                             boolean maxTransfer) {
+        CHANNEL.sendToServer(new AssemblerTransferPacket(pos, recipeId, maxTransfer));
     }
 
     public static void sendSettings(ServerPlayer player) {
