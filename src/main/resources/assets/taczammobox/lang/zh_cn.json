@@ -46,8 +46,6 @@
   "gui.taczammobox.ammo_assembler.output": "产物",
   "gui.taczammobox.ammo_assembler.recipes": "配方",
   "gui.taczammobox.ammo_assembler.requires": "所需材料",
-  "gui.taczammobox.creative.easter": "彩蛋",
-  "gui.taczammobox.creative.normal": "正常内容",
   "gui.taczammobox.filter": "过滤",
   "gui.taczammobox.pack": "打包",
   "gui.taczammobox.redstone.high": "有红石信号工作",
@@ -108,5 +106,6 @@
   "tooltip.taczammobox.redstone": "红石：%s",
   "tooltip.taczammobox.redstone.high": "有信号",
   "tooltip.taczammobox.redstone.ignore": "忽略",
-  "tooltip.taczammobox.redstone.low": "无信号"
+  "tooltip.taczammobox.redstone.low": "无信号",
+  "tooltip.taczammobox.easter_egg": "彩蛋物品"
 }

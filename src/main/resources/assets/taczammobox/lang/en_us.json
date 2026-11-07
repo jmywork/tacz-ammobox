@@ -46,8 +46,6 @@
   "gui.taczammobox.ammo_assembler.output": "Output",
   "gui.taczammobox.ammo_assembler.recipes": "Recipes",
   "gui.taczammobox.ammo_assembler.requires": "Requires",
-  "gui.taczammobox.creative.easter": "Easter Eggs",
-  "gui.taczammobox.creative.normal": "Items",
   "gui.taczammobox.filter": "Filter",
   "gui.taczammobox.pack": "Pack",
   "gui.taczammobox.redstone.high": "With Signal",
@@ -108,5 +106,6 @@
   "tooltip.taczammobox.redstone": "Redstone: %s",
   "tooltip.taczammobox.redstone.high": "On signal",
   "tooltip.taczammobox.redstone.ignore": "Ignored",
-  "tooltip.taczammobox.redstone.low": "No signal"
+  "tooltip.taczammobox.redstone.low": "No signal",
+  "tooltip.taczammobox.easter_egg": "Easter Egg Item"
 }
