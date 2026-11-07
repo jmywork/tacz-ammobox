@@ -1,12 +1,13 @@
 package com.taczammobox.mixin.client;
 
 import com.tacz.guns.api.item.IAttachment;
+import com.taczammobox.client.ui.CreativeFilterButton;
 import com.taczammobox.config.FeatureFlags;
 import com.taczammobox.registry.ModItems;
 import com.taczammobox.util.AutoFireTier;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.EffectRenderingInventoryScreen;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -17,40 +18,51 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Adds the 正常内容 / 彩蛋 filter rail next to the creative item grid, the same idea as
- * TACZ's gun pack filters. Our tab carries both normal items and easter eggs, and the
- * two buttons decide which half the grid shows.
+ * Adds the 正常内容 / 彩蛋 rail beside the creative item grid, the same idea as TACZ's
+ * gun pack filters. Our tab carries both ordinary items and easter eggs; the rail swaps
+ * which half the grid shows.
  */
 @Mixin(CreativeModeInventoryScreen.class)
 public abstract class CreativeTabFilterMixin
         extends EffectRenderingInventoryScreen<CreativeModeInventoryScreen.ItemPickerMenu>
         implements CreativeScreenAccess {
 
+    /** Rail geometry: square 20px buttons just left of the panel, 2px apart. */
+    private static final int BUTTON_SIZE = 20;
+    private static final int BUTTON_STEP = 22;
+    private static final int RAIL_GAP = 4;
+
     @Unique
     private static boolean taczammobox$showEasterEgg;
 
     @Unique
-    private Button taczammobox$normalButton;
+    private static boolean taczammobox$warned;
 
     @Unique
-    private Button taczammobox$easterButton;
+    private CreativeFilterButton taczammobox$normalButton;
+
+    @Unique
+    private CreativeFilterButton taczammobox$easterButton;
 
     protected CreativeTabFilterMixin(CreativeModeInventoryScreen.ItemPickerMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
     }
 
     @Inject(method = "init", at = @At("TAIL"))
-    private void taczammobox$addFilterButtons(CallbackInfo ci) {
-        int x = Math.max(2, this.leftPos - 58);
-        int y = this.topPos + 6;
-        this.taczammobox$normalButton = Button.builder(
-                        Component.translatable("gui.taczammobox.creative.normal"), b -> taczammobox$setFilter(false))
-                .bounds(x, y, 54, 20).build();
-        this.taczammobox$easterButton = Button.builder(
-                        Component.translatable("gui.taczammobox.creative.easter"), b -> taczammobox$setFilter(true))
-                .bounds(x, y + 22, 54, 20).build();
+    private void taczammobox$addFilterRail(CallbackInfo ci) {
+        int x = Math.max(2, this.leftPos - BUTTON_SIZE - RAIL_GAP);
+        int y = this.topPos + 8;
+        this.taczammobox$normalButton = new CreativeFilterButton(x, y,
+                new ItemStack(ModItems.PACKER.get()),
+                Component.translatable("gui.taczammobox.creative.normal"),
+                () -> taczammobox$setFilter(false));
+        this.taczammobox$easterButton = new CreativeFilterButton(x, y + BUTTON_STEP,
+                new ItemStack(ModItems.AMMO_BELT.get()),
+                Component.translatable("gui.taczammobox.creative.easter"),
+                () -> taczammobox$setFilter(true));
         this.addRenderableWidget(this.taczammobox$normalButton);
         this.addRenderableWidget(this.taczammobox$easterButton);
+        taczammobox$filterNow();
     }
 
     @Inject(method = "refreshSearchResults", at = @At("TAIL"))
@@ -66,19 +78,15 @@ public abstract class CreativeTabFilterMixin
     }
 
     @Unique
-    private static boolean taczammobox$warned;
-
-    @Unique
     private void taczammobox$filterNow() {
-        boolean ours = taczammobox$showsOurItems();
-        boolean filterable = ours && FeatureFlags.easterEggTab();
+        boolean filterable = FeatureFlags.easterEggTab() && taczammobox$showsOurItems();
         if (this.taczammobox$normalButton != null) {
             this.taczammobox$normalButton.visible = filterable;
-            this.taczammobox$normalButton.active = taczammobox$showEasterEgg;
+            this.taczammobox$normalButton.setSelected(!taczammobox$showEasterEgg);
         }
         if (this.taczammobox$easterButton != null) {
             this.taczammobox$easterButton.visible = filterable;
-            this.taczammobox$easterButton.active = !taczammobox$showEasterEgg;
+            this.taczammobox$easterButton.setSelected(taczammobox$showEasterEgg);
         }
         if (!filterable) {
             return;
@@ -105,14 +113,18 @@ public abstract class CreativeTabFilterMixin
     }
 
     /**
-     * The creative screen keeps its selected tab in a private static field that mixin cannot
-     * shadow reliably here, so recognise our tab by its marker item instead. Search text can
-     * hide that item, in which case the rail just hides for that moment.
+     * The selected tab lives in a private static field that mixin cannot shadow reliably
+     * here, so recognise our tab by its items instead. Both halves always hold at least
+     * one of our items, so the rail stays put while switching filters.
      */
     @Unique
     private boolean taczammobox$showsOurItems() {
+        String ours = com.taczammobox.TaczAmmoBoxMod.MOD_ID;
         for (ItemStack stack : this.menu.items) {
-            if (stack.is(ModItems.PACKER.get())) {
+            if (stack.isEmpty()) {
+                continue;
+            }
+            if (ours.equals(BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace())) {
                 return true;
             }
         }
