@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.tacz.guns.api.item.IAttachment;
 import com.taczammobox.TaczAmmoBoxMod;
 import com.taczammobox.util.AmmoChainHelper;
 import com.taczammobox.util.AutoFireTier;
@@ -211,8 +212,17 @@ public final class FeatureFlags {
         return tier == null ? -1L : tier.shootInterval();
     }
 
-    /** True when {@code stack} is one of our auto-fire magazines. */
+    /**
+     * True when {@code stack} is one of our auto-fire magazines, either as a loose
+     * attachment item or mounted on a gun.
+     */
     public static boolean isTierMagazine(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        if (stack.getItem() instanceof IAttachment attachment) {
+            return AutoFireTier.of(attachment.getAttachmentId(stack)) != null;
+        }
         return AutoFireTier.of(stack) != null;
     }
 
