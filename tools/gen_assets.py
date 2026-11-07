@@ -307,6 +307,9 @@ def draw_box_top_art(item_id: str, color_hex: str):
     if icon is not None:
         # Paste at native resolution: TACZ 1.2.0 redrew the ammo icons with a
         # thin text strip, and any downscale smears it into two colour bands.
+        # The up face maps the texture 180° from the labelled front, so the
+        # icon has to be turned the same way as on the crate.
+        icon = icon.rotate(180)
         img.alpha_composite(icon, (0, 0))
         return img
     style = bullet_style(item_id)
