@@ -58,10 +58,36 @@ dependencies {
     compileOnly(fg.deobf('com.simibubi.create:create-1.20.1:6.0.8-289:slim')) { transitive = false }
     compileOnly fg.deobf('net.createmod.ponder:Ponder-Forge-1.20.1:1.0.91')
     compileOnly fg.deobf('dev.engine-room.flywheel:flywheel-forge-api-1.20.1:1.0.5')
+
+    // Mixin annotation processor: rewrites @Inject/@Shadow names of vanilla members into
+    // the SRG names present at runtime and emits a refmap. Mod-to-mod mixins keep their
+    // own names and need no mapping.
+    annotationProcessor 'org.spongepowered:mixin:0.8.5'
+    // The mixin processor reads/writes its refmap with Gson; the processor classpath is
+    // isolated from the normal one. Both jars ship with the machine's Gradle cache, but
+    // this build runs offline, so they live in libs/ like the other compileOnly jars.
+    annotationProcessor files(
+            'libs/gson-2.10.1.jar',
+            'libs/guava-31.1-jre.jar',
+            'libs/asm-9.7.1.jar',
+            'libs/asm-tree-9.7.1.jar',
+            'libs/asm-util-9.7.1.jar',
+            'libs/asm-analysis-9.7.1.jar',
+            'libs/asm-commons-9.7.1.jar')
 }
+
+def refmapFile = file("$buildDir/resources/main/taczammobox.refmap.json")
+def srgMappings = file("$buildDir/createMcpToSrg/output.tsrg")
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+    dependsOn 'createMcpToSrg'
+    options.compilerArgs += [
+            "-AoutRefMapFile=${refmapFile.absolutePath}",
+            "-AmappingTypes=tsrg",
+            "-AdefaultObfuscationEnv=searge",
+            "-AreobfTsrgFile=${srgMappings.absolutePath}"
+    ]
 }
 
 processResources {

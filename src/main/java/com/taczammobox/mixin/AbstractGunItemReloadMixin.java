@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(AbstractGunItem.class)
 public abstract class AbstractGunItemReloadMixin {
-    @Inject(method = "canReload", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "canReload", at = @At("RETURN"), cancellable = true, remap = false)
     private void taczammobox$chainCanReload(LivingEntity shooter, ItemStack gunStack,
             CallbackInfoReturnable<Boolean> cir) {
         if (cir.getReturnValue() || !(shooter instanceof Player player)) {

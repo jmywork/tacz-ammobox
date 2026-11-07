@@ -22,7 +22,7 @@ import java.util.Set;
  */
 @Mixin(AttachmentsTagManager.class)
 public abstract class AttachmentsTagMixin {
-    @Inject(method = "getAllowAttachmentTags", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "getAllowAttachmentTags", at = @At("RETURN"), cancellable = true, remap = false)
     private void taczammobox$allowAutoSear(ResourceLocation gunId, CallbackInfoReturnable<Set<String>> cir) {
         if (!com.taczammobox.config.FeatureFlags.autoFire()) {
             return;

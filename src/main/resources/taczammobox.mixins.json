@@ -3,6 +3,7 @@
   "minVersion": "0.8",
   "package": "com.taczammobox.mixin",
   "compatibilityLevel": "JAVA_17",
+  "refmap": "taczammobox.refmap.json",
   "mixins": [
     "DeployerHandlerMixin",
     "AttachmentDataUtilsMixin",
@@ -15,7 +16,7 @@
   "client": [
     "AnimationStateMachineMixin",
     "SoundPlayManagerMixin",
-    "CreativeTabFilterMixin"
+    "client.CreativeTabFilterMixin"
   ],
   "injectors": {
     "defaultRequire": 1

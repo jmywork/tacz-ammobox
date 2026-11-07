@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Mixin(targets = "com.simibubi.create.content.kinetics.deployer.DeployerBlockEntity")
 public abstract class DeployerBlockEntityMixin {
 
-    @Shadow
+    @Shadow(remap = false)
     protected DeployerFakePlayer player;
 
     @Inject(method = "activate", at = @At("HEAD"), cancellable = true, remap = false)

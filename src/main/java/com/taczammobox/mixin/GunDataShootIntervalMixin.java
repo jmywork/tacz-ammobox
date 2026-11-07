@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(GunData.class)
 public abstract class GunDataShootIntervalMixin {
-    @Inject(method = "getShootInterval", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "getShootInterval", at = @At("RETURN"), cancellable = true, remap = false)
     private void taczammobox$tierShootInterval(LivingEntity shooter, FireMode fireMode, ItemStack gunStack,
             CallbackInfoReturnable<Long> cir) {
         if (!com.taczammobox.config.FeatureFlags.rpmOverride()) {

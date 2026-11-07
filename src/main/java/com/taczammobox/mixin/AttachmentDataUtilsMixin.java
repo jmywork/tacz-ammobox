@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(AttachmentDataUtils.class)
 public abstract class AttachmentDataUtilsMixin {
-    @Inject(method = "getAmmoCountWithAttachment", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "getAmmoCountWithAttachment", at = @At("RETURN"), cancellable = true, remap = false)
     private static void taczammobox$autoSearCapacity(ItemStack gunStack, GunData gunData,
             CallbackInfoReturnable<Integer> cir) {
         if (!com.taczammobox.config.FeatureFlags.capacityOverride()

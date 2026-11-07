@@ -2,7 +2,6 @@ package com.taczammobox.mixin.client;
 
 import com.tacz.guns.api.item.IAttachment;
 import com.taczammobox.config.FeatureFlags;
-import com.taczammobox.registry.ModCreativeTabs;
 import com.taczammobox.registry.ModItems;
 import com.taczammobox.util.AutoFireTier;
 import net.minecraft.client.gui.components.Button;
@@ -10,10 +9,8 @@ import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.EffectRenderingInventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -28,9 +25,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class CreativeTabFilterMixin
         extends EffectRenderingInventoryScreen<CreativeModeInventoryScreen.ItemPickerMenu>
         implements CreativeScreenAccess {
-
-    @Shadow
-    private static CreativeModeTab selectedTab;
 
     @Unique
     private static boolean taczammobox$showEasterEgg;
@@ -76,7 +70,7 @@ public abstract class CreativeTabFilterMixin
 
     @Unique
     private void taczammobox$filterNow() {
-        boolean ours = selectedTab == ModCreativeTabs.MAIN.get();
+        boolean ours = taczammobox$showsOurItems();
         boolean filterable = ours && FeatureFlags.easterEggTab();
         if (this.taczammobox$normalButton != null) {
             this.taczammobox$normalButton.visible = filterable;
@@ -108,6 +102,21 @@ public abstract class CreativeTabFilterMixin
         }
         taczammobox$showEasterEgg = easter;
         this.taczammobox$refresh();
+    }
+
+    /**
+     * The creative screen keeps its selected tab in a private static field that mixin cannot
+     * shadow reliably here, so recognise our tab by its marker item instead. Search text can
+     * hide that item, in which case the rail just hides for that moment.
+     */
+    @Unique
+    private boolean taczammobox$showsOurItems() {
+        for (ItemStack stack : this.menu.items) {
+            if (stack.is(ModItems.PACKER.get())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Unique

@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(ModernKineticGunItem.class)
 public abstract class ModernKineticGunBoltMixin {
-    @Inject(method = "startBolt", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "startBolt", at = @At("HEAD"), cancellable = true, remap = false)
     private void taczammobox$skipBoltScript(ShooterDataHolder holder, ItemStack gunStack, LivingEntity shooter,
             CallbackInfoReturnable<Boolean> cir) {
         if (!com.taczammobox.config.FeatureFlags.autoFire()

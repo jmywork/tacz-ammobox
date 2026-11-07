@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(SoundPlayManager.class)
 public abstract class SoundPlayManagerMixin {
-    @Inject(method = "playBoltSound", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "playBoltSound", at = @At("HEAD"), cancellable = true, remap = false)
     private static void taczammobox$skipBoltSound(LivingEntity entity, GunDisplayInstance display, CallbackInfo ci) {
         if (!com.taczammobox.config.FeatureFlags.autoFire()) {
             return;
