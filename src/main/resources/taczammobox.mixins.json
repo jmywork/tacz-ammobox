@@ -16,8 +16,7 @@
   "client": [
     "AnimationStateMachineMixin",
     "SoundPlayManagerMixin",
-    "client.CreativeTabFilterMixin",
-    "client.CreativeScreenAccess"
+    "client.CreativeTabFilterMixin"
   ],
   "injectors": {
     "defaultRequire": 1

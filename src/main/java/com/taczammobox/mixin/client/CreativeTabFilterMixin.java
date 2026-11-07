@@ -17,15 +17,19 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 /**
  * Adds the 正常内容 / 彩蛋 rail beside the creative item grid, the same idea as TACZ's
- * gun pack filters. Our tab carries both ordinary items and easter eggs; the rail swaps
- * which half the grid shows.
+ * gun pack filters. Vanilla rebuilds {@code menu.items} through
+ * {@code refreshCurrentTabContents(Collection)}; we keep the unfiltered collection aside
+ * and re-apply our filter every time that method runs.
  */
 @Mixin(CreativeModeInventoryScreen.class)
 public abstract class CreativeTabFilterMixin
-        extends EffectRenderingInventoryScreen<CreativeModeInventoryScreen.ItemPickerMenu>
-        implements CreativeScreenAccess {
+        extends EffectRenderingInventoryScreen<CreativeModeInventoryScreen.ItemPickerMenu> {
 
     /** Rail geometry: square 20px buttons just left of the panel, 2px apart. */
     private static final int BUTTON_SIZE = 20;
@@ -43,6 +47,10 @@ public abstract class CreativeTabFilterMixin
 
     @Unique
     private CreativeFilterButton taczammobox$easterButton;
+
+    /** Items the tab handed to vanilla, before our filter touched them. */
+    @Unique
+    private final List<ItemStack> taczammobox$source = new ArrayList<>();
 
     protected CreativeTabFilterMixin(CreativeModeInventoryScreen.ItemPickerMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -62,11 +70,16 @@ public abstract class CreativeTabFilterMixin
                 () -> taczammobox$setFilter(true));
         this.addRenderableWidget(this.taczammobox$normalButton);
         this.addRenderableWidget(this.taczammobox$easterButton);
-        taczammobox$filterNow();
     }
 
-    @Inject(method = "refreshSearchResults", at = @At("TAIL"))
-    private void taczammobox$applyFilter(CallbackInfo ci) {
+    @Inject(method = "refreshCurrentTabContents", at = @At("HEAD"))
+    private void taczammobox$captureSource(Collection<ItemStack> items, CallbackInfo ci) {
+        this.taczammobox$source.clear();
+        this.taczammobox$source.addAll(items);
+    }
+
+    @Inject(method = "refreshCurrentTabContents", at = @At("TAIL"))
+    private void taczammobox$applyFilter(Collection<ItemStack> items, CallbackInfo ci) {
         try {
             taczammobox$filterNow();
         } catch (Throwable t) {
@@ -77,9 +90,10 @@ public abstract class CreativeTabFilterMixin
         }
     }
 
+    /** Rebuilds {@code menu.items} from the captured source according to the rail state. */
     @Unique
     private void taczammobox$filterNow() {
-        boolean filterable = FeatureFlags.easterEggTab() && taczammobox$showsOurItems();
+        boolean filterable = FeatureFlags.easterEggTab() && taczammobox$sourceHasOurItems();
         if (this.taczammobox$normalButton != null) {
             this.taczammobox$normalButton.visible = filterable;
             this.taczammobox$normalButton.setSelected(!taczammobox$showEasterEgg);
@@ -88,19 +102,23 @@ public abstract class CreativeTabFilterMixin
             this.taczammobox$easterButton.visible = filterable;
             this.taczammobox$easterButton.setSelected(taczammobox$showEasterEgg);
         }
-        if (!filterable) {
+        if (!filterable || this.taczammobox$source.isEmpty()) {
             return;
         }
         boolean wantEaster = taczammobox$showEasterEgg;
-        // NonNullList does not support removeIf, so rebuild the list in place.
-        java.util.List<ItemStack> kept = new java.util.ArrayList<>(this.menu.items.size());
-        for (ItemStack stack : this.menu.items) {
+        List<ItemStack> kept = new ArrayList<>(this.taczammobox$source.size());
+        for (ItemStack stack : this.taczammobox$source) {
+            if (stack.isEmpty()) {
+                continue;
+            }
             if (taczammobox$isEasterEgg(stack) == wantEaster) {
                 kept.add(stack);
             }
         }
+        // NonNullList does not support removeIf, so rebuild the list in place.
         this.menu.items.clear();
         this.menu.items.addAll(kept);
+        this.menu.scrollTo(0.0F);
     }
 
     @Unique
@@ -109,18 +127,22 @@ public abstract class CreativeTabFilterMixin
             return;
         }
         taczammobox$showEasterEgg = easter;
-        this.taczammobox$refresh();
+        try {
+            taczammobox$filterNow();
+        } catch (Throwable t) {
+            if (!taczammobox$warned) {
+                taczammobox$warned = true;
+                com.taczammobox.TaczAmmoBoxMod.LOGGER.warn("[taczammobox] creative filter disabled after an error", t);
+            }
+        }
     }
 
-    /**
-     * The selected tab lives in a private static field that mixin cannot shadow reliably
-     * here, so recognise our tab by its items instead. Both halves always hold at least
-     * one of our items, so the rail stays put while switching filters.
-     */
+    /** The selected tab is a private static field mixin cannot shadow reliably, so the
+     * captured item collection tells us whether this is our tab. */
     @Unique
-    private boolean taczammobox$showsOurItems() {
+    private boolean taczammobox$sourceHasOurItems() {
         String ours = com.taczammobox.TaczAmmoBoxMod.MOD_ID;
-        for (ItemStack stack : this.menu.items) {
+        for (ItemStack stack : this.taczammobox$source) {
             if (stack.isEmpty()) {
                 continue;
             }
