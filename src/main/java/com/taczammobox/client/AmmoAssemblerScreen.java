@@ -24,10 +24,10 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
     private static final String[] FACE_KEYS = {"up", "down", "left", "right", "front", "back"};
 
     private static final int PANEL_W = 340;
-    private static final int PANEL_H = 196;
+    private static final int PANEL_H = 180;
 
-    private static final int LIST_Y = 20;
-    private static final int LIST_H = 128;
+    private static final int LIST_Y = 28;
+    private static final int LIST_H = 124;
 
     private static final int AMMO_X = 8;
     private static final int AMMO_W = 48;
@@ -70,14 +70,14 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
         for (int i = 0; i < sideButtons.length; i++) {
             int id = 1 + shownDirections[i].ordinal();
             sideButtons[i] = addRenderableWidget(Button.builder(Component.empty(), button -> click(id))
-                    .bounds(leftPos + 244, topPos + 22 + i * 19, 92, 17).build());
+                    .bounds(leftPos + 244, topPos + 26 + i * 19, 92, 17).build());
         }
         redstoneButton = addRenderableWidget(Button.builder(Component.empty(),
                         button -> click(AmmoAssemblerMenu.BUTTON_REDSTONE))
-                .bounds(leftPos + 244, topPos + 140, 92, 17).build());
+                .bounds(leftPos + 244, topPos + 135, 92, 17).build());
         lockButton = addRenderableWidget(Button.builder(Component.empty(),
                         button -> click(AmmoAssemblerMenu.BUTTON_LOCK))
-                .bounds(leftPos + 244, topPos + 161, 92, 17).build());
+                .bounds(leftPos + 244, topPos + 156, 92, 17).build());
         updateLabels();
     }
 
@@ -268,14 +268,14 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, 8, 6, 0x404040, false);
+        graphics.drawString(font, title, 8, 5, 0x404040, false);
         graphics.drawString(font, Component.translatable("gui.taczammobox.ammo_assembler.ammo"),
-                AMMO_X, 14, 0x404040, false);
+                AMMO_X, 18, 0x404040, false);
         graphics.drawString(font, Component.translatable("gui.taczammobox.ammo_assembler.recipes"),
-                RECIPE_X, 14, 0x404040, false);
+                RECIPE_X, 18, 0x404040, false);
         graphics.drawString(font, Component.translatable("gui.taczammobox.ammo_assembler.output"),
-                OUT_X, 14, 0x404040, false);
-        graphics.drawString(font, Component.translatable("gui.taczammobox.sides"), 244, 8, 0x404040, false);
+                OUT_X, 18, 0x404040, false);
+        graphics.drawString(font, Component.translatable("gui.taczammobox.sides"), 244, 10, 0x404040, false);
     }
 
     @Override
