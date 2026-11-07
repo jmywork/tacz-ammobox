@@ -39,13 +39,20 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
     private static final int OUT_W = 44;
 
     private static final int AMMO_ROW_H = 18;
+    private static final int AMMO_VISIBLE = LIST_H / AMMO_ROW_H;
     private static final int RECIPE_ROW_H = 56;
     private static final int VISIBLE_RECIPES = 2;
     private static final int LINE_H = 18;
     private static final int MAX_LINES = 3;
 
+    private static final int SCROLL_W = 4;
+    private static final int AMMO_BAR_X = AMMO_X + AMMO_W - 6;
+    private static final int RECIPE_BAR_X = RECIPE_X + RECIPE_W - 6;
+
     private int ammoScroll;
     private int recipeScroll;
+    private boolean draggingAmmoBar;
+    private boolean draggingRecipeBar;
 
     private final Button[] sideButtons = new Button[6];
     private final Direction[] shownDirections = new Direction[6];
@@ -166,12 +173,14 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
         renderAmmo(graphics, x, y);
         renderRecipes(graphics, x, y);
         renderOutput(graphics, x, y);
+        renderScrollbars(graphics, x, y);
     }
 
     private void renderAmmo(GuiGraphics graphics, int x, int y) {
         List<AssemblerRecipes.Group> groups = menu.groups();
         int selected = menu.getSelectedAmmo();
-        int visible = LIST_H / AMMO_ROW_H;
+        int visible = AMMO_VISIBLE;
+        ammoScroll = Math.max(0, Math.min(ammoScroll, Math.max(0, groups.size() - visible)));
         for (int row = 0; row < visible; row++) {
             int index = ammoScroll + row;
             if (index >= groups.size()) {
@@ -209,7 +218,7 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
             int iconX = baseX;
             int iconY = rowY + 2;
             int line = 0;
-            int paneRight = x + RECIPE_X + RECIPE_W - 2;
+            int paneRight = x + RECIPE_X + RECIPE_W - 9;
             for (AssemblerRecipes.IngredientStack requirement : entry.inputs()) {
                 ItemStack[] items = requirement.ingredient().getItems();
                 if (items.length == 0) {
@@ -255,6 +264,43 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
         }
     }
 
+    /** Thin draggable bar on the right edge of a list pane; hidden when everything fits. */
+    private void bar(GuiGraphics graphics, int x, int y, int total, int visible, int scroll, boolean active) {
+        if (total <= visible) {
+            return;
+        }
+        int trackX = x;
+        int trackY = y;
+        graphics.fill(trackX, trackY, trackX + SCROLL_W, trackY + LIST_H, 0xFF0B1016);
+        int thumbH = thumbHeight(LIST_H, total, visible);
+        int thumbY = trackY + (LIST_H - thumbH) * scroll / Math.max(1, total - visible);
+        graphics.fill(trackX, thumbY, trackX + SCROLL_W, thumbY + thumbH,
+                active ? TechTheme.ACCENT : 0xFF3C536B);
+    }
+
+    private void renderScrollbars(GuiGraphics graphics, int x, int y) {
+        int groups = menu.groups().size();
+        bar(graphics, x + AMMO_BAR_X, y + LIST_Y, groups, AMMO_VISIBLE, ammoScroll, draggingAmmoBar);
+        AssemblerRecipes.Group group = menu.selectedGroup();
+        int recipes = group == null ? 0 : group.recipes().size();
+        bar(graphics, x + RECIPE_BAR_X, y + LIST_Y, recipes, VISIBLE_RECIPES, recipeScroll, draggingRecipeBar);
+    }
+
+    private static int thumbHeight(int track, int total, int visible) {
+        return Math.max(12, track * visible / Math.max(1, total));
+    }
+
+    private static int scrollFromMouse(double mouseY, double trackTop, int total, int visible) {
+        int max = Math.max(0, total - visible);
+        if (max == 0) {
+            return 0;
+        }
+        int thumb = thumbHeight(LIST_H, total, visible);
+        double travel = Math.max(1, LIST_H - thumb);
+        double ratio = (mouseY - trackTop - thumb / 2.0) / travel;
+        return (int) Math.round(Math.max(0, Math.min(1, ratio)) * max);
+    }
+
     private static void pane(GuiGraphics graphics, int x, int y, int w, int h) {
         graphics.fill(x, y, x + w, y + h, TechTheme.PANEL2);
         graphics.fill(x, y, x + w, y + 1, TechTheme.BORDER);
@@ -286,6 +332,21 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
         if (button == 0) {
             int localX = (int) mouseX - leftPos;
             int localY = (int) mouseY - topPos;
+            if (localY >= LIST_Y && localY < LIST_Y + LIST_H) {
+                if (localX >= AMMO_BAR_X && localX < AMMO_BAR_X + SCROLL_W
+                        && menu.groups().size() > AMMO_VISIBLE) {
+                    draggingAmmoBar = true;
+                    ammoScroll = scrollFromMouse(mouseY, topPos + LIST_Y, menu.groups().size(), AMMO_VISIBLE);
+                    return true;
+                }
+                AssemblerRecipes.Group group = menu.selectedGroup();
+                int recipeCount = group == null ? 0 : group.recipes().size();
+                if (localX >= RECIPE_BAR_X && localX < RECIPE_BAR_X + SCROLL_W && recipeCount > VISIBLE_RECIPES) {
+                    draggingRecipeBar = true;
+                    recipeScroll = scrollFromMouse(mouseY, topPos + LIST_Y, recipeCount, VISIBLE_RECIPES);
+                    return true;
+                }
+            }
             if (localY >= LIST_Y && localY < LIST_Y + LIST_H && !menu.isLocked()) {
                 if (localX >= AMMO_X && localX < AMMO_X + AMMO_W) {
                     int index = ammoScroll + (localY - LIST_Y) / AMMO_ROW_H;
@@ -310,12 +371,34 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
     }
 
     @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (draggingAmmoBar) {
+            ammoScroll = scrollFromMouse(mouseY, topPos + LIST_Y, menu.groups().size(), AMMO_VISIBLE);
+            return true;
+        }
+        if (draggingRecipeBar) {
+            AssemblerRecipes.Group group = menu.selectedGroup();
+            int recipeCount = group == null ? 0 : group.recipes().size();
+            recipeScroll = scrollFromMouse(mouseY, topPos + LIST_Y, recipeCount, VISIBLE_RECIPES);
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        draggingAmmoBar = false;
+        draggingRecipeBar = false;
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
         int localX = (int) mouseX - leftPos;
         int localY = (int) mouseY - topPos;
         if (localY >= LIST_Y && localY < LIST_Y + LIST_H) {
             if (localX >= AMMO_X && localX < AMMO_X + AMMO_W) {
-                int visible = LIST_H / AMMO_ROW_H;
+                int visible = AMMO_VISIBLE;
                 int max = Math.max(0, menu.groups().size() - visible);
                 ammoScroll = Math.max(0, Math.min(max, ammoScroll - (int) Math.signum(delta)));
                 return true;
