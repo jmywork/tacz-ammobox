@@ -27,7 +27,7 @@ description='''Ammo packaging and automated ammo-box filling for Timeless and Cl
 [[dependencies.taczammobox]]
     modId="tacz"
     mandatory=true
-    versionRange="[1.1.7,)"
+    versionRange="[1.2.0,)"
     ordering="AFTER"
     side="BOTH"
 
