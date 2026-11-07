@@ -1,7 +1,7 @@
 package com.taczammobox.mixin;
 
 import com.tacz.guns.api.client.animation.statemachine.AnimationStateMachine;
-import com.taczammobox.util.AutoFireTier;
+import com.taczammobox.config.FeatureFlags;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,14 +18,23 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(AnimationStateMachine.class)
 public abstract class AnimationStateMachineMixin {
+    private static boolean taczammobox$warned;
+
     @Inject(method = "trigger", at = @At("HEAD"), cancellable = true, remap = false)
     private void taczammobox$skipBoltAnimation(String stateName, CallbackInfo ci) {
-        if (!com.taczammobox.config.FeatureFlags.autoFire() || !"blot".equals(stateName)) {
-            return;
-        }
-        LocalPlayer player = Minecraft.getInstance().player;
-        if (player != null && AutoFireTier.of(player.getMainHandItem()) != null) {
-            ci.cancel();
+        try {
+            if (!FeatureFlags.autoFire() || !"blot".equals(stateName)) {
+                return;
+            }
+            LocalPlayer player = Minecraft.getInstance().player;
+            if (player != null && FeatureFlags.isTierMagazine(player.getMainHandItem())) {
+                ci.cancel();
+            }
+        } catch (Throwable throwable) {
+            if (!taczammobox$warned) {
+                taczammobox$warned = true;
+                throwable.printStackTrace();
+            }
         }
     }
 }

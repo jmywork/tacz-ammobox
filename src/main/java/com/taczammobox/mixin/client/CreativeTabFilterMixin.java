@@ -1,10 +1,8 @@
 package com.taczammobox.mixin.client;
 
-import com.tacz.guns.api.item.IAttachment;
 import com.taczammobox.client.ui.CreativeFilterButton;
 import com.taczammobox.config.FeatureFlags;
 import com.taczammobox.registry.ModItems;
-import com.taczammobox.util.AutoFireTier;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.EffectRenderingInventoryScreen;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -90,6 +88,47 @@ public abstract class CreativeTabFilterMixin
         }
     }
 
+    /**
+     * TACZ's own creative mixin refills the grid from its cached pack list after we have
+     * filtered, which silently undoes the rail. Re-applying the filter right before the
+     * frame is drawn keeps our selection authoritative no matter who filled the list last.
+     */
+    @Inject(method = "render", at = @At("HEAD"))
+    private void taczammobox$keepFiltered(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY,
+            float partialTick, CallbackInfo ci) {
+        try {
+            if (!FeatureFlags.easterEggTab() || this.taczammobox$source.isEmpty()) {
+                return;
+            }
+            if (taczammobox$gridMatchesSelection()) {
+                return;
+            }
+            taczammobox$filterNow();
+        } catch (Throwable t) {
+            if (!taczammobox$warned) {
+                taczammobox$warned = true;
+                com.taczammobox.TaczAmmoBoxMod.LOGGER.warn("[taczammobox] creative filter disabled after an error", t);
+            }
+        }
+    }
+
+    /** True when every visible stack already matches the rail's current selection. */
+    @Unique
+    private boolean taczammobox$gridMatchesSelection() {
+        boolean wantEaster = taczammobox$showEasterEgg;
+        boolean seen = false;
+        for (ItemStack stack : this.menu.items) {
+            if (stack.isEmpty()) {
+                continue;
+            }
+            seen = true;
+            if (taczammobox$isEasterEgg(stack) != wantEaster) {
+                return false;
+            }
+        }
+        return seen;
+    }
+
     /** Rebuilds {@code menu.items} from the captured source according to the rail state. */
     @Unique
     private void taczammobox$filterNow() {
@@ -155,10 +194,6 @@ public abstract class CreativeTabFilterMixin
 
     @Unique
     private static boolean taczammobox$isEasterEgg(ItemStack stack) {
-        if (stack.is(ModItems.AMMO_BELT.get())) {
-            return true;
-        }
-        return stack.getItem() instanceof IAttachment attachment
-                && AutoFireTier.of(attachment.getAttachmentId(stack)) != null;
+        return stack.is(ModItems.AMMO_BELT.get()) || FeatureFlags.isTierMagazine(stack);
     }
 }

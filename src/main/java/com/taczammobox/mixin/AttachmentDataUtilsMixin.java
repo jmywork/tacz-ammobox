@@ -3,7 +3,7 @@ package com.taczammobox.mixin;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.util.AttachmentDataUtils;
-import com.taczammobox.util.AutoFireTier;
+import com.taczammobox.config.FeatureFlags;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,19 +19,24 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(AttachmentDataUtils.class)
 public abstract class AttachmentDataUtilsMixin {
+    private static boolean taczammobox$warned;
+
     @Inject(method = "getAmmoCountWithAttachment", at = @At("RETURN"), cancellable = true, remap = false)
     private static void taczammobox$autoSearCapacity(ItemStack gunStack, GunData gunData,
             CallbackInfoReturnable<Integer> cir) {
-        if (!com.taczammobox.config.FeatureFlags.capacityOverride()
-                || gunData.getBolt() != Bolt.MANUAL_ACTION) {
-            return;
-        }
-        Integer capacity = com.taczammobox.util.FeatureGuard.get("capacityOverride", () -> {
-            AutoFireTier tier = AutoFireTier.of(gunStack);
-            return tier == null ? null : tier.capacity();
-        }, null);
-        if (capacity != null) {
-            cir.setReturnValue(capacity);
+        try {
+            if (!FeatureFlags.capacityOverride() || gunData.getBolt() != Bolt.MANUAL_ACTION) {
+                return;
+            }
+            int capacity = FeatureFlags.tierCapacityFor(gunStack);
+            if (capacity > 0) {
+                cir.setReturnValue(capacity);
+            }
+        } catch (Throwable throwable) {
+            if (!taczammobox$warned) {
+                taczammobox$warned = true;
+                throwable.printStackTrace();
+            }
         }
     }
 }

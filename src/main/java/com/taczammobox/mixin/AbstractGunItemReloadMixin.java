@@ -1,7 +1,7 @@
 package com.taczammobox.mixin;
 
 import com.tacz.guns.api.item.gun.AbstractGunItem;
-import com.taczammobox.util.AmmoChainHelper;
+import com.taczammobox.config.FeatureFlags;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -19,16 +19,23 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(AbstractGunItem.class)
 public abstract class AbstractGunItemReloadMixin {
+    private static boolean taczammobox$warned;
+
     @Inject(method = "canReload", at = @At("RETURN"), cancellable = true, remap = false)
     private void taczammobox$chainCanReload(LivingEntity shooter, ItemStack gunStack,
             CallbackInfoReturnable<Boolean> cir) {
-        if (cir.getReturnValue() || !(shooter instanceof Player player)) {
-            return;
-        }
-        boolean allowed = com.taczammobox.util.FeatureGuard.get("ammoChain",
-                () -> AmmoChainHelper.hasReloadSource(player, gunStack), false);
-        if (allowed) {
-            cir.setReturnValue(true);
+        try {
+            if (cir.getReturnValue() || !(shooter instanceof Player player)) {
+                return;
+            }
+            if (FeatureFlags.chainHasReloadSource(player, gunStack)) {
+                cir.setReturnValue(true);
+            }
+        } catch (Throwable throwable) {
+            if (!taczammobox$warned) {
+                taczammobox$warned = true;
+                throwable.printStackTrace();
+            }
         }
     }
 }

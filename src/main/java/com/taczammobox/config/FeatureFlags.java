@@ -6,11 +6,17 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.taczammobox.TaczAmmoBoxMod;
+import com.taczammobox.util.AmmoChainHelper;
+import com.taczammobox.util.AutoFireTier;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.fml.loading.FMLPaths;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Feature switches for the parts of the mod that hook into other mods.
@@ -182,5 +188,45 @@ public final class FeatureFlags {
         return "autoFire=" + autoFire() + ", capacity=" + capacityOverride() + ", rpm=" + rpmOverride()
                 + ", belt=" + belt() + ", easterEgg=" + easterEggTab() + ", create=" + createCompat()
                 + ", safeMode=" + safeMode;
+    }
+
+    // ---------------------------------------------------------------------
+    // Bridge for the mixins that are merged into TACZ classes.
+    //
+    // An injected body physically lives inside the target class, so every class it
+    // references is resolved by TACZ's own module class loader. Going through this
+    // single class (and catching Throwable in the hooks) keeps a refused lookup from
+    // escalating into NoClassDefFoundError: the one behaviour goes quiet instead.
+    // ---------------------------------------------------------------------
+
+    /** Capacity of the tier magazine in {@code stack}, or {@code -1} when it is not one. */
+    public static int tierCapacityFor(ItemStack stack) {
+        AutoFireTier tier = AutoFireTier.of(stack);
+        return tier == null ? -1 : tier.capacity();
+    }
+
+    /** Shot interval in milliseconds of the tier magazine in {@code stack}, or {@code -1}. */
+    public static long tierIntervalFor(ItemStack stack) {
+        AutoFireTier tier = AutoFireTier.of(stack);
+        return tier == null ? -1L : tier.shootInterval();
+    }
+
+    /** True when {@code stack} is one of our auto-fire magazines. */
+    public static boolean isTierMagazine(ItemStack stack) {
+        return AutoFireTier.of(stack) != null;
+    }
+
+    /** Attachment ids of every tier, for the allow-attachment tag rewrite. */
+    public static List<String> tierAttachmentIds() {
+        List<String> ids = new ArrayList<>();
+        for (AutoFireTier tier : AutoFireTier.all()) {
+            ids.add(tier.id().toString());
+        }
+        return ids;
+    }
+
+    /** Feed belt lookup, kept here so the reload mixin only talks to this class. */
+    public static boolean chainHasReloadSource(Player player, ItemStack gunStack) {
+        return ammoChain() && AmmoChainHelper.hasReloadSource(player, gunStack);
     }
 }
