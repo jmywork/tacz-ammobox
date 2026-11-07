@@ -8,7 +8,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraftforge.items.SlotItemHandler;
@@ -16,7 +15,10 @@ import net.minecraftforge.items.SlotItemHandler;
 import javax.annotation.Nullable;
 import java.util.List;
 
-/** No machine slots: inputs and outputs are handled by automation, the GUI only selects. */
+/**
+ * Selection-only menu: the machine has no player slots, so the GUI shows just the three
+ * selector columns and the side/redstone configuration.
+ */
 public class AmmoAssemblerMenu extends AbstractContainerMenu {
     public static final int AMMO_BUTTON_OFFSET = 1000;
     public static final int RECIPE_BUTTON_OFFSET = 100000;
@@ -33,7 +35,8 @@ public class AmmoAssemblerMenu extends AbstractContainerMenu {
         this.data = data;
         addDataSlots(data);
 
-        // nine hidden read-only slots so the client sees the machine's input contents
+        // Hidden read-only slots keep the machine's input contents in sync for the missing
+        // material highlight; they are never drawn or clickable.
         var machineInventory = assembler.getInventory();
         for (int slot = 0; slot < AmmoAssemblerBlockEntity.INPUT_SLOTS; slot++) {
             addSlot(new SlotItemHandler(machineInventory, slot, -2000, -2000) {
@@ -47,15 +50,6 @@ public class AmmoAssemblerMenu extends AbstractContainerMenu {
                     return false;
                 }
             });
-        }
-
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 172 + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(inventory, col, 8 + col * 18, 232));
         }
     }
 
@@ -90,7 +84,7 @@ public class AmmoAssemblerMenu extends AbstractContainerMenu {
         return data.get(3) != 0;
     }
 
-    public net.minecraft.core.Direction getFacing() {
+    public Direction getFacing() {
         return assembler.getBlockState().getValue(com.taczammobox.block.AmmoAssemblerBlock.FACING);
     }
 
