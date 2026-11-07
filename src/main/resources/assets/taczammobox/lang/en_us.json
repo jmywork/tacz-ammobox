@@ -104,5 +104,7 @@
   "jei.taczammobox.assembler.missing": "Missing: %s",
   "jei.taczammobox.assembler.locked": "Recipe is locked to another round",
   "message.taczammobox.assembler.transfer_done": "Ingredients moved into the assembler",
-  "message.taczammobox.assembler.transfer_empty": "Nothing to move"
+  "message.taczammobox.assembler.transfer_empty": "Nothing to move",
+  "gui.taczammobox.creative.normal": "Items",
+  "gui.taczammobox.creative.easter": "Easter Eggs"
 }

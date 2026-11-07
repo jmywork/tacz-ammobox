@@ -104,5 +104,7 @@
   "jei.taczammobox.assembler.missing": "缺少：%s",
   "jei.taczammobox.assembler.locked": "配方已锁定为其他弹药",
   "message.taczammobox.assembler.transfer_done": "材料已送入装配机",
-  "message.taczammobox.assembler.transfer_empty": "没有可送入的材料"
+  "message.taczammobox.assembler.transfer_empty": "没有可送入的材料",
+  "gui.taczammobox.creative.normal": "正常内容",
+  "gui.taczammobox.creative.easter": "彩蛋"
 }
