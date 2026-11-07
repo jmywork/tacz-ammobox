@@ -27,7 +27,9 @@ public final class EasterEggTooltip {
         if (stack.isEmpty()) {
             return;
         }
-        boolean easterEgg = stack.is(ModItems.AMMO_BELT.get()) || FeatureFlags.isTierMagazine(stack);
+        boolean easterEgg = stack.is(ModItems.AMMO_BELT.get())
+                || stack.is(ModItems.SATELLITE_RACK.get())
+                || FeatureFlags.isTierMagazine(stack);
         if (easterEgg) {
             event.getToolTip().add(Component.translatable("tooltip.taczammobox.easter_egg")
                     .withStyle(ChatFormatting.GOLD));

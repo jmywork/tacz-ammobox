@@ -4,6 +4,7 @@ import com.taczammobox.TaczAmmoBoxMod;
 import com.taczammobox.menu.AmmoAssemblerMenu;
 import com.taczammobox.menu.AmmoLoaderMenu;
 import com.taczammobox.menu.AmmoPackerMenu;
+import com.taczammobox.menu.SatelliteRackMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -23,6 +24,10 @@ public final class ModMenus {
 
     public static final RegistryObject<MenuType<AmmoLoaderMenu>> LOADER =
             MENUS.register("ammo_loader", () -> IForgeMenuType.create(AmmoLoaderMenu::new));
+
+    public static final RegistryObject<MenuType<SatelliteRackMenu>> SATELLITE_RACK =
+            MENUS.register("satellite_rack", () -> IForgeMenuType.create(
+                    (id, inventory, buffer) -> new SatelliteRackMenu(id, inventory)));
 
     private ModMenus() {
     }

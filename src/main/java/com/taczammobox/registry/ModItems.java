@@ -8,6 +8,7 @@ import com.taczammobox.item.AmmoChainItem;
 import com.taczammobox.item.AmmoBoxItem;
 import com.taczammobox.item.CrateBlockItem;
 import com.taczammobox.item.DynamicCrateBlockItem;
+import com.taczammobox.item.SatelliteRackItem;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -53,6 +54,10 @@ public final class ModItems {
 
     public static final RegistryObject<Item> AMMO_CHAIN =
             ITEMS.register("ammo_chain", () -> new AmmoChainItem(new Item.Properties().stacksTo(1)));
+
+    /** Easter egg: the halo of guns that fires with the wearer. */
+    public static final RegistryObject<Item> SATELLITE_RACK =
+            ITEMS.register("satellite_rack", () -> new SatelliteRackItem(new Item.Properties().stacksTo(1)));
 
 
     static {

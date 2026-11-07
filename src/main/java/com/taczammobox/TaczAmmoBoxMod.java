@@ -11,6 +11,7 @@ import com.taczammobox.registry.AmmoTypes;
 import com.taczammobox.registry.ModBlockEntities;
 import com.taczammobox.registry.ModBlocks;
 import com.taczammobox.registry.ModCreativeTabs;
+import com.taczammobox.registry.ModEntities;
 import com.taczammobox.registry.ModItems;
 import com.taczammobox.registry.ModMenus;
 import com.mojang.logging.LogUtils;
@@ -44,6 +45,7 @@ public class TaczAmmoBoxMod {
         ModBlocks.register(modBus);
         ModItems.register(modBus);
         ModBlockEntities.register(modBus);
+        ModEntities.register(modBus);
         ModMenus.register(modBus);
         ModCreativeTabs.register(modBus);
     }

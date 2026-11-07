@@ -107,5 +107,12 @@
   "tooltip.taczammobox.redstone.high": "On signal",
   "tooltip.taczammobox.redstone.ignore": "Ignored",
   "tooltip.taczammobox.redstone.low": "No signal",
-  "tooltip.taczammobox.easter_egg": "Easter Egg Item"
+  "tooltip.taczammobox.easter_egg": "Easter Egg Item",
+  "item.taczammobox.satellite_rack": "Satellite Rack",
+  "item.taczammobox.satellite_rack.desc": "Hangs up to ten TACZ guns behind you and fires them with you.",
+  "item.taczammobox.satellite_rack.loaded": "Mounted %s / %s",
+  "item.taczammobox.satellite_rack.empty": "No guns mounted",
+  "item.taczammobox.satellite_rack.hint": "Works in the back curio slot or anywhere in your inventory",
+  "container.taczammobox.satellite_rack": "Satellite Rack",
+  "gui.taczammobox.satellite_rack.hint": "TACZ guns only · up to 10 · unlimited ammo"
 }

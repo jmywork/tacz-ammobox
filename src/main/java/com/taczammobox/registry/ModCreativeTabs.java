@@ -31,6 +31,7 @@ public final class ModCreativeTabs {
                 // Toys go right after the machines, not at the bottom of 60 ammo entries.
                 if (FeatureFlags.easterEggTab()) {
                     output.accept(ModItems.AMMO_BELT.get());
+                    output.accept(ModItems.SATELLITE_RACK.get());
                     for (AutoFireTier tier : AutoFireTier.all()) {
                         ItemStack attachment = AttachmentItemBuilder.create().setId(tier.id()).build();
                         if (!attachment.isEmpty()) {
