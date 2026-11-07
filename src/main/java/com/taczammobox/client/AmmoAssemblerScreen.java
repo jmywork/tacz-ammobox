@@ -6,6 +6,8 @@ import com.taczammobox.util.AssemblerRecipes;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import com.taczammobox.client.ui.TechButton;
+import com.taczammobox.client.ui.TechTheme;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -69,15 +71,13 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
 
         for (int i = 0; i < sideButtons.length; i++) {
             int id = 1 + shownDirections[i].ordinal();
-            sideButtons[i] = addRenderableWidget(Button.builder(Component.empty(), button -> click(id))
-                    .bounds(leftPos + 244, topPos + 26 + i * 19, 92, 17).build());
+            sideButtons[i] = addRenderableWidget(new TechButton(leftPos + 244, topPos + 26 + i * 19, 92, 17,
+                    Component.empty(), button -> click(id)));
         }
-        redstoneButton = addRenderableWidget(Button.builder(Component.empty(),
-                        button -> click(AmmoAssemblerMenu.BUTTON_REDSTONE))
-                .bounds(leftPos + 244, topPos + 135, 92, 17).build());
-        lockButton = addRenderableWidget(Button.builder(Component.empty(),
-                        button -> click(AmmoAssemblerMenu.BUTTON_LOCK))
-                .bounds(leftPos + 244, topPos + 156, 92, 17).build());
+        redstoneButton = addRenderableWidget(new TechButton(leftPos + 244, topPos + 135, 92, 17,
+                Component.empty(), button -> click(AmmoAssemblerMenu.BUTTON_REDSTONE)));
+        lockButton = addRenderableWidget(new TechButton(leftPos + 244, topPos + 156, 92, 17,
+                Component.empty(), button -> click(AmmoAssemblerMenu.BUTTON_LOCK)));
         updateLabels();
     }
 
@@ -101,40 +101,43 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
             AmmoAssemblerBlockEntity.SideMode mode = menu.getSide(shownDirections[i]);
             MutableComponent label = Component.translatable("gui.taczammobox.side." + FACE_KEYS[i]);
             label.append(" ").append(Component.translatable("gui.taczammobox.side." + mode.name().toLowerCase()));
-            sideButtons[i].setMessage(label.withStyle(color(mode)));
+            sideButtons[i].setMessage(label);
+            ((TechButton) sideButtons[i]).setTextColor(sideColor(mode));
         }
         if (redstoneButton != null) {
             AmmoAssemblerBlockEntity.RedstoneMode mode = menu.getRedstoneMode();
             redstoneButton.setMessage(Component.translatable(
-                    "gui.taczammobox.redstone." + mode.name().toLowerCase()).withStyle(redstoneColor(mode)));
+                    "gui.taczammobox.redstone." + mode.name().toLowerCase()));
+            ((TechButton) redstoneButton).setTextColor(redstoneColor(mode));
         }
         if (lockButton != null) {
             lockButton.active = menu.isLocked() || menu.selectedEntry() != null;
             lockButton.setMessage(Component.translatable(menu.isLocked()
                     ? "gui.taczammobox.ammo_assembler.lock.on"
                     : "gui.taczammobox.ammo_assembler.lock.off")
-                    .withStyle(menu.isLocked() ? ChatFormatting.GOLD : ChatFormatting.DARK_GRAY));
+                    );
+            ((TechButton) lockButton).setTextColor(menu.isLocked() ? TechTheme.ACCENT2 : TechTheme.MUTED);
         }
     }
 
-    private static ChatFormatting color(AmmoAssemblerBlockEntity.SideMode mode) {
+    private static int sideColor(AmmoAssemblerBlockEntity.SideMode mode) {
         if (mode == AmmoAssemblerBlockEntity.SideMode.INPUT) {
-            return ChatFormatting.GREEN;
+            return TechTheme.ACCENT;
         }
         if (mode == AmmoAssemblerBlockEntity.SideMode.OUTPUT) {
-            return ChatFormatting.GOLD;
+            return TechTheme.ACCENT2;
         }
-        return ChatFormatting.DARK_GRAY;
+        return TechTheme.MUTED;
     }
 
-    private static ChatFormatting redstoneColor(AmmoAssemblerBlockEntity.RedstoneMode mode) {
+    private static int redstoneColor(AmmoAssemblerBlockEntity.RedstoneMode mode) {
         if (mode == AmmoAssemblerBlockEntity.RedstoneMode.HIGH) {
-            return ChatFormatting.RED;
+            return TechTheme.WARN;
         }
         if (mode == AmmoAssemblerBlockEntity.RedstoneMode.LOW) {
-            return ChatFormatting.AQUA;
+            return TechTheme.ACCENT;
         }
-        return ChatFormatting.DARK_GRAY;
+        return TechTheme.MUTED;
     }
 
     @Override
@@ -142,15 +145,15 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
         int x = leftPos;
         int y = topPos;
 
-        graphics.fill(x, y, x + PANEL_W, y + PANEL_H, 0xFFC6C6C6);
-        graphics.fill(x, y, x + PANEL_W, y + 1, 0xFF373737);
-        graphics.fill(x, y + PANEL_H - 1, x + PANEL_W, y + PANEL_H, 0xFF373737);
-        graphics.fill(x, y, x + 1, y + PANEL_H, 0xFF373737);
-        graphics.fill(x + PANEL_W - 1, y, x + PANEL_W, y + PANEL_H, 0xFF373737);
+        graphics.fill(x, y, x + PANEL_W, y + PANEL_H, TechTheme.BG);
+        graphics.fill(x, y, x + PANEL_W, y + 1, TechTheme.BORDER);
+        graphics.fill(x, y + PANEL_H - 1, x + PANEL_W, y + PANEL_H, TechTheme.BORDER);
+        graphics.fill(x, y, x + 1, y + PANEL_H, TechTheme.BORDER);
+        graphics.fill(x + PANEL_W - 1, y, x + PANEL_W, y + PANEL_H, TechTheme.BORDER);
 
         // right configuration strip
-        graphics.fill(x + 240, y + 1, x + PANEL_W - 1, y + PANEL_H - 1, 0xFFB8B8B8);
-        graphics.fill(x + 239, y + 1, x + 240, y + PANEL_H - 1, 0xFF373737);
+        graphics.fill(x + 240, y + 1, x + PANEL_W - 1, y + PANEL_H - 1, TechTheme.PANEL);
+        graphics.fill(x + 239, y + 1, x + 240, y + PANEL_H - 1, TechTheme.BORDER);
 
         // three panes
         pane(graphics, x + AMMO_X - 2, y + LIST_Y - 2, AMMO_W + 4, LIST_H + 4);
@@ -177,7 +180,7 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
             int rowY = y + LIST_Y + row * AMMO_ROW_H;
             if (index == selected) {
                 graphics.fill(x + AMMO_X - 1, rowY - 1, x + AMMO_X + AMMO_W + 1, rowY + AMMO_ROW_H - 1,
-                        0xFF9A9A9A);
+                        0xFF2E4258);
             }
             graphics.renderItem(groups.get(index).display(), x + AMMO_X + 3, rowY);
         }
@@ -199,7 +202,7 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
             int rowY = y + LIST_Y + row * RECIPE_ROW_H;
             if (index == selected) {
                 graphics.fill(x + RECIPE_X - 1, rowY - 1, x + RECIPE_X + RECIPE_W + 1,
-                        rowY + RECIPE_ROW_H - 1, 0xFF9A9A9A);
+                        rowY + RECIPE_ROW_H - 1, 0xFF2E4258);
             }
             AssemblerRecipes.Entry entry = recipes.get(index);
             int baseX = x + RECIPE_X + 3;
@@ -225,7 +228,7 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
                 graphics.renderItem(items[0].copyWithCount(1), iconX, iconY);
                 boolean enough = countAvailable(requirement.ingredient()) >= requirement.count();
                 graphics.drawString(font, text, iconX + 17, iconY + 4,
-                        enough ? 0xFF303030 : 0xFFB00000, false);
+                        enough ? TechTheme.TEXT : TechTheme.WARN, false);
                 iconX += cell;
             }
         }
@@ -240,7 +243,7 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
         graphics.renderItem(entry.output().copyWithCount(1), x + OUT_X + 14, y + LIST_Y + 16);
         String count = "x" + entry.output().getCount();
         graphics.drawString(font, count, x + OUT_X + (OUT_W - font.width(count)) / 2,
-                y + LIST_Y + 40, 0x404040, false);
+                y + LIST_Y + 40, TechTheme.TEXT, false);
 
         int progress = menu.getProgress();
         int max = menu.getMaxProgress();
@@ -253,13 +256,13 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
     }
 
     private static void pane(GuiGraphics graphics, int x, int y, int w, int h) {
-        graphics.fill(x, y, x + w, y + h, 0xFFB8B8B8);
-        graphics.fill(x, y, x + w, y + 1, 0xFF8B8B8B);
-        graphics.fill(x, y + h - 1, x + w, y + h, 0xFF8B8B8B);
+        graphics.fill(x, y, x + w, y + h, TechTheme.PANEL2);
+        graphics.fill(x, y, x + w, y + 1, TechTheme.BORDER);
+        graphics.fill(x, y + h - 1, x + w, y + h, TechTheme.BORDER);
     }
 
     private static void divider(GuiGraphics graphics, int x, int top, int bottom) {
-        graphics.fill(x, top, x + 2, bottom, 0xFF373737);
+        graphics.fill(x, top, x + 2, bottom, TechTheme.BORDER);
     }
 
     private int countAvailable(Ingredient ingredient) {
@@ -268,14 +271,14 @@ public class AmmoAssemblerScreen extends AbstractContainerScreen<AmmoAssemblerMe
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, 8, 5, 0x404040, false);
+        graphics.drawString(font, title, 8, 5, TechTheme.TEXT, false);
         graphics.drawString(font, Component.translatable("gui.taczammobox.ammo_assembler.ammo"),
-                AMMO_X, 18, 0x404040, false);
+                AMMO_X, 18, TechTheme.TEXT, false);
         graphics.drawString(font, Component.translatable("gui.taczammobox.ammo_assembler.recipes"),
-                RECIPE_X, 18, 0x404040, false);
+                RECIPE_X, 18, TechTheme.TEXT, false);
         graphics.drawString(font, Component.translatable("gui.taczammobox.ammo_assembler.output"),
-                OUT_X, 18, 0x404040, false);
-        graphics.drawString(font, Component.translatable("gui.taczammobox.sides"), 244, 10, 0x404040, false);
+                OUT_X, 18, TechTheme.TEXT, false);
+        graphics.drawString(font, Component.translatable("gui.taczammobox.sides"), 244, 10, TechTheme.TEXT, false);
     }
 
     @Override

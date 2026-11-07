@@ -5,6 +5,8 @@ import com.taczammobox.menu.AmmoLoaderMenu;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import com.taczammobox.client.ui.TechButton;
+import com.taczammobox.client.ui.TechTheme;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -38,11 +40,11 @@ public class AmmoLoaderScreen extends AbstractContainerScreen<AmmoLoaderMenu> {
 
         for (int i = 0; i < sideButtons.length; i++) {
             int id = 1 + this.shownDirections[i].ordinal();
-            this.sideButtons[i] = this.addRenderableWidget(Button.builder(Component.empty(), button -> click(id))
-                    .bounds(this.leftPos + 184, this.topPos + 18 + i * 20, 88, 18).build());
+            this.sideButtons[i] = this.addRenderableWidget(new TechButton(this.leftPos + 184,
+                    this.topPos + 18 + i * 20, 88, 18, Component.empty(), button -> click(id)));
         }
-        this.redstoneButton = this.addRenderableWidget(Button.builder(Component.empty(), button -> click(7))
-                .bounds(this.leftPos + 184, this.topPos + 140, 88, 18).build());
+        this.redstoneButton = this.addRenderableWidget(new TechButton(this.leftPos + 184,
+                this.topPos + 140, 88, 18, Component.empty(), button -> click(7)));
         updateLabels();
     }
 
@@ -66,33 +68,35 @@ public class AmmoLoaderScreen extends AbstractContainerScreen<AmmoLoaderMenu> {
             AmmoLoaderBlockEntity.SideMode mode = this.menu.getSide(this.shownDirections[i]);
             MutableComponent label = Component.translatable("gui.taczammobox.side." + FACE_KEYS[i]);
             label.append(" ").append(Component.translatable("gui.taczammobox.side." + mode.name().toLowerCase()));
-            this.sideButtons[i].setMessage(label.withStyle(color(mode)));
+            this.sideButtons[i].setMessage(label);
+            ((TechButton) this.sideButtons[i]).setTextColor(sideColor(mode));
         }
         if (this.redstoneButton != null) {
             AmmoLoaderBlockEntity.RedstoneMode mode = this.menu.getRedstoneMode();
             this.redstoneButton.setMessage(Component.translatable(
-                    "gui.taczammobox.redstone." + mode.name().toLowerCase()).withStyle(redstoneColor(mode)));
+                    "gui.taczammobox.redstone." + mode.name().toLowerCase()));
+            ((TechButton) this.redstoneButton).setTextColor(redstoneColor(mode));
         }
     }
 
-    private static ChatFormatting color(AmmoLoaderBlockEntity.SideMode mode) {
+    private static int sideColor(AmmoLoaderBlockEntity.SideMode mode) {
         if (mode == AmmoLoaderBlockEntity.SideMode.INPUT) {
-            return ChatFormatting.GREEN;
+            return TechTheme.ACCENT;
         }
         if (mode == AmmoLoaderBlockEntity.SideMode.OUTPUT) {
-            return ChatFormatting.GOLD;
+            return TechTheme.ACCENT2;
         }
-        return ChatFormatting.DARK_GRAY;
+        return TechTheme.MUTED;
     }
 
-    private static ChatFormatting redstoneColor(AmmoLoaderBlockEntity.RedstoneMode mode) {
+    private static int redstoneColor(AmmoLoaderBlockEntity.RedstoneMode mode) {
         if (mode == AmmoLoaderBlockEntity.RedstoneMode.HIGH) {
-            return ChatFormatting.RED;
+            return TechTheme.WARN;
         }
         if (mode == AmmoLoaderBlockEntity.RedstoneMode.LOW) {
-            return ChatFormatting.AQUA;
+            return TechTheme.ACCENT;
         }
-        return ChatFormatting.DARK_GRAY;
+        return TechTheme.MUTED;
     }
 
     @Override
@@ -108,11 +112,11 @@ public class AmmoLoaderScreen extends AbstractContainerScreen<AmmoLoaderMenu> {
         int x = this.leftPos;
         int y = this.topPos;
 
-        graphics.fill(x, y, x + this.imageWidth, y + this.imageHeight, 0xFFC6C6C6);
-        graphics.fill(x, y, x + this.imageWidth, y + 1, 0xFF373737);
-        graphics.fill(x, y + this.imageHeight - 1, x + this.imageWidth, y + this.imageHeight, 0xFF373737);
-        graphics.fill(x, y, x + 1, y + this.imageHeight, 0xFF373737);
-        graphics.fill(x + this.imageWidth - 1, y, x + this.imageWidth, y + this.imageHeight, 0xFF373737);
+        graphics.fill(x, y, x + this.imageWidth, y + this.imageHeight, TechTheme.BG);
+        graphics.fill(x, y, x + this.imageWidth, y + 1, TechTheme.BORDER);
+        graphics.fill(x, y + this.imageHeight - 1, x + this.imageWidth, y + this.imageHeight, TechTheme.BORDER);
+        graphics.fill(x, y, x + 1, y + this.imageHeight, TechTheme.BORDER);
+        graphics.fill(x + this.imageWidth - 1, y, x + this.imageWidth, y + this.imageHeight, TechTheme.BORDER);
 
         drawSlot(graphics, x + 43, y + 34);
         drawSlot(graphics, x + 79, y + 34);
@@ -127,25 +131,25 @@ public class AmmoLoaderScreen extends AbstractContainerScreen<AmmoLoaderMenu> {
             drawSlot(graphics, x + 7 + col * 18, y + 141);
         }
 
-        graphics.fill(x + 176, y, x + this.imageWidth, y + this.imageHeight, 0xFFB8B8B8);
-        graphics.fill(x + 176, y, x + 177, y + this.imageHeight, 0xFF373737);
+        graphics.fill(x + 176, y, x + this.imageWidth, y + this.imageHeight, TechTheme.PANEL);
+        graphics.fill(x + 176, y, x + 177, y + this.imageHeight, TechTheme.BORDER);
 
-        graphics.fill(x + 102, y + 35, x + 126, y + 52, 0xFF8B8B8B);
+        graphics.fill(x + 102, y + 35, x + 126, y + 52, TechTheme.SLOT);
         int progress = this.menu.getProgress();
         int width = progress * 24 / AmmoLoaderBlockEntity.ticksPerOperation();
-        graphics.fill(x + 102, y + 35, x + 102 + width, y + 52, 0xFF6FBF4A);
+        graphics.fill(x + 102, y + 35, x + 102 + width, y + 52, TechTheme.ACCENT);
     }
 
     private static void drawSlot(GuiGraphics graphics, int x, int y) {
-        graphics.fill(x - 1, y - 1, x + 17, y + 17, 0xFF373737);
-        graphics.fill(x, y, x + 16, y + 16, 0xFF8B8B8B);
+        graphics.fill(x - 1, y - 1, x + 17, y + 17, TechTheme.BORDER);
+        graphics.fill(x, y, x + 16, y + 16, TechTheme.SLOT);
     }
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 0x404040, false);
-        graphics.drawString(this.font, Component.translatable("gui.taczammobox.sides"), 180, 6, 0x404040, false);
-        graphics.drawString(this.font, Component.translatable("gui.taczammobox.filter"), 150, 22, 0x404040, false);
-        graphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 0x404040, false);
+        graphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, TechTheme.TEXT, false);
+        graphics.drawString(this.font, Component.translatable("gui.taczammobox.sides"), 180, 6, TechTheme.TEXT, false);
+        graphics.drawString(this.font, Component.translatable("gui.taczammobox.filter"), 150, 22, TechTheme.TEXT, false);
+        graphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, TechTheme.TEXT, false);
     }
 }
