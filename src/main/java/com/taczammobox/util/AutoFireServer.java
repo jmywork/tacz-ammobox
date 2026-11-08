@@ -48,8 +48,12 @@ public final class AutoFireServer {
             return;
         }
         ShooterDataHolder holder = IGunOperator.fromLivingEntity(player).getDataHolder();
+        boolean wasBolting = holder.isBolting;
         holder.isBolting = false;
         holder.boltTimestamp = 0;
+        if (wasBolting) {
+            DIAG.log("server-bolt", "cleared isBolting");
+        }
         // Keep the chamber loaded so TACZ's NEED_BOLT check passes; an empty magazine must
         // block shooting though, otherwise the last round would never run out.
         boolean loaded = gun.hasBulletInBarrel(gunStack);
@@ -58,6 +62,39 @@ public final class AutoFireServer {
             gun.setBulletInBarrel(gunStack, false);
         } else if (count > 0 && !loaded) {
             gun.setBulletInBarrel(gunStack, true);
+        }
+    }
+
+    /** Rate-limited diagnostics for the tier magazine fire behaviour. */
+    public static final class DIAG {
+        private static final java.util.Map<String, Long> LAST = new java.util.HashMap<>();
+        private static long lastShotLog = System.currentTimeMillis();
+        private static int shotsSinceLog;
+        private static long totalShots;
+
+        private DIAG() {
+        }
+
+        public static void log(String tag, String message) {
+            long now = System.currentTimeMillis();
+            Long last = LAST.get(tag);
+            if (last != null && now - last < 800L) {
+                return;
+            }
+            LAST.put(tag, now);
+            TaczAmmoBoxMod.LOGGER.info("[taczammobox][shoot][{}] {} (total shots={})", tag, message, totalShots);
+        }
+
+        public static void shot() {
+            shotsSinceLog++;
+            totalShots++;
+            long now = System.currentTimeMillis();
+            if (now - lastShotLog >= 1000L) {
+                TaczAmmoBoxMod.LOGGER.info("[taczammobox][shoot][rate] server accepted {} shots in {} ms",
+                        shotsSinceLog, now - lastShotLog);
+                shotsSinceLog = 0;
+                lastShotLog = now;
+            }
         }
     }
 
@@ -80,5 +117,6 @@ public final class AutoFireServer {
             gun.setCurrentAmmoCount(gunStack, count - 1);
         }
         gun.setBulletInBarrel(gunStack, true);
+        DIAG.shot();
     }
 }

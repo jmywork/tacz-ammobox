@@ -52,6 +52,9 @@ public final class AutoTriggerClient {
         }
         IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(player);
         if (operator != null && operator.getDataHolder() != null) {
+            if (operator.getDataHolder().isBolting) {
+                com.taczammobox.util.AutoFireServer.DIAG.log("client-bolt", "cleared isBolting");
+            }
             operator.getDataHolder().isBolting = false;
         }
     }
