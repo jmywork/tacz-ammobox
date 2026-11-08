@@ -11,9 +11,12 @@ import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.resource.index.CommonAmmoIndex;
 import com.tacz.guns.resource.index.CommonGunIndex;
 import com.tacz.guns.resource.pojo.data.gun.BulletData;
+import com.tacz.guns.resource.pojo.data.gun.BurstData;
+import com.tacz.guns.resource.pojo.data.gun.ChargeData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import org.joml.Vector2d;
 import com.taczammobox.TaczAmmoBoxMod;
@@ -62,38 +65,33 @@ import java.util.UUID;
  */
 @Mod.EventBusSubscriber(modid = TaczAmmoBoxMod.MOD_ID)
 public final class SatelliteRackManager {
-    /** Halo geometry in degrees; the gap between ARC_END and ARC_START+360 is the bottom. */
-    private static final double ARC_START = -55.0D;
-    private static final double ARC_END = 235.0D;
-    private static final double RING_RADIUS = 1.25D;
-    private static final double BACK_OFFSET = 0.92D;
+    /**
+     * Idle pose: one fan of guns behind the back. Every gun hangs off a single
+     * pivot at the small of the back and radiates up and outwards, the way the
+     * petals of the Huawei mark open — a peacock tail rather than a pair of wings.
+     * The fan lies in the player's back plane, so from behind every gun shows its
+     * broadside.
+     */
+    private static final double FAN_BACK_OFFSET = 0.55D;
+    private static final double FAN_PIVOT_HEIGHT = 1.02D;
+    private static final double FAN_RADIUS = 0.82D;
+    /** Total opening angle in degrees, symmetric around straight up. */
+    private static final double FAN_ARC = 168.0D;
+    /** Roll that lays each gun broadside to the viewer instead of edge-on. */
+    private static final float FAN_ROLL = 90.0F;
+    /** Spawn height for a fresh entity, before the first layout pass moves it. */
     private static final double CENTER_HEIGHT = 1.45D;
-    /** Wings hang from just below the shoulder blades. */
-    private static final double WING_BASE_HEIGHT = 1.38D;
-    private static final double WING_INNER = 0.16D;
-    private static final double WING_SPREAD = 1.62D;
-    private static final double WING_TOP = 0.10D;
-    /** Negative: the wing tip rises above the root. */
-    private static final double WING_DROP = -0.55D;
-    private static final double WING_SWEEP = -0.06D;
-    private static final float WING_CANT_YAW = 5.0F;
-    private static final float WING_CANT_SPREAD = 34.0F;
-    private static final float WING_CANT_PITCH = 4.0F;
-    private static final float WING_ROLL = 14.0F;
-    private static final float WING_ROLL_SPREAD = 26.0F;
-    /** How far the top of the ring leans forward over the player. */
-    private static final double RING_TILT = 30.0D;
-    /** Resting inward cant, so the halo looks like a guard rather than a fence. */
-    private static final float IDLE_CANT_YAW = 12.0F;
-    private static final float IDLE_CANT_PITCH = 9.0F;
     /** Enemies inside this radius get engaged automatically. */
     private static final double AUTO_RANGE = 24.0D;
     /** A marked target stays in focus out to this distance. */
     private static final double FOCUS_RANGE = 40.0D;
     /** The halo's own search cadence; scanning every tick is wasteful. */
     private static final long SCAN_INTERVAL = 4L;
-    /** Hard floor so no gun can turn the halo into a bullet fountain (energy guns report 0 ms). */
-    private static final long MIN_INTERVAL_TICKS = 2L;
+    /**
+     * 1200 RPM is TACZ's own ceiling and works out to one round per tick, so the
+     * halo never needs to wait longer than that between shots.
+     */
+    private static final long MIN_INTERVAL_TICKS = 1L;
     /** Live bullets per satellite before it stops adding more. */
     private static final int BULLET_BUDGET = 8;
     private static final GameProfile PROFILE = new GameProfile(
@@ -156,17 +154,18 @@ public final class SatelliteRackManager {
             return;
         }
 
-        // Angel wings: guns are dealt alternately to a left and a right wing, then
-        // fanned outwards from the shoulder blades like feather vanes. The inner
-        // gun of each wing sits high and close, the tip drops and sweeps back.
+        // Peacock fan: the guns hang off one pivot at the small of the back and
+        // spread across the arc, so the fan opens as a single shape. With ten guns
+        // the inner pair stands almost upright and the outer pair lies out to the
+        // sides; with one gun it sits dead centre.
         float yawRad = (float) Math.toRadians(player.getYRot());
         double forwardX = -Math.sin(yawRad);
         double forwardZ = Math.cos(yawRad);
         double rightX = Math.cos(yawRad);
         double rightZ = Math.sin(yawRad);
-        double centerX = player.getX() - forwardX * BACK_OFFSET;
-        double centerY = player.getY() + WING_BASE_HEIGHT;
-        double centerZ = player.getZ() - forwardZ * BACK_OFFSET;
+        double pivotX = player.getX() - forwardX * FAN_BACK_OFFSET;
+        double pivotY = player.getY() + FAN_PIVOT_HEIGHT;
+        double pivotZ = player.getZ() - forwardZ * FAN_BACK_OFFSET;
 
         int count = guns.size();
         for (int i = 0; i < count; i++) {
@@ -180,31 +179,29 @@ public final class SatelliteRackManager {
                 player.level().addFreshEntity(entity);
             }
 
-            int side = (i % 2 == 0) ? -1 : 1;
-            int rank = i / 2;
-            int ranks = (count + 1) / 2;
-            double feather = ranks <= 1 ? 0.5D : rank / (double) (ranks - 1);
-            double across = side * (WING_INNER + feather * WING_SPREAD);
-            double rise = WING_TOP - feather * WING_DROP;
-            double sweep = feather * WING_SWEEP;
-            double x = centerX + rightX * across + forwardX * sweep;
-            double y = centerY + rise;
-            double z = centerZ + rightZ * across + forwardZ * sweep;
+            double fraction = count <= 1 ? 0.5D : i / (double) (count - 1);
+            double angle = Math.toRadians(-FAN_ARC / 2.0D + fraction * FAN_ARC);
+            double across = Math.sin(angle) * FAN_RADIUS;
+            double rise = Math.cos(angle) * FAN_RADIUS;
+            double x = pivotX + rightX * across;
+            double y = pivotY + rise;
+            double z = pivotZ + rightZ * across;
             entity.setPos(x, y, z);
 
             long now = player.level().getGameTime();
             if (target != null) {
                 pointAt(entity, target.getEyePosition());
             } else {
-                // Exusiai pose: the wings hold their muzzles to the sky no matter where
-                // the player looks. Inner vanes stand almost straight up, outer ones
-                // lean outwards as the wing opens.
-                float cantYaw = (float) (side * (WING_CANT_YAW + feather * WING_CANT_SPREAD));
-                entity.setYRot(player.getYRot() + cantYaw);
-                entity.setXRot((float) (-82.0F + feather * 26.0F));
+                // Idle: the muzzle points along its own petal, so the fan reads as
+                // one opening shape instead of a bundle of parallel guns.
+                double dirX = rightX * Math.sin(angle);
+                double dirY = Math.cos(angle);
+                double dirZ = rightZ * Math.sin(angle);
+                entity.setYRot((float) Math.toDegrees(Math.atan2(-dirX, dirZ)));
+                entity.setXRot((float) -Math.toDegrees(Math.atan2(dirY, Math.hypot(dirX, dirZ))));
             }
-            // Feather tilt: vanes rotate outwards as they leave the shoulder.
-            entity.setRoll((float) (side * (WING_ROLL * feather + WING_ROLL_SPREAD * feather * feather)));
+            // Lay each gun broadside in the fan plane; edge-on they look like sticks.
+            entity.setRoll((across >= 0.0D ? 1.0F : -1.0F) * FAN_ROLL);
             entity.setGunIfChanged(guns.get(i));
             entity.setSlotIndex(i);
 
@@ -622,14 +619,74 @@ public final class SatelliteRackManager {
         } finally {
             shooter.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
         }
-        // GunData.getShootInterval() is in milliseconds, not ticks.
-        long intervalMs = gunData != null
-                ? gunData.getShootInterval(shooter, gun.getFireMode(gunStack), gunStack)
-                : 200L;
-        // A zero interval means the pack drives the gun through a Lua script (most
-        // energy weapons); we cannot run that script, so give them a slow cadence.
-        long interval = intervalMs <= 0L ? 4L : Math.max(MIN_INTERVAL_TICKS, intervalMs / 50L);
+        // TACZ reports the trigger interval in milliseconds; shotIntervalTicks() also
+        // folds in the bolt/charge action time and converts to ticks.
+        long interval = shotIntervalTicks(gunData, gun, gunStack, shooter);
+        if (interval != satellite.getLoggedInterval()) {
+            satellite.setLoggedInterval(interval);
+            // One line per gun, so a report can compare the halo's cadence with the
+            // gun's own rate instead of guessing whether the TACZ interval was used.
+            TaczAmmoBoxMod.LOGGER.info("[taczammobox] satellite {} cadence: {} tick(s) ~ {} RPM",
+                    gun.getGunId(gunStack), interval, 1200L / Math.max(1L, interval));
+        }
         return interval;
+    }
+
+    /**
+     * Ticks this gun must wait between rounds when it fires the way TACZ fires it.
+     *
+     * <p>{@code GunData.getShootInterval()} only carries the trigger interval, so a
+     * bolt gun would otherwise fire at its RPM while a player has to cycle the bolt,
+     * and a charge gun would skip the charge completely. The action times are folded
+     * in here. Our own tier magazines deliberately rewrite the interval and skip the
+     * bolt, so their value is taken at face value.</p>
+     */
+    private static long shotIntervalTicks(@Nullable GunData gunData, IGun gun, ItemStack gunStack,
+                                          FakePlayer shooter) {
+        if (gunData == null) {
+            return 4L;
+        }
+        long intervalMs;
+        try {
+            intervalMs = gunData.getShootInterval(shooter, gun.getFireMode(gunStack), gunStack);
+        } catch (Throwable throwable) {
+            // A broken attachment cache must not stop the halo from firing.
+            intervalMs = 0L;
+        }
+        if (intervalMs <= 0L) {
+            // The pack drives this gun through a Lua script (most energy weapons);
+            // we cannot run that script, so give it a slow cadence.
+            return 4L;
+        }
+        FireMode fireMode = gun.getFireMode(gunStack);
+        if (fireMode == FireMode.BURST) {
+            BurstData burst = gunData.getBurstData();
+            if (burst != null && burst.getCount() > 0) {
+                // We do not run TACZ's burst state machine, so fire at the sustained
+                // rate of a whole burst instead of its intra-burst gap.
+                intervalMs = Math.max(intervalMs,
+                        Math.max(50L, gunData.getBurstShootInterval()) / burst.getCount());
+            }
+        }
+        boolean tierMagazine = AutoFireTier.of(gunStack) != null;
+        if (!tierMagazine && gunData.getBolt() != null) {
+            // A player cycle is boltFeedTime followed by boltActionTime, and TACZ
+            // rejects shots while the bolt is moving; a pack that leaves
+            // boltFeedTime at -1 reuses the action time.
+            float action = Math.max(0.0F, gunData.getBoltActionTime());
+            float feed = gunData.getBoltFeedTime() < 0.0F ? action : Math.max(0.0F, gunData.getBoltFeedTime());
+            intervalMs = Math.max(intervalMs, (long) ((action + feed) * 1000.0F));
+        }
+        if (!tierMagazine) {
+            ChargeData charge = gunData.getChargeData(fireMode);
+            if (charge != null && charge.getIncreasePerTick() > 0.0F) {
+                float needed = charge.getFireThreshold() > 0.0F ? charge.getFireThreshold() : charge.getMaxCharge();
+                intervalMs = Math.max(intervalMs, (long) (Math.ceil(needed / charge.getIncreasePerTick()) * 50.0F));
+            }
+        }
+        // Round up: the halo may fire slower than the gun, never faster.
+        long ticks = (intervalMs + 49L) / 50L;
+        return Math.max(MIN_INTERVAL_TICKS, ticks);
     }
 
     private static List<SatelliteGunEntity> satellites(Player player) {

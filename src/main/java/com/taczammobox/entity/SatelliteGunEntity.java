@@ -58,6 +58,8 @@ public class SatelliteGunEntity extends Entity {
     private float heat;
     private long heatLockUntil;
     private long lastShotTick = Long.MIN_VALUE;
+    /** Last cadence that was logged, so one line is printed per gun change. */
+    private long loggedInterval = -1L;
 
     public SatelliteGunEntity(EntityType<? extends SatelliteGunEntity> type, Level level) {
         super(type, level);
@@ -292,6 +294,15 @@ public class SatelliteGunEntity extends Entity {
 
     public void setLastShotTick(long tick) {
         this.lastShotTick = tick;
+    }
+
+    /** Last tick interval this gun was logged with, -1 until it has fired once. */
+    public long getLoggedInterval() {
+        return loggedInterval;
+    }
+
+    public void setLoggedInterval(long loggedInterval) {
+        this.loggedInterval = loggedInterval;
     }
 
     public void setNextFire(long nextFire) {
