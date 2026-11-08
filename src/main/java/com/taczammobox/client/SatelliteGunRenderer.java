@@ -34,7 +34,7 @@ public class SatelliteGunRenderer extends EntityRenderer<SatelliteGunEntity> {
         pose.mulPose(Axis.YP.rotationDegrees(180.0F - entity.getYRot()));
         pose.mulPose(Axis.XP.rotationDegrees(-entity.getXRot()));
         pose.mulPose(Axis.ZP.rotationDegrees(entity.getRoll()));
-        pose.scale(1.35F, 1.35F, 1.35F);
+        pose.scale(1.0F, 1.0F, 1.0F);
         Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.FIXED, packedLight,
                 OverlayTexture.NO_OVERLAY, pose, buffers, entity.level(), entity.getId());
         pose.popPose();
