@@ -33,9 +33,16 @@ public record FocusTargetPacket(int entityId) {
             ItemStack rack = SatelliteRackManager.findRack(player);
             if (!rack.isEmpty()) {
                 if (packet.entityId == 0) {
-                    SatelliteRackItem.setFocus(rack, null);
-                    player.displayClientMessage(Component.translatable("message.taczammobox.focus.cleared")
-                            .withStyle(ChatFormatting.GRAY), true);
+                    LivingEntity looked = pickByRay(player);
+                    if (looked != null) {
+                        SatelliteRackItem.setFocus(rack, looked.getUUID());
+                        player.displayClientMessage(Component.translatable("message.taczammobox.focus.set",
+                                looked.getDisplayName()).withStyle(ChatFormatting.AQUA), true);
+                    } else {
+                        SatelliteRackItem.setFocus(rack, null);
+                        player.displayClientMessage(Component.translatable("message.taczammobox.focus.cleared")
+                                .withStyle(ChatFormatting.GRAY), true);
+                    }
                 } else {
                     Entity entity = player.level().getEntity(packet.entityId);
                     if (entity instanceof LivingEntity living && living.isAlive()
@@ -51,5 +58,30 @@ public record FocusTargetPacket(int entityId) {
             }
         }
         context.setPacketHandled(true);
+    }
+
+    /**
+     * Server-side fallback: the client's picker ignores entities that are not
+     * "pickable" (some dummies and armour stands), so cast our own box ray.
+     */
+    private static LivingEntity pickByRay(ServerPlayer player) {
+        var eye = player.getEyePosition();
+        var look = player.getLookAngle();
+        var end = eye.add(look.scale(64.0D));
+        var box = player.getBoundingBox().expandTowards(look.scale(64.0D)).inflate(1.0D);
+        LivingEntity best = null;
+        double bestDistance = 64.0D * 64.0D;
+        for (LivingEntity candidate : player.level().getEntitiesOfClass(LivingEntity.class, box,
+                entity -> entity != player && entity.isAlive() && !entity.isSpectator())) {
+            var hit = candidate.getBoundingBox().inflate(0.3D).clip(eye, end);
+            if (hit.isPresent()) {
+                double distance = eye.distanceToSqr(hit.get());
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    best = candidate;
+                }
+            }
+        }
+        return best;
     }
 }

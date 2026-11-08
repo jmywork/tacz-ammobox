@@ -181,7 +181,7 @@ public final class SatelliteRackManager {
         UUID focus = SatelliteRackItem.focus(rack);
         if (focus != null) {
             var entity = player.level() instanceof ServerLevel serverLevel ? serverLevel.getEntity(focus) : null;
-            if (entity instanceof LivingEntity living && isValidTarget(player, living, FOCUS_RANGE)) {
+            if (entity instanceof LivingEntity living && isFocusValid(player, living, FOCUS_RANGE)) {
                 target = living;
             } else if (!rack.isEmpty()) {
                 // The mark died or walked away; drop it so normal search resumes.
@@ -195,6 +195,14 @@ public final class SatelliteRackManager {
         List<LivingEntity> candidates = player.level().getEntitiesOfClass(LivingEntity.class, box,
                 entity -> isValidTarget(player, entity, AUTO_RANGE));
         return candidates.stream().min(Comparator.comparingDouble(player::distanceToSqr)).orElse(null);
+    }
+
+    /** A marked target can be anything living, hostiles or not. */
+    private static boolean isFocusValid(Player player, LivingEntity entity, double range) {
+        if (entity == player || !entity.isAlive() || entity.isSpectator() || entity instanceof Player) {
+            return false;
+        }
+        return player.distanceToSqr(entity) <= range * range && player.hasLineOfSight(entity);
     }
 
     private static boolean isValidTarget(Player player, LivingEntity entity, double range) {
@@ -364,6 +372,12 @@ public final class SatelliteRackManager {
             data.isBolting = false;
             data.setCurrentGunItem(() -> gunStack);
             if (debug) {
+                TaczAmmoBoxMod.LOGGER.info("sat ammo: stack={} hand={} barrel={}",
+                        gun.getCurrentAmmoCount(gunStack),
+                        gun.getCurrentAmmoCount(shooter.getMainHandItem()),
+                        gun.hasBulletInBarrel(gunStack));
+            }
+            if (debug) {
                 TaczAmmoBoxMod.LOGGER.info("sat gate: shootTs={} cool={} drawCd={} bolting={}",
                         data.shootTimestamp, operator.getSynShootCoolDown(), operator.getSynDrawCoolDown(),
                         data.isBolting);
@@ -382,8 +396,8 @@ public final class SatelliteRackManager {
                 }
             }
             if (!spawned) {
-                ServerPlayer owner = level.getServer() == null ? null
-                        : level.getServer().getPlayerList().getPlayer(satellite.getOwner());
+                ServerPlayer owner = level.getPlayerByUUID(satellite.getOwner()) instanceof ServerPlayer serverPlayer
+                        ? serverPlayer : null;
                 spawned = spawnBullet(level, owner == null ? shooter : owner, satellite, gunStack, gun, dir);
             }
             if (debug) {
@@ -401,9 +415,15 @@ public final class SatelliteRackManager {
         } finally {
             shooter.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
         }
-        return TimelessAPI.getCommonGunIndex(gun.getGunId(gunStack))
+        // GunData.getShootInterval() is in milliseconds, not ticks.
+        long intervalMs = TimelessAPI.getCommonGunIndex(gun.getGunId(gunStack))
                 .map(index -> index.getGunData().getShootInterval(shooter, gun.getFireMode(gunStack), gunStack))
                 .orElse(200L);
+        long interval = Math.max(1L, intervalMs / 50L);
+        if (debug) {
+            TaczAmmoBoxMod.LOGGER.info("sat interval: {} ms -> {} ticks", intervalMs, interval);
+        }
+        return interval;
     }
 
     private static List<SatelliteGunEntity> satellites(Player player) {

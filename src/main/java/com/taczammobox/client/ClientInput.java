@@ -9,6 +9,8 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
@@ -31,10 +33,7 @@ public final class ClientInput {
             return;
         }
         if (ModKeyMappings.FOCUS_TARGET.consumeClick()) {
-            var hit = minecraft.player.pick(64.0D, 0.0F, false);
-            int id = hit instanceof net.minecraft.world.phys.EntityHitResult entityHit
-                    ? entityHit.getEntity().getId() : 0;
-            ModNetwork.sendFocus(id);
+            ModNetwork.sendFocus(pickFocusTarget(minecraft));
         }
         if (ModKeyMappings.SORT_AMMO.consumeClick()) {
             TaczAmmoBoxMod.LOGGER.info("[key] pack pressed");
@@ -49,6 +48,25 @@ public final class ClientInput {
                     BuiltInRegistries.ITEM.getKey(minecraft.player.getMainHandItem().getItem()));
             ModNetwork.sendFill();
         }
+    }
+
+    /** What the crosshair is on: vanilla's own pick first, then a manual ray. */
+    private static int pickFocusTarget(Minecraft minecraft) {
+        if (minecraft.player == null || minecraft.level == null) {
+            return 0;
+        }
+        if (minecraft.crosshairPickEntity != null) {
+            return minecraft.crosshairPickEntity.getId();
+        }
+        var player = minecraft.player;
+        Vec3 eye = player.getEyePosition(1.0F);
+        Vec3 look = player.getLookAngle();
+        Vec3 end = eye.add(look.scale(64.0D));
+        AABB box = player.getBoundingBox().expandTowards(look.scale(64.0D)).inflate(1.0D);
+        var hit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(
+                player, eye, end, box,
+                entity -> !entity.isSpectator() && entity.isPickable(), 64.0D * 64.0D);
+        return hit == null ? 0 : hit.getEntity().getId();
     }
 
     @SubscribeEvent
