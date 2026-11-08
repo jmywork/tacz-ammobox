@@ -71,6 +71,10 @@ public final class SatelliteRackManager {
     private static final double FOCUS_RANGE = 40.0D;
     /** The halo's own search cadence; scanning every tick is wasteful. */
     private static final long SCAN_INTERVAL = 4L;
+    /** Hard floor so no gun can turn the halo into a bullet fountain (energy guns report 0 ms). */
+    private static final long MIN_INTERVAL_TICKS = 2L;
+    /** Live bullets per satellite before it stops adding more. */
+    private static final int BULLET_BUDGET = 8;
     private static final GameProfile PROFILE = new GameProfile(
             UUID.nameUUIDFromBytes("taczammobox:satellite".getBytes(StandardCharsets.UTF_8)), "[Satellite]");
     /** Stand-in for "this happened long before the fake player's timeline". */
@@ -259,8 +263,8 @@ public final class SatelliteRackManager {
      * that never "drew" the gun, so build the bullet that script would have built:
      * the same EntityKineticBullet, the same gun data, our own direction.
      */
-    private static boolean spawnBullet(ServerLevel level, LivingEntity owner, SatelliteGunEntity satellite,
-                                       ItemStack gunStack, IGun gun, Vec3 dir) {
+    private static boolean spawnBullet(ServerLevel level, FakePlayer shooter, LivingEntity owner,
+                                       SatelliteGunEntity satellite, ItemStack gunStack, IGun gun, Vec3 dir) {
         CommonGunIndex index = TimelessAPI.getCommonGunIndex(gun.getGunId(gunStack)).orElse(null);
         if (index == null) {
             return false;
@@ -270,10 +274,23 @@ public final class SatelliteRackManager {
         if (gunData == null || bulletData == null || gunData.getAmmoId() == null) {
             return false;
         }
-        // Owned by the player, not the fake: the ring sits behind the player's back,
-        // so a fake-owned bullet would fly straight through the player and stop there.
-        EntityKineticBullet bullet = new EntityKineticBullet(level, owner, gunStack, gunData.getAmmoId(),
+        // The constructor reads the shooter's attachment cache and throws when it is
+        // null, so build it on the fake (which we keep warm); the player becomes the
+        // owner right after, which fixes damage attribution and stops our own bullets
+        // from colliding with the player standing in front of the ring.
+        if (level.getEntitiesOfClass(EntityKineticBullet.class,
+                satellite.getBoundingBox().inflate(12.0D),
+                bullet -> bullet.getOwner() == shooter || bullet.getOwner() == owner).size()
+                >= BULLET_BUDGET) {
+            // Energy guns in some packs report a 0 ms interval and a very long bullet
+            // life; without a budget ten of them flood the world and the client dies.
+            return false;
+        }
+        EntityKineticBullet bullet = new EntityKineticBullet(level, shooter, gunStack, gunData.getAmmoId(),
                 gun.getGunId(gunStack), true, gunData, bulletData);
+        if (owner != shooter) {
+            bullet.setOwner(owner);
+        }
         Vec3 muzzle = satellite.position().add(0.0D, 0.35D, 0.0D).add(dir.scale(0.6D));
         bullet.setPos(muzzle.x, muzzle.y, muzzle.z);
         bullet.shootFromRotation(owner, satellite.getXRot(), satellite.getYRot(), 0.0F,
@@ -405,7 +422,7 @@ public final class SatelliteRackManager {
             if (!spawned) {
                 ServerPlayer owner = level.getPlayerByUUID(satellite.getOwner()) instanceof ServerPlayer serverPlayer
                         ? serverPlayer : null;
-                spawned = spawnBullet(level, owner == null ? shooter : owner, satellite, gunStack, gun, dir);
+                spawned = spawnBullet(level, shooter, owner == null ? shooter : owner, satellite, gunStack, gun, dir);
             }
             if (debug) {
                 int bullets = level.getEntitiesOfClass(EntityKineticBullet.class,
@@ -426,7 +443,9 @@ public final class SatelliteRackManager {
         long intervalMs = TimelessAPI.getCommonGunIndex(gun.getGunId(gunStack))
                 .map(index -> index.getGunData().getShootInterval(shooter, gun.getFireMode(gunStack), gunStack))
                 .orElse(200L);
-        long interval = Math.max(1L, intervalMs / 50L);
+        // A zero interval means the pack drives the gun through a Lua script (most
+        // energy weapons); we cannot run that script, so give them a slow cadence.
+        long interval = intervalMs <= 0L ? 4L : Math.max(MIN_INTERVAL_TICKS, intervalMs / 50L);
         if (debug) {
             TaczAmmoBoxMod.LOGGER.info("sat interval: {} ms -> {} ticks", intervalMs, interval);
         }
