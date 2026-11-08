@@ -26,6 +26,7 @@ public class SatelliteGunEntity extends Entity {
             SynchedEntityData.defineId(SatelliteGunEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_RECOIL =
             SynchedEntityData.defineId(SatelliteGunEntity.class, EntityDataSerializers.FLOAT);
+    private boolean flashSeen;
     private static final EntityDataAccessor<Integer> DATA_FLASH =
             SynchedEntityData.defineId(SatelliteGunEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_ROLL =
@@ -64,6 +65,8 @@ public class SatelliteGunEntity extends Entity {
             int flash = this.getFlash();
             if (flash > 0) {
                 this.setFlash(flash - 1);
+            } else {
+                this.flashSeen = false;
             }
         }
         super.tick();
@@ -138,6 +141,18 @@ public class SatelliteGunEntity extends Entity {
 
     public void setRecoil(float recoil) {
         this.entityData.set(DATA_RECOIL, recoil);
+    }
+
+    /**
+     * True once per shot on the client, so the renderer can kick off TACZ's
+     * own muzzle flash exactly once instead of every frame.
+     */
+    public boolean consumeFlashStart() {
+        if (this.flashSeen || this.getFlash() <= 0) {
+            return false;
+        }
+        this.flashSeen = true;
+        return true;
     }
 
     public int getFlash() {
