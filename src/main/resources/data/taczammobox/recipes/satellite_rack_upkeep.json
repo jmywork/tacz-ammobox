@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "NBN",
+    "GCG",
+    "NHN"
+  ],
+  "key": {
+    "N": {
+      "item": "minecraft:netherite_block"
+    },
+    "B": {
+      "item": "minecraft:beacon"
+    },
+    "G": {
+      "item": "minecraft:dragon_breath"
+    },
+    "C": {
+      "item": "taczammobox:ammo_chain"
+    },
+    "H": {
+      "item": "minecraft:dragon_head"
+    }
+  },
+  "result": {
+    "item": "taczammobox:satellite_rack_upkeep"
+  }
+}
