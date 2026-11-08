@@ -48,6 +48,8 @@ public class SatelliteGunEntity extends Entity {
 
     // Heat is server-side only: the halo must overheat like the real gun instead of
     // firing forever, otherwise magazine-fed energy guns flood the world.
+    private int liveBullets;
+    private long bulletCheckTick = Long.MIN_VALUE / 2L;
     private int magazine;
     private float heat;
     private long heatLockUntil;
@@ -211,6 +213,22 @@ public class SatelliteGunEntity extends Entity {
     }
 
     /** Upkeep rack: rounds left in this gun's magazine. */
+    public int getLiveBullets() {
+        return liveBullets;
+    }
+
+    public void setLiveBullets(int liveBullets) {
+        this.liveBullets = liveBullets;
+    }
+
+    public long getBulletCheckTick() {
+        return bulletCheckTick;
+    }
+
+    public void setBulletCheckTick(long bulletCheckTick) {
+        this.bulletCheckTick = bulletCheckTick;
+    }
+
     public int getMagazine() {
         return magazine;
     }

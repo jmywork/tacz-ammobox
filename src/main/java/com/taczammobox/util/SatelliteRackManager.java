@@ -93,8 +93,14 @@ public final class SatelliteRackManager {
      * reason. So the halo builds its bullets itself and never asks TACZ to shoot.
      */
     private static final boolean USE_NATIVE_SHOOT = false;
-    /** Bullets one halo may add per tick, across all ten guns. */
-    private static final int MAX_BULLETS_PER_TICK = 3;
+    /**
+     * Safety valve only: ten guns can never legitimately need more than a few
+     * bullets in one tick, and this number is high enough not to touch real
+     * cadences. TPS is protected by MAX_LIVE_BULLETS instead.
+     */
+    private static final int MAX_BULLETS_PER_TICK = 32;
+    /** Live satellite bullets around one gun before it waits for them to land. */
+    private static final int MAX_LIVE_BULLETS = 10;
     private static final Map<UUID, LivingEntity> TARGET_CACHE = new HashMap<>();
     private static final Map<UUID, Long> TARGET_TICK = new HashMap<>();
     private static final Map<UUID, int[]> SPAWN_BUDGET = new HashMap<>();
@@ -386,12 +392,22 @@ public final class SatelliteRackManager {
         int[] budget = SPAWN_BUDGET.get(owner.getUUID());
         if (budget != null) {
             if (budget[0] <= 0) {
-                // Ten guns firing at once used to flood the world with entities and
-                // stall the client; cap how many bullets one player's halo may add
-                // per tick instead of scanning the world for them.
                 return false;
             }
             budget[0]--;
+        }
+        long tickNow = level.getGameTime();
+        long checkedAt = satellite.getBulletCheckTick();
+        if (tickNow - checkedAt >= 10L) {
+            int live = level.getEntitiesOfClass(EntityKineticBullet.class,
+                    satellite.getBoundingBox().inflate(16.0D),
+                    bullet -> bullet.getOwner() == owner).size();
+            satellite.setLiveBullets(live);
+            satellite.setBulletCheckTick(tickNow);
+        }
+        if (satellite.getLiveBullets() >= MAX_LIVE_BULLETS) {
+            satellite.setLiveBullets(satellite.getLiveBullets() - 1);
+            return false;
         }
         EntityKineticBullet bullet = new EntityKineticBullet(level, shooter, gunStack, gunData.getAmmoId(),
                 gun.getGunId(gunStack), true, gunData, bulletData);
@@ -432,26 +448,16 @@ public final class SatelliteRackManager {
         shooter.moveTo(satellite.getX(), satellite.getY(), satellite.getZ(), satellite.getYRot(), satellite.getXRot());
         shooter.setYHeadRot(satellite.getYRot());
         shooter.setXRot(satellite.getXRot());
-        shooter.setHealth(shooter.getMaxHealth());
-        shooter.hurtTime = 0;
-        if (!ItemStack.isSameItemSameTags(shooter.getMainHandItem(), gunStack)) {
-            shooter.setItemInHand(InteractionHand.MAIN_HAND, gunStack.copy());
-        }
-        long gameTime = level.getGameTime();
-        if (firing || gameTime % 4L == satellite.getId() % 4L) {
-            shooter.tick();
-        }
+        // A full player tick ten times a game tick was the biggest TPS sink here:
+        // the bullets are built by us, so the fake player only has to stay a valid
+        // TACZ subject with a warm attachment cache.
         IGunOperator operator = IGunOperator.fromLivingEntity(shooter);
-        operator.aim(true);
-        ShooterDataHolder data = operator.getDataHolder();
-        if (data.currentGunItem == null) {
-            operator.initialData();
+        if (operator.getCacheProperty() == null) {
+            AttachmentPropertyManager.postChangeEvent(shooter, gunStack);
         }
         if (gunStack.getItem() instanceof AbstractGunItem gunItem) {
+            ShooterDataHolder data = operator.getDataHolder();
             gunItem.tickHeat(data, gunStack, shooter);
-            if (firing && operator.getCacheProperty() == null) {
-                AttachmentPropertyManager.postChangeEvent(shooter, gunStack);
-            }
         }
     }
 
