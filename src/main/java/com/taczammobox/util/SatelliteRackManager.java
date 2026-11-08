@@ -229,7 +229,7 @@ public final class SatelliteRackManager {
             return false;
         }
         EntityKineticBullet bullet = new EntityKineticBullet(level, shooter, gunStack, gunData.getAmmoId(),
-                gun.getGunId(gunStack), false, gunData, bulletData);
+                gun.getGunId(gunStack), true, gunData, bulletData);
         Vec3 muzzle = satellite.position().add(0.0D, 0.35D, 0.0D).add(dir.scale(0.6D));
         bullet.setPos(muzzle.x, muzzle.y, muzzle.z);
         bullet.shootFromRotation(shooter, satellite.getXRot(), satellite.getYRot(), 0.0F,
@@ -319,6 +319,17 @@ public final class SatelliteRackManager {
             // cache, and a fake player never receives the event that builds it, so
             // rebuild it here before asking the gun to fire.
             AttachmentPropertyManager.postChangeEvent(shooter, gunStack);
+            // aim()/postChangeEvent() may touch the holder again, so stamp the
+            // timestamps as late as possible.
+            data.baseTimestamp = System.currentTimeMillis();
+            data.shootTimestamp = LONG_AGO;
+            data.lastShootTimestamp = LONG_AGO;
+            data.drawTimestamp = LONG_AGO;
+            if (debug) {
+                TaczAmmoBoxMod.LOGGER.info("sat gate: shootTs={} cool={} drawCd={} bolting={}",
+                        data.shootTimestamp, operator.getSynShootCoolDown(), operator.getSynDrawCoolDown(),
+                        data.isBolting);
+            }
             Vec3 dir = Vec3.directionFromRotation(satellite.getXRot(), satellite.getYRot());
             boolean spawned = false;
             if (gunStack.getItem() instanceof AbstractGunItem) {
