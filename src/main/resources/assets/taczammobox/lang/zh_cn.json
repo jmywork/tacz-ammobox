@@ -123,5 +123,5 @@
   "item.taczammobox.satellite_rack_upkeep.desc": "按需供弹的浮游炮挂架，弹药取自背包里的盒、箱与散装弹药。",
   "item.taczammobox.satellite_rack_upkeep.hint": "放在饰品背槽或背包里生效；某种弹药打光时会提示缺少的弹种。",
   "item.taczammobox.satellite_rack.cache": "已缓存 %s 种弹药",
-  "message.taczammobox.satellite.no_ammo": "浮游炮缺少弹药：%s"
+  "message.taczammobox.satellite.no_ammo": "浮游炮缺少弹药：%s，请补充对应的弹药盒或散装弹药"
 }

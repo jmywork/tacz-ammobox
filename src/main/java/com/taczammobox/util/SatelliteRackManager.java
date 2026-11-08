@@ -309,20 +309,25 @@ public final class SatelliteRackManager {
      * that never "drew" the gun, so build the bullet that script would have built:
      * the same EntityKineticBullet, the same gun data, our own direction.
      */
-    private static final Map<UUID, Long> AMMO_NOTICE = new HashMap<>();
+    private static final Map<String, Long> AMMO_NOTICE = new HashMap<>();
 
-    /** Action-bar nudge, once per second, when an upkeep gun has nothing to eat. */
+    /**
+     * Chat notice when an upkeep gun has nothing to eat. Chat is persistent enough
+     * for a player to actually act on it, but ten guns would spam it, so each
+     * caliber is announced at most once every ten seconds.
+     */
     private static void noticeMissingAmmo(@Nullable Player player, ResourceLocation ammoId) {
         if (player == null) {
             return;
         }
         long now = player.level().getGameTime();
-        Long last = AMMO_NOTICE.put(player.getUUID(), now);
-        if (last != null && now - last < 20L) {
+        String key = player.getUUID() + "/" + ammoId;
+        Long last = AMMO_NOTICE.put(key, now);
+        if (last != null && now - last < 200L) {
             return;
         }
-        player.displayClientMessage(Component.translatable("message.taczammobox.satellite.no_ammo",
-                ammoId.toString()), true);
+        player.sendSystemMessage(Component.translatable("message.taczammobox.satellite.no_ammo",
+                ammoId.getPath().toUpperCase(java.util.Locale.ROOT)));
     }
 
     /** Return unfired rounds to the rack when a satellite goes away. */
