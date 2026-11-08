@@ -53,6 +53,9 @@ public class SatelliteGunRenderer extends EntityRenderer<SatelliteGunEntity> {
         pose.mulPose(Axis.YP.rotationDegrees(180.0F - entity.getYRot()));
         pose.mulPose(Axis.XP.rotationDegrees(-entity.getXRot()));
         pose.mulPose(Axis.YP.rotationDegrees(-90.0F));
+        // Roll around the barrel: the vanes fan open edge over edge like the
+        // blades of a folding sword case instead of lying flat in one plane.
+        pose.mulPose(Axis.XP.rotationDegrees(entity.getRoll()));
 
         pose.scale(0.5F, 0.5F, 0.5F);
 

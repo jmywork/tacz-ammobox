@@ -66,7 +66,7 @@ public final class SatelliteRackManager {
     private static final double ARC_START = -55.0D;
     private static final double ARC_END = 235.0D;
     private static final double RING_RADIUS = 1.25D;
-    private static final double BACK_OFFSET = 1.12D;
+    private static final double BACK_OFFSET = 0.92D;
     private static final double CENTER_HEIGHT = 1.45D;
     /** Wings hang from just below the shoulder blades. */
     private static final double WING_BASE_HEIGHT = 1.38D;
