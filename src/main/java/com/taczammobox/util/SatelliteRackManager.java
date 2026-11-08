@@ -68,6 +68,18 @@ public final class SatelliteRackManager {
     private static final double RING_RADIUS = 1.25D;
     private static final double BACK_OFFSET = 1.35D;
     private static final double CENTER_HEIGHT = 1.45D;
+    /** Wings hang from just below the shoulder blades. */
+    private static final double WING_BASE_HEIGHT = 1.05D;
+    private static final double WING_INNER = 0.45D;
+    private static final double WING_SPREAD = 1.35D;
+    private static final double WING_TOP = 0.55D;
+    private static final double WING_DROP = 0.85D;
+    private static final double WING_SWEEP = 0.35D;
+    private static final float WING_CANT_YAW = 4.0F;
+    private static final float WING_CANT_SPREAD = 12.0F;
+    private static final float WING_CANT_PITCH = 4.0F;
+    private static final float WING_ROLL = 10.0F;
+    private static final float WING_ROLL_SPREAD = 30.0F;
     /** How far the top of the ring leans forward over the player. */
     private static final double RING_TILT = 30.0D;
     /** Resting inward cant, so the halo looks like a guard rather than a fence. */
@@ -143,16 +155,16 @@ public final class SatelliteRackManager {
             return;
         }
 
-        // Upright halo: a vertical ring hanging behind the back, its plane facing
-        // the way the player looks. The bottom of the ring is left empty so it
-        // never sits directly behind the legs.
+        // Angel wings: guns are dealt alternately to a left and a right wing, then
+        // fanned outwards from the shoulder blades like feather vanes. The inner
+        // gun of each wing sits high and close, the tip drops and sweeps back.
         float yawRad = (float) Math.toRadians(player.getYRot());
         double forwardX = -Math.sin(yawRad);
         double forwardZ = Math.cos(yawRad);
         double rightX = Math.cos(yawRad);
         double rightZ = Math.sin(yawRad);
         double centerX = player.getX() - forwardX * BACK_OFFSET;
-        double centerY = player.getY() + CENTER_HEIGHT;
+        double centerY = player.getY() + WING_BASE_HEIGHT;
         double centerZ = player.getZ() - forwardZ * BACK_OFFSET;
 
         int count = guns.size();
@@ -167,31 +179,30 @@ public final class SatelliteRackManager {
                 player.level().addFreshEntity(entity);
             }
 
-            double thetaDeg = count == 1 ? 90.0D : ARC_START + (ARC_END - ARC_START) * i / (count - 1.0D);
-            double theta = Math.toRadians(thetaDeg);
-            double across = Math.cos(theta) * RING_RADIUS;
-            double rise = Math.sin(theta) * RING_RADIUS;
-            // Lean the whole ring forward at the top so it cups the player
-            // instead of hanging behind like a flat picture frame.
-            double tilt = Math.toRadians(RING_TILT);
-            double forwardLean = rise * Math.sin(tilt);
-            double x = centerX + rightX * across + forwardX * forwardLean;
-            double y = centerY + rise * Math.cos(tilt);
-            double z = centerZ + rightZ * across + forwardZ * forwardLean;
+            int side = (i % 2 == 0) ? -1 : 1;
+            int rank = i / 2;
+            int ranks = (count + 1) / 2;
+            double feather = ranks <= 1 ? 0.5D : rank / (double) (ranks - 1);
+            double across = side * (WING_INNER + feather * WING_SPREAD);
+            double rise = WING_TOP - feather * WING_DROP;
+            double sweep = feather * WING_SWEEP;
+            double x = centerX + rightX * across + forwardX * sweep;
+            double y = centerY + rise;
+            double z = centerZ + rightZ * across + forwardZ * sweep;
             entity.setPos(x, y, z);
 
             long now = player.level().getGameTime();
             if (target != null) {
                 pointAt(entity, target.getEyePosition());
             } else {
-                // Resting pose: follow the look direction, but cant each gun
-                // toward the player's centre line.
-                float cantYaw = across > 0.01D ? -IDLE_CANT_YAW : across < -0.01D ? IDLE_CANT_YAW : 0.0F;
-                float cantPitch = rise > 0.01D ? -IDLE_CANT_PITCH : rise < -0.01D ? IDLE_CANT_PITCH : 0.0F;
+                // Resting wing pose: muzzles follow the look direction, each feather
+                // opening a few degrees outwards so the fan reads as a wing.
+                float cantYaw = (float) (side * (WING_CANT_YAW + feather * WING_CANT_SPREAD));
                 entity.setYRot(player.getYRot() + cantYaw);
-                entity.setXRot(Mth.clamp(player.getXRot() + cantPitch, -80.0F, 80.0F));
+                entity.setXRot(Mth.clamp(player.getXRot() - WING_CANT_PITCH, -80.0F, 80.0F));
             }
-            entity.setRoll(0.0F);
+            // Feather tilt: vanes rotate outwards as they leave the shoulder.
+            entity.setRoll((float) (side * (WING_ROLL + feather * WING_ROLL_SPREAD)));
             entity.setGunIfChanged(guns.get(i));
             entity.setSlotIndex(i);
 
