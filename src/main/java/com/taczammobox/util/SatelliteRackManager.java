@@ -4,10 +4,10 @@ import com.mojang.authlib.GameProfile;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ReloadState;
-import com.tacz.guns.api.entity.ShootResult;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.api.event.common.GunShootEvent;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.taczammobox.TaczAmmoBoxMod;
 import com.taczammobox.compat.CuriosCompat;
 import com.taczammobox.config.FeatureFlags;
@@ -221,9 +221,6 @@ public final class SatelliteRackManager {
             // so TACZ's anti-cheat rejects every shot as NETWORK_FAIL unless we
             // seed the holder ourselves.
             ShooterDataHolder data = operator.getDataHolder();
-            // TACZ treats the 2-arg shoot() as "the client sent timestamp 0", so the
-            // cooldown becomes interval - (0 - shootTimestamp). Pushing the stamps
-            // far into the past is the fake-player way of saying "last shot ages ago".
             data.baseTimestamp = System.currentTimeMillis();
             data.shootTimestamp = LONG_AGO;
             data.lastShootTimestamp = LONG_AGO;
@@ -238,10 +235,13 @@ public final class SatelliteRackManager {
             // no public API for a truly zero-spread shot, so this is as close as
             // we get without touching their internals.
             operator.aim(true);
-            ShootResult result = operator.shoot(satellite::getXRot, satellite::getYRot);
-            if (result != ShootResult.SUCCESS && !resultWarned) {
-                resultWarned = true;
-                TaczAmmoBoxMod.LOGGER.warn("Satellite shot rejected: {}", result);
+            // IGunOperator.shoot() runs the whole real-player gate first (cooldown,
+            // base-timestamp network window, draw, bolt, ammo). A fake player has no
+            // client to sync any of that, and seeding the holder did not satisfy the
+            // gate, so call the spawner that gate eventually delegates to and skip
+            // the gate entirely. Ammo is refilled above, so nothing is consumed.
+            if (gunStack.getItem() instanceof AbstractGunItem gunItem) {
+                gunItem.shoot(data, gunStack, satellite::getXRot, satellite::getYRot, shooter);
             }
         } catch (Throwable throwable) {
             if (!warned) {
