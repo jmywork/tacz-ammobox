@@ -45,6 +45,11 @@ public final class SatelliteRackManager {
     private static final double CENTER_HEIGHT = 1.45D;
     /** How far the top of the ring leans forward over the player. */
     private static final double RING_TILT = 30.0D;
+    /** Resting inward cant, so the halo looks like a guard rather than a fence. */
+    private static final float IDLE_CANT_YAW = 12.0F;
+    private static final float IDLE_CANT_PITCH = 9.0F;
+    /** How long the satellites keep converging on the last hit point. */
+    private static final long AIM_HOLD_TICKS = 12L;
     private static final double AIM_DISTANCE = 16.0D;
     private static final GameProfile PROFILE = new GameProfile(
             UUID.nameUUIDFromBytes("taczammobox:satellite".getBytes(StandardCharsets.UTF_8)), "[Satellite]");
@@ -109,11 +114,18 @@ public final class SatelliteRackManager {
             double z = centerZ + rightZ * across + forwardZ * forwardLean;
             entity.setPos(x, y, z);
 
-            // Only yaw follows the player. Pitch stays level so the halo keeps
-            // standing upright instead of lying down when the player looks up
-            // or down.
-            entity.setYRot(player.getYRot());
-            entity.setXRot(player.getXRot());
+            long now = player.level().getGameTime();
+            Vec3 aim = entity.getAimTarget();
+            if (aim != null && now <= entity.getAimUntil()) {
+                pointAt(entity, aim);
+            } else {
+                // Resting pose: follow the look direction, but cant each gun
+                // toward the player's centre line.
+                float cantYaw = across > 0.01D ? -IDLE_CANT_YAW : across < -0.01D ? IDLE_CANT_YAW : 0.0F;
+                float cantPitch = rise > 0.01D ? -IDLE_CANT_PITCH : rise < -0.01D ? IDLE_CANT_PITCH : 0.0F;
+                entity.setYRot(player.getYRot() + cantYaw);
+                entity.setXRot(Mth.clamp(player.getXRot() + cantPitch, -80.0F, 80.0F));
+            }
             entity.setRoll(0.0F);
             entity.setGun(guns.get(i));
             entity.setSlotIndex(i);
@@ -136,6 +148,12 @@ public final class SatelliteRackManager {
             return;
         }
         long now = player.level().getGameTime();
+        // Everything the player is aiming at becomes the convergence point.
+        Vec3 aim = player.pick(AIM_DISTANCE * 4.0D, 1.0F, false).getLocation();
+        for (SatelliteGunEntity satellite : satellites) {
+            satellite.setAimTarget(aim, now + AIM_HOLD_TICKS);
+            pointAt(satellite, aim);
+        }
         for (SatelliteGunEntity satellite : satellites) {
             if (now < satellite.getNextFire()) {
                 continue;
@@ -145,6 +163,15 @@ public final class SatelliteRackManager {
                 satellite.setNextFire(now + interval);
             }
         }
+    }
+
+    private static void pointAt(SatelliteGunEntity satellite, Vec3 target) {
+        double dx = target.x - satellite.getX();
+        double dy = target.y - satellite.getY();
+        double dz = target.z - satellite.getZ();
+        double horizontal = Math.sqrt(dx * dx + dz * dz);
+        satellite.setYRot((float) Math.toDegrees(Math.atan2(-dx, dz)));
+        satellite.setXRot(Mth.clamp((float) -Math.toDegrees(Math.atan2(dy, horizontal)), -80.0F, 80.0F));
     }
 
     /** @return the cooldown in ticks, or 0 when the shot did not happen. */

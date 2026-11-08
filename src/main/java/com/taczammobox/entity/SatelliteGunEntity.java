@@ -30,6 +30,8 @@ public class SatelliteGunEntity extends Entity {
     @Nullable
     private UUID owner;
     private long nextFire;
+    private net.minecraft.world.phys.Vec3 aimTarget;
+    private long aimUntil;
 
     public SatelliteGunEntity(EntityType<? extends SatelliteGunEntity> type, Level level) {
         super(type, level);
@@ -119,6 +121,19 @@ public class SatelliteGunEntity extends Entity {
 
     public void setRoll(float roll) {
         this.entityData.set(DATA_ROLL, roll);
+    }
+
+    public void setAimTarget(net.minecraft.world.phys.Vec3 target, long until) {
+        this.aimTarget = target;
+        this.aimUntil = until;
+    }
+
+    public net.minecraft.world.phys.Vec3 getAimTarget() {
+        return this.aimTarget;
+    }
+
+    public long getAimUntil() {
+        return this.aimUntil;
     }
 
     public long getNextFire() {
