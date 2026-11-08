@@ -66,18 +66,18 @@ public final class SatelliteRackManager {
     private static final double ARC_START = -55.0D;
     private static final double ARC_END = 235.0D;
     private static final double RING_RADIUS = 1.25D;
-    private static final double BACK_OFFSET = 1.35D;
+    private static final double BACK_OFFSET = 1.12D;
     private static final double CENTER_HEIGHT = 1.45D;
     /** Wings hang from just below the shoulder blades. */
-    private static final double WING_BASE_HEIGHT = 1.45D;
-    private static final double WING_INNER = 0.30D;
-    private static final double WING_SPREAD = 1.05D;
+    private static final double WING_BASE_HEIGHT = 1.38D;
+    private static final double WING_INNER = 0.16D;
+    private static final double WING_SPREAD = 1.62D;
     private static final double WING_TOP = 0.10D;
     /** Negative: the wing tip rises above the root. */
     private static final double WING_DROP = -0.55D;
-    private static final double WING_SWEEP = 0.15D;
+    private static final double WING_SWEEP = -0.06D;
     private static final float WING_CANT_YAW = 5.0F;
-    private static final float WING_CANT_SPREAD = 24.0F;
+    private static final float WING_CANT_SPREAD = 34.0F;
     private static final float WING_CANT_PITCH = 4.0F;
     private static final float WING_ROLL = 14.0F;
     private static final float WING_ROLL_SPREAD = 26.0F;
