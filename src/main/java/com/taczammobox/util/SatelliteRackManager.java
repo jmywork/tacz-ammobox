@@ -43,6 +43,8 @@ public final class SatelliteRackManager {
     private static final double RING_RADIUS = 1.25D;
     private static final double BACK_OFFSET = 1.35D;
     private static final double CENTER_HEIGHT = 1.45D;
+    /** How far the top of the ring leans forward over the player. */
+    private static final double RING_TILT = 30.0D;
     private static final double AIM_DISTANCE = 16.0D;
     private static final GameProfile PROFILE = new GameProfile(
             UUID.nameUUIDFromBytes("taczammobox:satellite".getBytes(StandardCharsets.UTF_8)), "[Satellite]");
@@ -96,9 +98,15 @@ public final class SatelliteRackManager {
 
             double thetaDeg = count == 1 ? 90.0D : ARC_START + (ARC_END - ARC_START) * i / (count - 1.0D);
             double theta = Math.toRadians(thetaDeg);
-            double x = centerX + rightX * Math.cos(theta) * RING_RADIUS;
-            double y = centerY + Math.sin(theta) * RING_RADIUS;
-            double z = centerZ + rightZ * Math.cos(theta) * RING_RADIUS;
+            double across = Math.cos(theta) * RING_RADIUS;
+            double rise = Math.sin(theta) * RING_RADIUS;
+            // Lean the whole ring forward at the top so it cups the player
+            // instead of hanging behind like a flat picture frame.
+            double tilt = Math.toRadians(RING_TILT);
+            double forwardLean = rise * Math.sin(tilt);
+            double x = centerX + rightX * across + forwardX * forwardLean;
+            double y = centerY + rise * Math.cos(tilt);
+            double z = centerZ + rightZ * across + forwardZ * forwardLean;
             entity.setPos(x, y, z);
 
             // Only yaw follows the player. Pitch stays level so the halo keeps
