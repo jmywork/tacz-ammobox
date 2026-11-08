@@ -114,5 +114,9 @@
   "item.taczammobox.satellite_rack.empty": "No guns mounted",
   "item.taczammobox.satellite_rack.hint": "Works in the back curio slot or anywhere in your inventory",
   "container.taczammobox.satellite_rack": "Satellite Rack",
-  "gui.taczammobox.satellite_rack.hint": "TACZ guns only · up to 10 · unlimited ammo"
+  "gui.taczammobox.satellite_rack.hint": "TACZ guns only · up to 10 · unlimited ammo",
+  "key.taczammobox.focus": "Mark Focus Target",
+  "message.taczammobox.focus.set": "Satellites locked on: %s",
+  "message.taczammobox.focus.cleared": "Focus mark cleared",
+  "message.taczammobox.focus.none": "Nothing to mark under the crosshair"
 }

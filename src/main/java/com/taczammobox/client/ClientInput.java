@@ -30,6 +30,12 @@ public final class ClientInput {
         if (minecraft.player == null || minecraft.screen != null) {
             return;
         }
+        if (ModKeyMappings.FOCUS_TARGET.consumeClick()) {
+            var hit = minecraft.player.pick(64.0D, 0.0F, false);
+            int id = hit instanceof net.minecraft.world.phys.EntityHitResult entityHit
+                    ? entityHit.getEntity().getId() : 0;
+            ModNetwork.sendFocus(id);
+        }
         if (ModKeyMappings.SORT_AMMO.consumeClick()) {
             TaczAmmoBoxMod.LOGGER.info("[key] pack pressed");
             ModNetwork.sendPack();

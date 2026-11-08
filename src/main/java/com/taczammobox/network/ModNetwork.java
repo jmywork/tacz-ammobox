@@ -13,7 +13,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import java.util.List;
 
 public final class ModNetwork {
-    private static final String VERSION = "7";
+    private static final String VERSION = "8";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(TaczAmmoBoxMod.MOD_ID, "main"),
@@ -64,6 +64,12 @@ public final class ModNetwork {
                 })
                 .add();
 
+        CHANNEL.messageBuilder(FocusTargetPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(FocusTargetPacket::encode)
+                .decoder(FocusTargetPacket::decode)
+                .consumerMainThread(FocusTargetPacket::handle)
+                .add();
+
         CHANNEL.messageBuilder(SortPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(SortPacket::encode)
                 .decoder(SortPacket::decode)
@@ -81,6 +87,10 @@ public final class ModNetwork {
 
     public static void sendFill(int slot, int containerId) {
         CHANNEL.sendToServer(new FillPacket(slot, containerId));
+    }
+
+    public static void sendFocus(int entityId) {
+        CHANNEL.sendToServer(new FocusTargetPacket(entityId));
     }
 
     public static void sendPack() {

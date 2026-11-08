@@ -9,7 +9,6 @@ import com.tacz.guns.api.entity.ReloadState;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
-import com.tacz.guns.api.event.common.GunShootEvent;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.resource.index.CommonGunIndex;
 import com.tacz.guns.resource.pojo.data.gun.BulletData;
@@ -21,10 +20,16 @@ import com.taczammobox.config.FeatureFlags;
 import com.taczammobox.entity.SatelliteGunEntity;
 import com.taczammobox.item.SatelliteRackItem;
 import com.taczammobox.registry.ModEntities;
+
+import javax.annotation.Nullable;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.OwnableEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -34,7 +39,6 @@ import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.FakePlayerFactory;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 
@@ -61,11 +65,12 @@ public final class SatelliteRackManager {
     /** Resting inward cant, so the halo looks like a guard rather than a fence. */
     private static final float IDLE_CANT_YAW = 12.0F;
     private static final float IDLE_CANT_PITCH = 9.0F;
-    /** How long the satellites keep converging on the last hit point. */
-    private static final long AIM_HOLD_TICKS = 12L;
-    /** After the player fires, satellites keep engaging on their own for this long. */
-    private static final long COMBAT_WINDOW_TICKS = 30L;
-    private static final double AIM_DISTANCE = 16.0D;
+    /** Enemies inside this radius get engaged automatically. */
+    private static final double AUTO_RANGE = 24.0D;
+    /** A marked target stays in focus out to this distance. */
+    private static final double FOCUS_RANGE = 40.0D;
+    /** The halo's own search cadence; scanning every tick is wasteful. */
+    private static final long SCAN_INTERVAL = 4L;
     private static final GameProfile PROFILE = new GameProfile(
             UUID.nameUUIDFromBytes("taczammobox:satellite".getBytes(StandardCharsets.UTF_8)), "[Satellite]");
     /** Stand-in for "this happened long before the fake player's timeline". */
@@ -88,6 +93,7 @@ public final class SatelliteRackManager {
             discard(player);
             return;
         }
+        LivingEntity target = findTarget(player);
         List<ItemStack> guns = SatelliteRackItem.loadedGuns(rack);
         List<SatelliteGunEntity> existing = satellites(player);
         if (guns.isEmpty()) {
@@ -107,7 +113,6 @@ public final class SatelliteRackManager {
         double centerY = player.getY() + CENTER_HEIGHT;
         double centerZ = player.getZ() - forwardZ * BACK_OFFSET;
 
-        Vec3 target = player.getEyePosition().add(player.getLookAngle().scale(AIM_DISTANCE)).add(0.0D, -0.6D, 0.0D);
         int count = guns.size();
         for (int i = 0; i < count; i++) {
             SatelliteGunEntity entity;
@@ -134,9 +139,8 @@ public final class SatelliteRackManager {
             entity.setPos(x, y, z);
 
             long now = player.level().getGameTime();
-            Vec3 aim = entity.getAimTarget();
-            if (aim != null && now <= entity.getAimUntil()) {
-                pointAt(entity, aim);
+            if (target != null) {
+                pointAt(entity, target.getEyePosition());
             } else {
                 // Resting pose: follow the look direction, but cant each gun
                 // toward the player's centre line.
@@ -149,12 +153,12 @@ public final class SatelliteRackManager {
             entity.setGun(guns.get(i));
             entity.setSlotIndex(i);
 
-            boolean shouldFire = now < entity.getCombatUntil() && now >= entity.getNextFire();
+            boolean shouldFire = target != null && now >= entity.getNextFire();
             if (player.level() instanceof ServerLevel serverLevel) {
                 bindShooter(entity, serverLevel, guns.get(i), shouldFire);
             }
 
-            // Each satellite keeps its own cadence inside the combat window.
+            // Each satellite fires on its own gun's cadence.
             if (shouldFire) {
                 long interval = fire(entity);
                 if (interval > 0L) {
@@ -169,26 +173,47 @@ public final class SatelliteRackManager {
         }
     }
 
-    @SubscribeEvent
-    public static void onGunShoot(GunShootEvent event) {
-        if (event.getLogicalSide() != LogicalSide.SERVER) {
-            return;
+    /** A marked target wins; otherwise the closest hostile with line of sight. */
+    @Nullable
+    private static LivingEntity findTarget(Player player) {
+        LivingEntity target = null;
+        ItemStack rack = findRack(player);
+        UUID focus = SatelliteRackItem.focus(rack);
+        if (focus != null) {
+            var entity = player.level() instanceof ServerLevel serverLevel ? serverLevel.getEntity(focus) : null;
+            if (entity instanceof LivingEntity living && isValidTarget(player, living, FOCUS_RANGE)) {
+                target = living;
+            } else if (!rack.isEmpty()) {
+                // The mark died or walked away; drop it so normal search resumes.
+                SatelliteRackItem.setFocus(rack, null);
+            }
         }
-        if (!(event.getShooter() instanceof Player player) || player.level().isClientSide()) {
-            return;
+        if (target != null) {
+            return target;
         }
-        List<SatelliteGunEntity> satellites = satellites(player);
-        if (satellites.isEmpty()) {
-            return;
+        AABB box = player.getBoundingBox().inflate(AUTO_RANGE);
+        List<LivingEntity> candidates = player.level().getEntitiesOfClass(LivingEntity.class, box,
+                entity -> isValidTarget(player, entity, AUTO_RANGE));
+        return candidates.stream().min(Comparator.comparingDouble(player::distanceToSqr)).orElse(null);
+    }
+
+    private static boolean isValidTarget(Player player, LivingEntity entity, double range) {
+        if (entity == player || !entity.isAlive() || entity.isSpectator()) {
+            return false;
         }
-        long now = player.level().getGameTime();
-        // Everything the player is aiming at becomes the convergence point.
-        Vec3 aim = player.pick(AIM_DISTANCE * 4.0D, 1.0F, false).getLocation();
-        for (SatelliteGunEntity satellite : satellites) {
-            satellite.setAimTarget(aim, now + AIM_HOLD_TICKS);
-            satellite.setCombatUntil(now + COMBAT_WINDOW_TICKS);
-            pointAt(satellite, aim);
+        if (entity instanceof Player) {
+            return false;
         }
+        if (!(entity instanceof Enemy)) {
+            return false;
+        }
+        if (entity instanceof OwnableEntity ownable && player.getUUID().equals(ownable.getOwnerUUID())) {
+            return false;
+        }
+        if (entity instanceof TamableAnimal tamable && tamable.isTame()) {
+            return false;
+        }
+        return player.distanceToSqr(entity) <= range * range && player.hasLineOfSight(entity);
     }
 
     private static void muzzleFx(SatelliteGunEntity satellite) {
@@ -396,7 +421,7 @@ public final class SatelliteRackManager {
         }
     }
 
-    private static ItemStack findRack(Player player) {
+    public static ItemStack findRack(Player player) {
         if (player.getMainHandItem().getItem() instanceof SatelliteRackItem) {
             return player.getMainHandItem();
         }

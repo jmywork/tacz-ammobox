@@ -18,15 +18,17 @@ import net.minecraft.world.level.Level;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
- * Easter-egg rack: holds up to ten TACZ guns that orbit the wearer and fire
- * whenever the wearer does. The guns live in the stack's NBT so the rack can be
+ * Easter-egg rack: holds up to ten TACZ guns that orbit the wearer and fight
+ * on their own; a marked target pulls every gun onto it. The guns live in the stack's NBT so the rack can be
  * moved between the back slot and the inventory without losing them.
  */
 public class SatelliteRackItem extends Item {
     public static final int SLOTS = 10;
     private static final String TAG_GUNS = "Guns";
+    private static final String TAG_FOCUS = "Focus";
 
     public SatelliteRackItem(Properties properties) {
         super(properties);
@@ -87,6 +89,27 @@ public class SatelliteRackItem extends Item {
             }
         }
         return out;
+    }
+
+    /** The marked target, or null when the halo picks its own. */
+    @Nullable
+    public static UUID focus(ItemStack rack) {
+        CompoundTag tag = rack.getTag();
+        if (tag == null || !tag.hasUUID(TAG_FOCUS)) {
+            return null;
+        }
+        return tag.getUUID(TAG_FOCUS);
+    }
+
+    public static void setFocus(ItemStack rack, @Nullable UUID uuid) {
+        if (uuid == null) {
+            CompoundTag tag = rack.getTag();
+            if (tag != null) {
+                tag.remove(TAG_FOCUS);
+            }
+            return;
+        }
+        rack.getOrCreateTag().putUUID(TAG_FOCUS, uuid);
     }
 
     public static boolean isGun(ItemStack stack) {

@@ -114,5 +114,9 @@
   "item.taczammobox.satellite_rack.empty": "没有挂载任何枪械",
   "item.taczammobox.satellite_rack.hint": "放在饰品背槽或背包里生效",
   "container.taczammobox.satellite_rack": "浮游炮挂架",
-  "gui.taczammobox.satellite_rack.hint": "只能放 TACZ 枪械 · 最多 10 把 · 无限弹药"
+  "gui.taczammobox.satellite_rack.hint": "只能放 TACZ 枪械 · 最多 10 把 · 无限弹药",
+  "key.taczammobox.focus": "标记集火目标",
+  "message.taczammobox.focus.set": "浮游炮已锁定：%s",
+  "message.taczammobox.focus.cleared": "已取消集火标记",
+  "message.taczammobox.focus.none": "准星没有可锁定的目标"
 }
