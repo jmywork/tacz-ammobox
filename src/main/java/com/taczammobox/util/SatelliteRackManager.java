@@ -93,7 +93,11 @@ public final class SatelliteRackManager {
      * reason. So the halo builds its bullets itself and never asks TACZ to shoot.
      */
     private static final boolean USE_NATIVE_SHOOT = false;
-    private static int debugFires;
+    /** Bullets one halo may add per tick, across all ten guns. */
+    private static final int MAX_BULLETS_PER_TICK = 3;
+    private static final Map<UUID, LivingEntity> TARGET_CACHE = new HashMap<>();
+    private static final Map<UUID, Long> TARGET_TICK = new HashMap<>();
+    private static final Map<UUID, int[]> SPAWN_BUDGET = new HashMap<>();
     private static boolean warned;
     private static boolean resultWarned;
 
@@ -111,7 +115,20 @@ public final class SatelliteRackManager {
             discard(player);
             return;
         }
-        LivingEntity target = findTarget(player);
+        long tick = player.level().getGameTime();
+        Long cachedAt = TARGET_TICK.get(player.getUUID());
+        LivingEntity target;
+        if (cachedAt == null || tick - cachedAt >= 4L) {
+            target = findTarget(player);
+            TARGET_CACHE.put(player.getUUID(), target);
+            TARGET_TICK.put(player.getUUID(), tick);
+        } else {
+            target = TARGET_CACHE.get(player.getUUID());
+            if (target != null && !target.isAlive()) {
+                target = null;
+            }
+        }
+        SPAWN_BUDGET.put(player.getUUID(), new int[] {MAX_BULLETS_PER_TICK});
         List<ItemStack> guns = SatelliteRackItem.loadedGuns(rack);
         List<SatelliteGunEntity> existing = satellites(player);
         if (guns.isEmpty()) {
@@ -201,25 +218,34 @@ public final class SatelliteRackManager {
     /** A marked target wins; otherwise the closest hostile with line of sight. */
     @Nullable
     private static LivingEntity findTarget(Player player) {
-        LivingEntity target = null;
         ItemStack rack = findRack(player);
         UUID focus = SatelliteRackItem.focus(rack);
         if (focus != null) {
             var entity = player.level() instanceof ServerLevel serverLevel ? serverLevel.getEntity(focus) : null;
             if (entity instanceof LivingEntity living && isFocusValid(player, living, FOCUS_RANGE)) {
-                target = living;
-            } else if (!rack.isEmpty()) {
+                return living;
+            }
+            if (!rack.isEmpty()) {
                 // The mark died or walked away; drop it so normal search resumes.
                 SatelliteRackItem.setFocus(rack, null);
             }
         }
-        if (target != null) {
-            return target;
-        }
         AABB box = player.getBoundingBox().inflate(AUTO_RANGE);
         List<LivingEntity> candidates = player.level().getEntitiesOfClass(LivingEntity.class, box,
-                entity -> isValidTarget(player, entity, AUTO_RANGE));
-        return candidates.stream().min(Comparator.comparingDouble(player::distanceToSqr)).orElse(null);
+                entity -> isTargetCandidate(player, entity, AUTO_RANGE));
+        candidates.sort(Comparator.comparingDouble(player::distanceToSqr));
+        // Ray casts are the expensive part of the search, so only test the nearest
+        // few candidates instead of every mob inside the box.
+        int checked = 0;
+        for (LivingEntity candidate : candidates) {
+            if (player.hasLineOfSight(candidate)) {
+                return candidate;
+            }
+            if (++checked >= 4) {
+                break;
+            }
+        }
+        return null;
     }
 
     /** A marked target can be anything living, hostiles or not. */
@@ -230,7 +256,7 @@ public final class SatelliteRackManager {
         return player.distanceToSqr(entity) <= range * range && player.hasLineOfSight(entity);
     }
 
-    private static boolean isValidTarget(Player player, LivingEntity entity, double range) {
+    private static boolean isTargetCandidate(Player player, LivingEntity entity, double range) {
         if (entity == player || !entity.isAlive() || entity.isSpectator()) {
             return false;
         }
@@ -246,7 +272,7 @@ public final class SatelliteRackManager {
         if (entity instanceof TamableAnimal tamable && tamable.isTame()) {
             return false;
         }
-        return player.distanceToSqr(entity) <= range * range && player.hasLineOfSight(entity);
+        return player.distanceToSqr(entity) <= range * range;
     }
 
     private static void muzzleFx(SatelliteGunEntity satellite) {
@@ -357,13 +383,15 @@ public final class SatelliteRackManager {
         // null, so build it on the fake (which we keep warm); the player becomes the
         // owner right after, which fixes damage attribution and stops our own bullets
         // from colliding with the player standing in front of the ring.
-        if (level.getEntitiesOfClass(EntityKineticBullet.class,
-                satellite.getBoundingBox().inflate(12.0D),
-                bullet -> bullet.getOwner() == shooter || bullet.getOwner() == owner).size()
-                >= BULLET_BUDGET) {
-            // Energy guns in some packs report a 0 ms interval and a very long bullet
-            // life; without a budget ten of them flood the world and the client dies.
-            return false;
+        int[] budget = SPAWN_BUDGET.get(owner.getUUID());
+        if (budget != null) {
+            if (budget[0] <= 0) {
+                // Ten guns firing at once used to flood the world with entities and
+                // stall the client; cap how many bullets one player's halo may add
+                // per tick instead of scanning the world for them.
+                return false;
+            }
+            budget[0]--;
         }
         EntityKineticBullet bullet = new EntityKineticBullet(level, shooter, gunStack, gunData.getAmmoId(),
                 gun.getGunId(gunStack), true, gunData, bulletData);
@@ -409,7 +437,10 @@ public final class SatelliteRackManager {
         if (!ItemStack.isSameItemSameTags(shooter.getMainHandItem(), gunStack)) {
             shooter.setItemInHand(InteractionHand.MAIN_HAND, gunStack.copy());
         }
-        shooter.tick();
+        long gameTime = level.getGameTime();
+        if (firing || gameTime % 4L == satellite.getId() % 4L) {
+            shooter.tick();
+        }
         IGunOperator operator = IGunOperator.fromLivingEntity(shooter);
         operator.aim(true);
         ShooterDataHolder data = operator.getDataHolder();
@@ -418,7 +449,7 @@ public final class SatelliteRackManager {
         }
         if (gunStack.getItem() instanceof AbstractGunItem gunItem) {
             gunItem.tickHeat(data, gunStack, shooter);
-            if (firing) {
+            if (firing && operator.getCacheProperty() == null) {
                 AttachmentPropertyManager.postChangeEvent(shooter, gunStack);
             }
         }
@@ -430,14 +461,6 @@ public final class SatelliteRackManager {
         }
         ItemStack gunStack = satellite.getGun().copy();
         IGun gun = IGun.getIGunOrNull(gunStack);
-        boolean debug = debugFires++ < 12;
-        if (debug) {
-            TaczAmmoBoxMod.LOGGER.info("sat fire enter: item={} gun={} ammo={} mode={} combat={} now={}",
-                    gunStack.getItem().getClass().getSimpleName(), gun == null ? "null" : gun.getGunId(gunStack),
-                    gun == null ? -1 : gun.getCurrentAmmoCount(gunStack),
-                    gun == null ? "?" : gun.getFireMode(gunStack), satellite.getCombatUntil(),
-                    satellite.level().getGameTime());
-        }
         if (gun == null) {
             return 0L;
         }
@@ -517,7 +540,9 @@ public final class SatelliteRackManager {
             // shootOnce() bails out silently when the operator has no attachment
             // cache, and a fake player never receives the event that builds it, so
             // rebuild it here before asking the gun to fire.
-            AttachmentPropertyManager.postChangeEvent(shooter, gunStack);
+            if (operator.getCacheProperty() == null) {
+                AttachmentPropertyManager.postChangeEvent(shooter, gunStack);
+            }
             // aim()/postChangeEvent() may replace tacz$data with a fresh holder,
             // so re-read it and stamp the *current* instance as late as possible.
             data = operator.getDataHolder();
@@ -534,46 +559,15 @@ public final class SatelliteRackManager {
             data.reloadStateType = ReloadState.StateType.NOT_RELOADING;
             data.isBolting = false;
             data.setCurrentGunItem(() -> gunStack);
-            if (debug) {
-                TaczAmmoBoxMod.LOGGER.info("sat ammo: stack={} hand={} barrel={}",
-                        gun.getCurrentAmmoCount(gunStack),
-                        gun.getCurrentAmmoCount(shooter.getMainHandItem()),
-                        gun.hasBulletInBarrel(gunStack));
-            }
-            if (debug) {
-                TaczAmmoBoxMod.LOGGER.info("sat gate: shootTs={} cool={} drawCd={} bolting={}",
-                        data.shootTimestamp, operator.getSynShootCoolDown(), operator.getSynDrawCoolDown(),
-                        data.isBolting);
-            }
             Vec3 dir = Vec3.directionFromRotation(satellite.getXRot(), satellite.getYRot());
-            boolean spawned = false;
-            if (USE_NATIVE_SHOOT && gunStack.getItem() instanceof AbstractGunItem) {
-                ShootResult result = operator.shoot(satellite::getXRot, satellite::getYRot);
-                spawned = result == ShootResult.SUCCESS;
-                if (debug) {
-                    TaczAmmoBoxMod.LOGGER.info("sat shoot result: {}", result);
-                }
-                if (!spawned && !resultWarned) {
-                    resultWarned = true;
-                    TaczAmmoBoxMod.LOGGER.warn("Satellite native shot rejected ({}), using direct bullet", result);
-                }
-            }
-            if (!spawned) {
-                ServerPlayer owner = level.getPlayerByUUID(satellite.getOwner()) instanceof ServerPlayer serverPlayer
-                        ? serverPlayer : null;
-                spawned = spawnBullet(level, shooter, owner == null ? shooter : owner, satellite, gunStack, gun,
-                        dir, target);
-            }
+            ServerPlayer owner = level.getPlayerByUUID(satellite.getOwner()) instanceof ServerPlayer serverPlayer
+                    ? serverPlayer : null;
+            boolean spawned = spawnBullet(level, shooter, owner == null ? shooter : owner, satellite, gunStack,
+                    gun, dir, target);
             if (upkeep && spawned) {
                 magazine = Math.max(0, magazine - 1);
                 satellite.setMagazine(magazine);
                 gun.setCurrentAmmoCount(gunStack, magazine);
-            }
-            if (debug) {
-                int bullets = level.getEntitiesOfClass(EntityKineticBullet.class,
-                        satellite.getBoundingBox().inflate(4.0D)).size();
-                TaczAmmoBoxMod.LOGGER.info("sat fire after: spawned={} bulletsNear={} cache={}",
-                        spawned, bullets, operator.getCacheProperty() == null ? "null" : "ok");
             }
         } catch (Throwable throwable) {
             if (!warned) {
@@ -591,9 +585,6 @@ public final class SatelliteRackManager {
         // A zero interval means the pack drives the gun through a Lua script (most
         // energy weapons); we cannot run that script, so give them a slow cadence.
         long interval = intervalMs <= 0L ? 4L : Math.max(MIN_INTERVAL_TICKS, intervalMs / 50L);
-        if (debug) {
-            TaczAmmoBoxMod.LOGGER.info("sat interval: {} ms -> {} ticks", intervalMs, interval);
-        }
         return interval;
     }
 
