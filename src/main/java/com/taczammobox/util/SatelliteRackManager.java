@@ -174,7 +174,7 @@ public final class SatelliteRackManager {
 
             // Each satellite fires on its own gun's cadence.
             if (shouldFire) {
-                long interval = fire(entity);
+                long interval = fire(entity, target);
                 if (interval > 0L) {
                     entity.setNextFire(now + interval);
                     entity.setFlash(2);
@@ -294,7 +294,8 @@ public final class SatelliteRackManager {
     }
 
     private static boolean spawnBullet(ServerLevel level, FakePlayer shooter, LivingEntity owner,
-                                       SatelliteGunEntity satellite, ItemStack gunStack, IGun gun, Vec3 dir) {
+                                       SatelliteGunEntity satellite, ItemStack gunStack, IGun gun, Vec3 dir,
+                                       @Nullable LivingEntity target) {
         CommonGunIndex index = TimelessAPI.getCommonGunIndex(gun.getGunId(gunStack)).orElse(null);
         if (index == null) {
             return false;
@@ -323,8 +324,27 @@ public final class SatelliteRackManager {
         }
         Vec3 muzzle = satellite.position().add(0.0D, 0.35D, 0.0D).add(dir.scale(0.6D));
         bullet.setPos(muzzle.x, muzzle.y, muzzle.z);
-        bullet.shootFromRotation(owner, satellite.getXRot(), satellite.getYRot(), 0.0F,
-                Math.max(1.0F, bulletData.getSpeed()), new Vector2d(0.0D, 0.0D));
+        float speed = Math.max(1.0F, bulletData.getSpeed());
+        bullet.shootFromRotation(owner, satellite.getXRot(), satellite.getYRot(), 0.0F, speed,
+                new Vector2d(0.0D, 0.0D));
+        if (target != null) {
+            // Aim from the actual muzzle at the torso and lead a walking mob: the
+            // angle-only shot drifts behind a moving target because the ring sits
+            // ~1.5 blocks behind the player. Overriding the velocity vector makes the
+            // trajectory independent of any yaw/pitch convention mismatch.
+            Vec3 aim = target.getBoundingBox().getCenter();
+            double distance = muzzle.distanceTo(aim);
+            double seconds = distance / speed;
+            aim = aim.add(target.getDeltaMovement().scale(Math.min(6.0D, seconds * 20.0D)));
+            Vec3 delta = aim.subtract(muzzle);
+            if (delta.lengthSqr() > 1.0E-6D) {
+                Vec3 velocity = delta.normalize().scale(speed);
+                bullet.setDeltaMovement(velocity);
+                bullet.setYRot((float) Math.toDegrees(Math.atan2(-velocity.x, velocity.z)));
+                bullet.setXRot((float) -Math.toDegrees(Math.atan2(velocity.y,
+                        Math.hypot(velocity.x, velocity.z))));
+            }
+        }
         return level.addFreshEntity(bullet);
     }
 
@@ -356,7 +376,7 @@ public final class SatelliteRackManager {
         }
     }
 
-    private static long fire(SatelliteGunEntity satellite) {
+    private static long fire(SatelliteGunEntity satellite, @Nullable LivingEntity target) {
         if (!(satellite.level() instanceof ServerLevel level)) {
             return 0L;
         }
@@ -473,7 +493,8 @@ public final class SatelliteRackManager {
             if (!spawned) {
                 ServerPlayer owner = level.getPlayerByUUID(satellite.getOwner()) instanceof ServerPlayer serverPlayer
                         ? serverPlayer : null;
-                spawned = spawnBullet(level, shooter, owner == null ? shooter : owner, satellite, gunStack, gun, dir);
+                spawned = spawnBullet(level, shooter, owner == null ? shooter : owner, satellite, gunStack, gun,
+                        dir, target);
             }
             if (debug) {
                 int bullets = level.getEntitiesOfClass(EntityKineticBullet.class,
