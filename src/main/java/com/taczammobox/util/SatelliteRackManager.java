@@ -51,6 +51,8 @@ public final class SatelliteRackManager {
     private static final float IDLE_CANT_PITCH = 9.0F;
     /** How long the satellites keep converging on the last hit point. */
     private static final long AIM_HOLD_TICKS = 12L;
+    /** After the player fires, satellites keep engaging on their own for this long. */
+    private static final long COMBAT_WINDOW_TICKS = 30L;
     private static final double AIM_DISTANCE = 16.0D;
     private static final GameProfile PROFILE = new GameProfile(
             UUID.nameUUIDFromBytes("taczammobox:satellite".getBytes(StandardCharsets.UTF_8)), "[Satellite]");
@@ -130,6 +132,16 @@ public final class SatelliteRackManager {
             entity.setRoll(0.0F);
             entity.setGun(guns.get(i));
             entity.setSlotIndex(i);
+
+            // Each satellite keeps its own cadence inside the combat window.
+            if (now < entity.getCombatUntil() && now >= entity.getNextFire()) {
+                long interval = fire(entity);
+                if (interval > 0L) {
+                    entity.setNextFire(now + interval);
+                    entity.setFlash(2);
+                    muzzleFx(entity);
+                }
+            }
         }
         for (int i = guns.size(); i < existing.size(); i++) {
             existing.get(i).discard();
@@ -153,19 +165,8 @@ public final class SatelliteRackManager {
         Vec3 aim = player.pick(AIM_DISTANCE * 4.0D, 1.0F, false).getLocation();
         for (SatelliteGunEntity satellite : satellites) {
             satellite.setAimTarget(aim, now + AIM_HOLD_TICKS);
+            satellite.setCombatUntil(now + COMBAT_WINDOW_TICKS);
             pointAt(satellite, aim);
-        }
-        for (SatelliteGunEntity satellite : satellites) {
-            if (now < satellite.getNextFire()) {
-                continue;
-            }
-            long interval = fire(satellite);
-            if (interval > 0L) {
-                satellite.setNextFire(now + interval);
-                satellite.setRecoil(1.0F);
-                satellite.setFlash(2);
-                muzzleFx(satellite);
-            }
         }
     }
 
@@ -209,7 +210,12 @@ public final class SatelliteRackManager {
         shooter.setYHeadRot(satellite.getYRot());
         shooter.setItemInHand(InteractionHand.MAIN_HAND, gunStack);
         try {
-            IGunOperator.fromLivingEntity(shooter).shoot(satellite::getXRot, satellite::getYRot);
+            IGunOperator operator = IGunOperator.fromLivingEntity(shooter);
+            // Aiming state tightens TACZ's inaccuracy modifiers a little; there is
+            // no public API for a truly zero-spread shot, so this is as close as
+            // we get without touching their internals.
+            operator.aim(true);
+            operator.shoot(satellite::getXRot, satellite::getYRot);
         } catch (Throwable throwable) {
             if (!warned) {
                 warned = true;

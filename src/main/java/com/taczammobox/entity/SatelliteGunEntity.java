@@ -36,6 +36,7 @@ public class SatelliteGunEntity extends Entity {
     private long nextFire;
     private net.minecraft.world.phys.Vec3 aimTarget;
     private long aimUntil;
+    private long combatUntil;
 
     public SatelliteGunEntity(EntityType<? extends SatelliteGunEntity> type, Level level) {
         super(type, level);
@@ -162,6 +163,14 @@ public class SatelliteGunEntity extends Entity {
 
     public net.minecraft.world.phys.Vec3 getAimTarget() {
         return this.aimTarget;
+    }
+
+    public void setCombatUntil(long until) {
+        this.combatUntil = until;
+    }
+
+    public long getCombatUntil() {
+        return this.combatUntil;
     }
 
     public long getAimUntil() {
