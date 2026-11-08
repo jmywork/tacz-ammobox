@@ -75,6 +75,13 @@ public final class SatelliteRackManager {
             UUID.nameUUIDFromBytes("taczammobox:satellite".getBytes(StandardCharsets.UTF_8)), "[Satellite]");
     /** Stand-in for "this happened long before the fake player's timeline". */
     private static final long LONG_AGO = -60_000L;
+    /**
+     * TACZ 1.2.0 gates every shot behind its own feed-type check
+     * (FeedType.INVENTORY needs matching ammo in the shooter's inventory), which a
+     * fake player cannot satisfy; the sentry arm breaks on 1.2.0 for the same
+     * reason. So the halo builds its bullets itself and never asks TACZ to shoot.
+     */
+    private static final boolean USE_NATIVE_SHOOT = false;
     private static int debugFires;
     private static boolean warned;
     private static boolean resultWarned;
@@ -384,7 +391,7 @@ public final class SatelliteRackManager {
             }
             Vec3 dir = Vec3.directionFromRotation(satellite.getXRot(), satellite.getYRot());
             boolean spawned = false;
-            if (gunStack.getItem() instanceof AbstractGunItem) {
+            if (USE_NATIVE_SHOOT && gunStack.getItem() instanceof AbstractGunItem) {
                 ShootResult result = operator.shoot(satellite::getXRot, satellite::getYRot);
                 spawned = result == ShootResult.SUCCESS;
                 if (debug) {
