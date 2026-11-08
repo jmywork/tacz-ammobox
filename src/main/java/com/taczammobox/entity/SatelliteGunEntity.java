@@ -1,5 +1,8 @@
 package com.taczammobox.entity;
 
+import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.attachment.AttachmentType;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -48,6 +51,7 @@ public class SatelliteGunEntity extends Entity {
 
     // Heat is server-side only: the halo must overheat like the real gun instead of
     // firing forever, otherwise magazine-fed energy guns flood the world.
+    private String gunSignature = "";
     private int liveBullets;
     private long bulletCheckTick = Long.MIN_VALUE / 2L;
     private int magazine;
@@ -137,6 +141,35 @@ public class SatelliteGunEntity extends Entity {
 
     public ItemStack getGun() {
         return this.entityData.get(DATA_GUN);
+    }
+
+    /**
+     * The synced gun stack carries the loaded round count, which changes on every
+     * upkeep shot. Pushing that through entity data resends the whole stack to every
+     * tracking client each shot, so only push when the parts the client draws change.
+     */
+    public void setGunIfChanged(ItemStack gun) {
+        String signature = gunSignature(gun);
+        if (signature.equals(this.gunSignature)) {
+            return;
+        }
+        this.gunSignature = signature;
+        this.setGun(gun);
+    }
+
+    private static String gunSignature(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return "";
+        }
+        IGun gun = IGun.getIGunOrNull(stack);
+        if (gun == null) {
+            return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+        }
+        StringBuilder builder = new StringBuilder(gun.getGunId(stack).toString());
+        for (AttachmentType type : AttachmentType.values()) {
+            builder.append('|').append(gun.getAttachmentId(stack, type));
+        }
+        return builder.toString();
     }
 
     public void setGun(ItemStack gun) {

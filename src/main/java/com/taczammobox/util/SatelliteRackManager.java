@@ -192,7 +192,7 @@ public final class SatelliteRackManager {
                 entity.setXRot(Mth.clamp(player.getXRot() + cantPitch, -80.0F, 80.0F));
             }
             entity.setRoll(0.0F);
-            entity.setGun(guns.get(i));
+            entity.setGunIfChanged(guns.get(i));
             entity.setSlotIndex(i);
 
             boolean shouldFire = target != null && now >= entity.getNextFire();
@@ -204,7 +204,7 @@ public final class SatelliteRackManager {
 
             // Each satellite fires on its own gun's cadence.
             if (shouldFire) {
-                long interval = fire(entity, target);
+                long interval = fire(entity, target, player, rack);
                 if (interval > 0L) {
                     entity.setNextFire(now + interval);
                     entity.setFlash(2);
@@ -487,7 +487,8 @@ public final class SatelliteRackManager {
         }
     }
 
-    private static long fire(SatelliteGunEntity satellite, @Nullable LivingEntity target) {
+    private static long fire(SatelliteGunEntity satellite, @Nullable LivingEntity target, Player player,
+                             ItemStack rack) {
         if (!(satellite.level() instanceof ServerLevel level)) {
             return 0L;
         }
@@ -498,9 +499,7 @@ public final class SatelliteRackManager {
         }
         CommonGunIndex index = TimelessAPI.getCommonGunIndex(gun.getGunId(gunStack)).orElse(null);
         GunData gunData = index == null ? null : index.getGunData();
-        Player player = level.getPlayerByUUID(satellite.getOwner());
-        ItemStack rack = player == null ? ItemStack.EMPTY : findRack(player);
-        boolean upkeep = !rack.isEmpty() && SatelliteRackItem.consumesAmmo(rack);
+        boolean upkeep = player != null && !rack.isEmpty() && SatelliteRackItem.consumesAmmo(rack);
         int magazine = satellite.getMagazine();
         if (upkeep && gunData != null && gunData.getAmmoId() != null) {
             int magSize = Math.max(1, gunData.getAmmoAmount());
