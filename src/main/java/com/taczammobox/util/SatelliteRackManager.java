@@ -5,6 +5,7 @@ import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ReloadState;
 import com.tacz.guns.entity.EntityKineticBullet;
+import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.api.event.common.GunShootEvent;
 import com.tacz.guns.api.item.IGun;
@@ -250,13 +251,18 @@ public final class SatelliteRackManager {
             // client to sync any of that, and seeding the holder did not satisfy the
             // gate, so call the spawner that gate eventually delegates to and skip
             // the gate entirely. Ammo is refilled above, so nothing is consumed.
+            // shootOnce() bails out silently when the operator has no attachment
+            // cache, and a fake player never receives the event that builds it, so
+            // rebuild it here before asking the gun to fire.
+            AttachmentPropertyManager.postChangeEvent(shooter, gunStack);
             if (gunStack.getItem() instanceof AbstractGunItem gunItem) {
                 gunItem.shoot(data, gunStack, satellite::getXRot, satellite::getYRot, shooter);
                 if (debug) {
                     int bullets = level.getEntitiesOfClass(EntityKineticBullet.class,
                             satellite.getBoundingBox().inflate(4.0D)).size();
-                    TaczAmmoBoxMod.LOGGER.info("sat fire after: bulletsNear={} ammoAfter={} shootTs={}",
-                            bullets, gun.getCurrentAmmoCount(gunStack), data.shootTimestamp);
+                    TaczAmmoBoxMod.LOGGER.info("sat fire after: bulletsNear={} ammoAfter={} cache={}",
+                            bullets, gun.getCurrentAmmoCount(gunStack),
+                            operator.getCacheProperty() == null ? "null" : "ok");
                 }
             } else if (debug) {
                 TaczAmmoBoxMod.LOGGER.warn("sat fire: item is not AbstractGunItem: {}", gunStack.getItem());
