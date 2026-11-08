@@ -25,6 +25,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.OwnableEntity;
@@ -176,15 +177,18 @@ public final class SatelliteRackManager {
             LivingEntity prey = gunTarget(entity, player, rack, now, claims);
             if (prey != null) {
                 claims.merge(prey.getUUID(), 1, Integer::sum);
+                // Track the prey with the muzzle; the bullet is aimed by velocity,
+                // so this is purely visual.
+                pointAt(entity, prey.getEyePosition());
+            } else {
+                // Idle: the muzzle points along its own petal, so the fan reads as
+                // one opening shape instead of a bundle of parallel guns.
+                double dirX = rightX * Math.sin(angle);
+                double dirY = Math.cos(angle);
+                double dirZ = rightZ * Math.sin(angle);
+                entity.setYRot((float) Math.toDegrees(Math.atan2(-dirX, dirZ)));
+                entity.setXRot((float) -Math.toDegrees(Math.atan2(dirY, Math.hypot(dirX, dirZ))));
             }
-            // The fan keeps its petal pose even while firing: the bullets aim
-            // themselves, and letting every gun swing at its own prey dragged the
-            // flat fan into a tangle of barrels pointing every which way.
-            double dirX = rightX * Math.sin(angle);
-            double dirY = Math.cos(angle);
-            double dirZ = rightZ * Math.sin(angle);
-            entity.setYRot((float) Math.toDegrees(Math.atan2(-dirX, dirZ)));
-            entity.setXRot((float) -Math.toDegrees(Math.atan2(dirY, Math.hypot(dirX, dirZ))));
             // In the FIXED frame a gun is already broadside when its muzzle points
             // sideways, so the petal guns must not be rolled at all; only the gun
             // aiming straight up sits edge-on and needs the quarter turn.
@@ -335,6 +339,16 @@ public final class SatelliteRackManager {
             return false;
         }
         return satellite.distanceToSqr(entity) <= AUTO_RANGE * AUTO_RANGE;
+    }
+
+    /** Turns the gun's muzzle onto a point; the bullet is aimed separately. */
+    private static void pointAt(SatelliteGunEntity satellite, Vec3 target) {
+        double dx = target.x - satellite.getX();
+        double dy = target.y - satellite.getY();
+        double dz = target.z - satellite.getZ();
+        double horizontal = Math.sqrt(dx * dx + dz * dz);
+        satellite.setYRot((float) Math.toDegrees(Math.atan2(-dx, dz)));
+        satellite.setXRot(Mth.clamp((float) -Math.toDegrees(Math.atan2(dy, horizontal)), -80.0F, 80.0F));
     }
 
 
