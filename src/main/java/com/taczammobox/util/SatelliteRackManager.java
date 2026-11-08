@@ -37,10 +37,12 @@ import java.util.UUID;
  */
 @Mod.EventBusSubscriber(modid = TaczAmmoBoxMod.MOD_ID)
 public final class SatelliteRackManager {
-    /** Degrees away from "straight behind", alternating left/right. */
-    private static final double[] OFFSETS = {14.0D, -14.0D, 29.0D, -29.0D, 44.0D, -44.0D, 59.0D, -59.0D, 74.0D, -74.0D};
-    private static final double RADIUS = 2.4D;
-    private static final double HEIGHT = 1.15D;
+    /** Halo geometry in degrees; the gap between ARC_END and ARC_START+360 is the bottom. */
+    private static final double ARC_START = -55.0D;
+    private static final double ARC_END = 235.0D;
+    private static final double RING_RADIUS = 1.15D;
+    private static final double BACK_OFFSET = 1.35D;
+    private static final double CENTER_HEIGHT = 1.45D;
     private static final double AIM_DISTANCE = 16.0D;
     private static final GameProfile PROFILE = new GameProfile(
             UUID.nameUUIDFromBytes("taczammobox:satellite".getBytes(StandardCharsets.UTF_8)), "[Satellite]");
@@ -67,21 +69,36 @@ public final class SatelliteRackManager {
             return;
         }
 
-        Vec3 target = player.getEyePosition().add(player.getLookAngle().scale(AIM_DISTANCE)).add(0.0D, -0.8D, 0.0D);
-        for (int i = 0; i < guns.size(); i++) {
+        // Upright halo: a vertical ring hanging behind the back, its plane facing
+        // the way the player looks. The bottom of the ring is left empty so it
+        // never sits directly behind the legs.
+        float yawRad = (float) Math.toRadians(player.getYRot());
+        double forwardX = -Math.sin(yawRad);
+        double forwardZ = Math.cos(yawRad);
+        double rightX = Math.cos(yawRad);
+        double rightZ = Math.sin(yawRad);
+        double centerX = player.getX() - forwardX * BACK_OFFSET;
+        double centerY = player.getY() + CENTER_HEIGHT;
+        double centerZ = player.getZ() - forwardZ * BACK_OFFSET;
+
+        Vec3 target = player.getEyePosition().add(player.getLookAngle().scale(AIM_DISTANCE)).add(0.0D, -0.6D, 0.0D);
+        int count = guns.size();
+        for (int i = 0; i < count; i++) {
             SatelliteGunEntity entity;
             if (i < existing.size()) {
                 entity = existing.get(i);
             } else {
                 entity = new SatelliteGunEntity(ModEntities.SATELLITE_GUN.get(), player.level());
                 entity.setOwner(player.getUUID());
-                entity.setPos(player.getX(), player.getY() + HEIGHT, player.getZ());
+                entity.setPos(player.getX(), player.getY() + CENTER_HEIGHT, player.getZ());
                 player.level().addFreshEntity(entity);
             }
-            double angle = Math.toRadians(player.getYRot() + 180.0D + OFFSETS[i % OFFSETS.length]);
-            double x = player.getX() - Math.sin(angle) * RADIUS;
-            double z = player.getZ() + Math.cos(angle) * RADIUS;
-            double y = player.getY() + HEIGHT + (i % 2 == 0 ? 0.18D : -0.12D);
+
+            double thetaDeg = count == 1 ? 90.0D : ARC_START + (ARC_END - ARC_START) * i / (count - 1.0D);
+            double theta = Math.toRadians(thetaDeg);
+            double x = centerX + rightX * Math.cos(theta) * RING_RADIUS;
+            double y = centerY + Math.sin(theta) * RING_RADIUS;
+            double z = centerZ + rightZ * Math.cos(theta) * RING_RADIUS;
             entity.setPos(x, y, z);
 
             double dx = target.x - x;
@@ -92,7 +109,8 @@ public final class SatelliteRackManager {
             float pitch = (float) -Math.toDegrees(Math.atan2(dy, horizontal));
             entity.setYRot(yaw);
             entity.setXRot(Mth.clamp(pitch, -60.0F, 60.0F));
-            entity.setRoll((i % 2 == 0 ? 9.0F : -9.0F));
+            // Roll the gun so its top points away from the centre of the ring.
+            entity.setRoll((float) (thetaDeg - 90.0D));
             entity.setGun(guns.get(i));
             entity.setSlotIndex(i);
         }
