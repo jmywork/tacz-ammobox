@@ -3,6 +3,8 @@ package com.taczammobox.util;
 import com.mojang.authlib.GameProfile;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
+import com.tacz.guns.api.entity.ShootResult;
+import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.api.entity.ReloadState;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
@@ -145,8 +147,13 @@ public final class SatelliteRackManager {
             entity.setGun(guns.get(i));
             entity.setSlotIndex(i);
 
+            boolean shouldFire = now < entity.getCombatUntil() && now >= entity.getNextFire();
+            if (player.level() instanceof ServerLevel serverLevel) {
+                bindShooter(entity, serverLevel, guns.get(i), shouldFire);
+            }
+
             // Each satellite keeps its own cadence inside the combat window.
-            if (now < entity.getCombatUntil() && now >= entity.getNextFire()) {
+            if (shouldFire) {
                 long interval = fire(entity);
                 if (interval > 0L) {
                     entity.setNextFire(now + interval);
@@ -230,6 +237,34 @@ public final class SatelliteRackManager {
         return level.addFreshEntity(bullet);
     }
 
+
+    /** Keeps the fake player's TACZ state (aim, draw, heat) alive between shots. */
+    private static void bindShooter(SatelliteGunEntity satellite, ServerLevel level, ItemStack gunStack,
+                                    boolean firing) {
+        FakePlayer shooter = satellite.shooter(level);
+        shooter.moveTo(satellite.getX(), satellite.getY(), satellite.getZ(), satellite.getYRot(), satellite.getXRot());
+        shooter.setYHeadRot(satellite.getYRot());
+        shooter.setXRot(satellite.getXRot());
+        shooter.setHealth(shooter.getMaxHealth());
+        shooter.hurtTime = 0;
+        if (!ItemStack.isSameItemSameTags(shooter.getMainHandItem(), gunStack)) {
+            shooter.setItemInHand(InteractionHand.MAIN_HAND, gunStack.copy());
+        }
+        shooter.tick();
+        IGunOperator operator = IGunOperator.fromLivingEntity(shooter);
+        operator.aim(true);
+        ShooterDataHolder data = operator.getDataHolder();
+        if (data.currentGunItem == null) {
+            operator.initialData();
+        }
+        if (gunStack.getItem() instanceof AbstractGunItem gunItem) {
+            gunItem.tickHeat(data, gunStack, shooter);
+            if (firing) {
+                AttachmentPropertyManager.postChangeEvent(shooter, gunStack);
+            }
+        }
+    }
+
     private static long fire(SatelliteGunEntity satellite) {
         if (!(satellite.level() instanceof ServerLevel level)) {
             return 0L;
@@ -251,7 +286,7 @@ public final class SatelliteRackManager {
         gun.setCurrentAmmoCount(gunStack, 999);
         gun.setBulletInBarrel(gunStack, true);
 
-        FakePlayer shooter = FakePlayerFactory.get(level, PROFILE);
+        FakePlayer shooter = satellite.shooter(level);
         shooter.moveTo(satellite.getX(), satellite.getY(), satellite.getZ(), satellite.getYRot(), satellite.getXRot());
         shooter.setYHeadRot(satellite.getYRot());
         shooter.setItemInHand(InteractionHand.MAIN_HAND, gunStack);
@@ -285,7 +320,18 @@ public final class SatelliteRackManager {
             // rebuild it here before asking the gun to fire.
             AttachmentPropertyManager.postChangeEvent(shooter, gunStack);
             Vec3 dir = Vec3.directionFromRotation(satellite.getXRot(), satellite.getYRot());
-            boolean spawned = spawnBullet(level, shooter, satellite, gunStack, gun, dir);
+            boolean spawned = false;
+            if (gunStack.getItem() instanceof AbstractGunItem) {
+                ShootResult result = operator.shoot(satellite::getXRot, satellite::getYRot);
+                spawned = result == ShootResult.SUCCESS;
+                if (!spawned && !resultWarned) {
+                    resultWarned = true;
+                    TaczAmmoBoxMod.LOGGER.warn("Satellite native shot rejected ({}), using direct bullet", result);
+                }
+            }
+            if (!spawned) {
+                spawned = spawnBullet(level, shooter, satellite, gunStack, gun, dir);
+            }
             if (debug) {
                 int bullets = level.getEntitiesOfClass(EntityKineticBullet.class,
                         satellite.getBoundingBox().inflate(4.0D)).size();

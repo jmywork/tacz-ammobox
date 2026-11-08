@@ -9,10 +9,14 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.common.util.FakePlayerFactory;
 import net.minecraftforge.network.NetworkHooks;
 
 import javax.annotation.Nullable;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 /**
@@ -38,6 +42,9 @@ public class SatelliteGunEntity extends Entity {
     private net.minecraft.world.phys.Vec3 aimTarget;
     private long aimUntil;
     private long combatUntil;
+    /** Server-side only: the TACZ state holder this gun shoots through. */
+    @Nullable
+    private FakePlayer shooter;
 
     public SatelliteGunEntity(EntityType<? extends SatelliteGunEntity> type, Level level) {
         super(type, level);
@@ -198,5 +205,18 @@ public class SatelliteGunEntity extends Entity {
 
     public void setNextFire(long nextFire) {
         this.nextFire = nextFire;
+    }
+
+    /**
+     * TACZ needs a living entity that keeps a persistent shooter state (draw,
+     * aim, heat, attachment cache), so every satellite owns one fake player and
+     * the manager ticks it along with the gun, the same way the sentry arm does.
+     */
+    public FakePlayer shooter(ServerLevel level) {
+        if (this.shooter == null) {
+            UUID id = UUID.nameUUIDFromBytes(("taczammobox:satellite:" + this.getUUID()).getBytes(StandardCharsets.UTF_8));
+            this.shooter = FakePlayerFactory.get(level, new com.mojang.authlib.GameProfile(id, "[Satellite]"));
+        }
+        return this.shooter;
     }
 }
