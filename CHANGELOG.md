@@ -14,13 +14,17 @@
 
 - **弹药装配机**（`taczammobox:ammo_assembler`）：配方驱动。界面分「弹药 / 配方 / 产物」三列，配方直接来自 TACZ 枪械工作台，不新增任何物品或合成表；机器没有玩家合成槽，靠六面输入输出与红石控制，会自动从「入」面的容器抽取配方所需材料，材料齐全才开工，可选锁定当前配方
 
+- **浮游炮机架**（`taczammobox:satellite_rack`，彩蛋物品）：最多挂 10 把 TACZ 枪，在玩家身后排成一对枪口朝天的天使翅膀；自动索敌 24 格内的敌对生物，也可以按键标记单一目标集火（40 格）。子弹由模组按原枪数据自建（TACZ 1.2.0 的供弹检查不接受假玩家），伤害、装弹量、热量与射速都按原枪结算；打空且背包没有对应弹药时，在聊天栏按弹种提示
+
+- **制式浮游炮机架**（`taczammobox:satellite_rack_upkeep`）：生存可合成（下界合金块 ×4 + 信标 + 弹链 + 龙息 ×2 + 龙头）。自带按弹种分组的弹药缓存，先吃缓存、再吃背包里的盒装/箱装弹药与散装弹药，余弹留在缓存里不浪费
+
 - **彩蛋物品同栏展示**：自动供弹弹链与三级自动击发弹匣不再单独开创造分类，和普通物品放在一起，物品说明里标注「彩蛋物品」；仍然不提供任何合成表
 - 尝试过的 TACZ 风格「正常 / 彩蛋」侧栏已移除：原版创造栏的列表会被 TACZ 自己的枪包筛选覆盖，做不出稳定效果，两个分类反而更难找
 
 ### 稳定性
 
 - 适配 **TACZ 1.2.0**（`tacz-forge-1.20.1-1.2.0`）；0.4.0 起不再兼容 1.1.8
-- 新增 `config/taczammobox/features.json` 特性开关：`autoFire`、`capacityOverride`、`rpmOverride`、`belt`、`easterEggTab`、`createCompat`、`safeMode`，默认全开，行为与 0.3.0 一致
+- 新增 `config/taczammobox/features.json` 特性开关：`autoFire`、`capacityOverride`、`rpmOverride`、`belt`、`ammoChain`、`ammoFactory`、`easterEggTab`、`createCompat`、`safeMode`，默认全开，行为与 0.3.0 一致
 - 新增 `FeatureGuard`：任一挂钩首次抛出意外异常时只停用该特性并记录一条日志，不再刷屏或拖垮游戏
 - 新增启动自检 `CompatSelfCheck`：反射校验 TACZ 关键方法与字段，缺失时自动关闭 auto-fire 并打印缺失项
 - 8 个 TACZ/Create mixin 全部受特性开关控制，`safeMode` 可整体退回「原版 TACZ + 我们的物品」
