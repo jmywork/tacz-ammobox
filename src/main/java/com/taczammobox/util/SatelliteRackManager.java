@@ -105,7 +105,7 @@ public final class SatelliteRackManager {
             // standing upright instead of lying down when the player looks up
             // or down.
             entity.setYRot(player.getYRot());
-            entity.setXRot(0.0F);
+            entity.setXRot(player.getXRot());
             entity.setRoll(0.0F);
             entity.setGun(guns.get(i));
             entity.setSlotIndex(i);

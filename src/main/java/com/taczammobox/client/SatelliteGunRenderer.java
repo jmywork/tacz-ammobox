@@ -1,7 +1,6 @@
 package com.taczammobox.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import com.taczammobox.entity.SatelliteGunEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -10,6 +9,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
+import com.mojang.math.Axis;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -31,12 +31,14 @@ public class SatelliteGunRenderer extends EntityRenderer<SatelliteGunEntity> {
             return;
         }
         pose.pushPose();
+
+        // TACZ renders guns with the barrel on +X and the sights on +Y under
+        // FIXED, so the muzzle has to be turned onto -Z before pitch is applied.
+        // Order matters: yaw, then pitch, then the fixed 90 degree barrel turn.
         pose.mulPose(Axis.YP.rotationDegrees(180.0F - entity.getYRot()));
-        // TACZ's FIXED model puts the barrel along +X; turn it onto -Z so the
-        // muzzle follows the entity's yaw, then pitch around the new X axis.
-        pose.mulPose(Axis.YP.rotationDegrees(-90.0F));
         pose.mulPose(Axis.XP.rotationDegrees(-entity.getXRot()));
-        pose.mulPose(Axis.ZP.rotationDegrees(entity.getRoll()));
+        pose.mulPose(Axis.YP.rotationDegrees(90.0F));
+
         pose.scale(0.5F, 0.5F, 0.5F);
         Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.FIXED, packedLight,
                 OverlayTexture.NO_OVERLAY, pose, buffers, entity.level(), entity.getId());
