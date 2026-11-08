@@ -123,5 +123,6 @@
   "item.taczammobox.satellite_rack_upkeep.desc": "Keeps the halo fed: rounds come from boxes, crates and loose ammo in your inventory.",
   "item.taczammobox.satellite_rack_upkeep.hint": "Works from the back slot or inventory; warns you when a caliber runs dry.",
   "item.taczammobox.satellite_rack.cache": "%s caliber(s) cached",
-  "message.taczammobox.satellite.no_ammo": "Satellite guns are out of %s. Load a matching ammo box or loose rounds."
+  "message.taczammobox.satellite.no_ammo": "Satellite guns are out of %s. Load a matching ammo box or loose rounds.",
+  "entity.taczammobox.satellite_gun": "Satellite Gun"
 }

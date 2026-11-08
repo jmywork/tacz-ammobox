@@ -25,7 +25,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.OwnableEntity;
@@ -71,12 +70,6 @@ public final class SatelliteRackManager {
     private static final double FAN_RADIUS = 1.10D;
     /** Total opening angle in degrees, symmetric around straight up. */
     private static final double FAN_ARC = 170.0D;
-    /**
-     * When a target is engaged the guns swing level, so the fan steps back and
-     * opens a little wider to keep the barrels out of the player's head.
-     */
-    private static final double FAN_COMBAT_BACK = 0.14D;
-    private static final double FAN_COMBAT_RADIUS = 0.14D;
     /** Roll that lays each gun broadside to the viewer instead of edge-on. */
     private static final float FAN_ROLL = 90.0F;
     /** Spawn height for a fresh entity, before the first layout pass moves it. */
@@ -148,25 +141,14 @@ public final class SatelliteRackManager {
         // spread across the arc, so the fan opens as a single shape. With ten guns
         // the inner pair stands almost upright and the outer pair lies out to the
         // sides; with one gun it sits dead centre.
-        boolean engaging = SatelliteRackItem.focus(rack) != null;
-        if (!engaging) {
-            for (SatelliteGunEntity satellite : existing) {
-                if (satellite.getTarget() != null) {
-                    engaging = true;
-                    break;
-                }
-            }
-        }
-        double backOffset = FAN_BACK_OFFSET + (engaging ? FAN_COMBAT_BACK : 0.0D);
-        double radius = FAN_RADIUS + (engaging ? FAN_COMBAT_RADIUS : 0.0D);
         float yawRad = (float) Math.toRadians(player.getYRot());
         double forwardX = -Math.sin(yawRad);
         double forwardZ = Math.cos(yawRad);
         double rightX = Math.cos(yawRad);
         double rightZ = Math.sin(yawRad);
-        double pivotX = player.getX() - forwardX * backOffset;
+        double pivotX = player.getX() - forwardX * FAN_BACK_OFFSET;
         double pivotY = player.getY() + FAN_PIVOT_HEIGHT;
-        double pivotZ = player.getZ() - forwardZ * backOffset;
+        double pivotZ = player.getZ() - forwardZ * FAN_BACK_OFFSET;
 
         int count = guns.size();
         for (int i = 0; i < count; i++) {
@@ -182,8 +164,8 @@ public final class SatelliteRackManager {
 
             double fraction = count <= 1 ? 0.5D : i / (double) (count - 1);
             double angle = Math.toRadians(-FAN_ARC / 2.0D + fraction * FAN_ARC);
-            double across = Math.sin(angle) * radius;
-            double rise = Math.cos(angle) * radius;
+            double across = Math.sin(angle) * FAN_RADIUS;
+            double rise = Math.cos(angle) * FAN_RADIUS;
             double x = pivotX + rightX * across;
             double y = pivotY + rise;
             double z = pivotZ + rightZ * across;
@@ -194,16 +176,15 @@ public final class SatelliteRackManager {
             LivingEntity prey = gunTarget(entity, player, rack, now, claims);
             if (prey != null) {
                 claims.merge(prey.getUUID(), 1, Integer::sum);
-                pointAt(entity, prey.getEyePosition());
-            } else {
-                // Idle: the muzzle points along its own petal, so the fan reads as
-                // one opening shape instead of a bundle of parallel guns.
-                double dirX = rightX * Math.sin(angle);
-                double dirY = Math.cos(angle);
-                double dirZ = rightZ * Math.sin(angle);
-                entity.setYRot((float) Math.toDegrees(Math.atan2(-dirX, dirZ)));
-                entity.setXRot((float) -Math.toDegrees(Math.atan2(dirY, Math.hypot(dirX, dirZ))));
             }
+            // The fan keeps its petal pose even while firing: the bullets aim
+            // themselves, and letting every gun swing at its own prey dragged the
+            // flat fan into a tangle of barrels pointing every which way.
+            double dirX = rightX * Math.sin(angle);
+            double dirY = Math.cos(angle);
+            double dirZ = rightZ * Math.sin(angle);
+            entity.setYRot((float) Math.toDegrees(Math.atan2(-dirX, dirZ)));
+            entity.setXRot((float) -Math.toDegrees(Math.atan2(dirY, Math.hypot(dirX, dirZ))));
             // In the FIXED frame a gun is already broadside when its muzzle points
             // sideways, so the petal guns must not be rolled at all; only the gun
             // aiming straight up sits edge-on and needs the quarter turn.
@@ -356,14 +337,6 @@ public final class SatelliteRackManager {
         return satellite.distanceToSqr(entity) <= AUTO_RANGE * AUTO_RANGE;
     }
 
-    private static void pointAt(SatelliteGunEntity satellite, Vec3 target) {
-        double dx = target.x - satellite.getX();
-        double dy = target.y - satellite.getY();
-        double dz = target.z - satellite.getZ();
-        double horizontal = Math.sqrt(dx * dx + dz * dz);
-        satellite.setYRot((float) Math.toDegrees(Math.atan2(-dx, dz)));
-        satellite.setXRot(Mth.clamp((float) -Math.toDegrees(Math.atan2(dy, horizontal)), -80.0F, 80.0F));
-    }
 
     /** @return the cooldown in ticks, or 0 when the shot did not happen. */
 
