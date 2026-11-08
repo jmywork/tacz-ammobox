@@ -101,10 +101,11 @@ public final class SatelliteRackManager {
             double z = centerZ + rightZ * Math.cos(theta) * RING_RADIUS;
             entity.setPos(x, y, z);
 
-            // Every muzzle points exactly where the player is looking, so the
-            // ring reads as one firing line instead of a converging mess.
+            // Only yaw follows the player. Pitch stays level so the halo keeps
+            // standing upright instead of lying down when the player looks up
+            // or down.
             entity.setYRot(player.getYRot());
-            entity.setXRot(player.getXRot());
+            entity.setXRot(0.0F);
             entity.setRoll(0.0F);
             entity.setGun(guns.get(i));
             entity.setSlotIndex(i);
