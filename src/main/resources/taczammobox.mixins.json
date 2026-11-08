@@ -16,7 +16,8 @@
   "client": [
     "AnimationStateMachineMixin",
     "SoundPlayManagerMixin",
-    "LocalPlayerShootDiagMixin"
+    "LocalPlayerShootDiagMixin",
+    "LocalPlayerShootChamberMixin"
   ],
   "injectors": {
     "defaultRequire": 1
