@@ -23,6 +23,8 @@ import com.taczammobox.item.SatelliteRackItem;
 import com.taczammobox.registry.ModEntities;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -217,7 +219,7 @@ public final class SatelliteRackManager {
      * that never "drew" the gun, so build the bullet that script would have built:
      * the same EntityKineticBullet, the same gun data, our own direction.
      */
-    private static boolean spawnBullet(ServerLevel level, FakePlayer shooter, SatelliteGunEntity satellite,
+    private static boolean spawnBullet(ServerLevel level, LivingEntity owner, SatelliteGunEntity satellite,
                                        ItemStack gunStack, IGun gun, Vec3 dir) {
         CommonGunIndex index = TimelessAPI.getCommonGunIndex(gun.getGunId(gunStack)).orElse(null);
         if (index == null) {
@@ -228,11 +230,13 @@ public final class SatelliteRackManager {
         if (gunData == null || bulletData == null || gunData.getAmmoId() == null) {
             return false;
         }
-        EntityKineticBullet bullet = new EntityKineticBullet(level, shooter, gunStack, gunData.getAmmoId(),
+        // Owned by the player, not the fake: the ring sits behind the player's back,
+        // so a fake-owned bullet would fly straight through the player and stop there.
+        EntityKineticBullet bullet = new EntityKineticBullet(level, owner, gunStack, gunData.getAmmoId(),
                 gun.getGunId(gunStack), true, gunData, bulletData);
         Vec3 muzzle = satellite.position().add(0.0D, 0.35D, 0.0D).add(dir.scale(0.6D));
         bullet.setPos(muzzle.x, muzzle.y, muzzle.z);
-        bullet.shootFromRotation(shooter, satellite.getXRot(), satellite.getYRot(), 0.0F,
+        bullet.shootFromRotation(owner, satellite.getXRot(), satellite.getYRot(), 0.0F,
                 Math.max(1.0F, bulletData.getSpeed()), new Vector2d(0.0D, 0.0D));
         return level.addFreshEntity(bullet);
     }
@@ -296,12 +300,11 @@ public final class SatelliteRackManager {
             // so TACZ's anti-cheat rejects every shot as NETWORK_FAIL unless we
             // seed the holder ourselves.
             ShooterDataHolder data = operator.getDataHolder();
-            data.baseTimestamp = System.currentTimeMillis();
-            data.shootTimestamp = LONG_AGO;
-            data.lastShootTimestamp = LONG_AGO;
-            data.drawTimestamp = LONG_AGO;
-            data.reloadTimestamp = LONG_AGO;
-            data.boltTimestamp = LONG_AGO;
+            data.shootTimestamp = -1L;
+            data.lastShootTimestamp = -1L;
+            data.drawTimestamp = -1L;
+            data.reloadTimestamp = -1L;
+            data.boltTimestamp = -1L;
             data.reloadStateType = ReloadState.StateType.NOT_RELOADING;
             data.sprintTimeS = 0.0F;
             data.isBolting = false;
@@ -345,13 +348,18 @@ public final class SatelliteRackManager {
             if (gunStack.getItem() instanceof AbstractGunItem) {
                 ShootResult result = operator.shoot(satellite::getXRot, satellite::getYRot);
                 spawned = result == ShootResult.SUCCESS;
+                if (debug) {
+                    TaczAmmoBoxMod.LOGGER.info("sat shoot result: {}", result);
+                }
                 if (!spawned && !resultWarned) {
                     resultWarned = true;
                     TaczAmmoBoxMod.LOGGER.warn("Satellite native shot rejected ({}), using direct bullet", result);
                 }
             }
             if (!spawned) {
-                spawned = spawnBullet(level, shooter, satellite, gunStack, gun, dir);
+                ServerPlayer owner = level.getServer() == null ? null
+                        : level.getServer().getPlayerList().getPlayer(satellite.getOwner());
+                spawned = spawnBullet(level, owner == null ? shooter : owner, satellite, gunStack, gun, dir);
             }
             if (debug) {
                 int bullets = level.getEntitiesOfClass(EntityKineticBullet.class,
