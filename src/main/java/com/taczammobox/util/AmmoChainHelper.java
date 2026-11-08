@@ -13,7 +13,6 @@ import com.taczammobox.compat.CuriosCompat;
 import com.taczammobox.config.WasteSettings;
 import com.taczammobox.item.AmmoBeltItem;
 import com.taczammobox.item.PackagedAmmo;
-import com.taczammobox.registry.ModItems;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -56,11 +55,19 @@ public final class AmmoChainHelper {
             return;
         }
         boolean reloading = isReloading(player);
-        boolean was = WAS_RELOADING.getOrDefault(player.getUUID(), false);
-        WAS_RELOADING.put(player.getUUID(), reloading);
-        if (was && !reloading) {
+        Boolean previous = WAS_RELOADING.get(player.getUUID());
+        // Only touch the map on a state change; this runs for every player every tick.
+        if (previous == null || previous != reloading) {
+            WAS_RELOADING.put(player.getUUID(), reloading);
+        }
+        if (previous != null && previous && !reloading) {
             onReloadFinished(player);
         }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
+        WAS_RELOADING.remove(event.getEntity().getUUID());
     }
 
     private static boolean isReloading(Player player) {

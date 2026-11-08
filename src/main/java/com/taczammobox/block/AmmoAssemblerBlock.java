@@ -1,6 +1,5 @@
 package com.taczammobox.block;
 
-import com.taczammobox.menu.AmmoAssemblerMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;

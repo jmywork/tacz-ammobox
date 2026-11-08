@@ -95,6 +95,12 @@ public final class SatelliteRackManager {
     /** Live satellite bullets around one gun before it waits for them to land. */
     private static final int MAX_LIVE_BULLETS = 10;
     private static final Map<UUID, int[]> SPAWN_BUDGET = new HashMap<>();
+    /** Deserialised rack contents, rebuilt only when the rack's gun list changes. */
+    private static final Map<UUID, List<ItemStack>> GUN_CACHE = new HashMap<>();
+    private static final Map<UUID, Integer> GUN_CACHE_VERSION = new HashMap<>();
+    private static final Map<UUID, ItemStack> GUN_CACHE_RACK = new HashMap<>();
+    /** Next tick a player without a Curios rack may query the slot again. */
+    private static final Map<UUID, Long> RACK_RETRY = new HashMap<>();
     private static boolean warned;
 
     private SatelliteRackManager() {
@@ -105,6 +111,10 @@ public final class SatelliteRackManager {
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         UUID id = event.getEntity().getUUID();
         SPAWN_BUDGET.remove(id);
+        GUN_CACHE.remove(id);
+        GUN_CACHE_VERSION.remove(id);
+        GUN_CACHE_RACK.remove(id);
+        RACK_RETRY.remove(id);
         AMMO_NOTICE.keySet().removeIf(key -> key.startsWith(id + "/"));
     }
 
@@ -131,7 +141,21 @@ public final class SatelliteRackManager {
         // nobody is shooting yet, so ten guns spread over a group instead of
         // stacking every barrel on the same one.
         Map<UUID, Integer> claims = new HashMap<>();
-        List<ItemStack> guns = SatelliteRackItem.loadedGuns(rack);
+        UUID focus = SatelliteRackItem.focus(rack);
+        int gunsVersion = SatelliteRackItem.gunsVersion(rack);
+        List<ItemStack> guns;
+        boolean gunsChanged;
+        Integer cachedVersion = GUN_CACHE_VERSION.get(playerId);
+        if (GUN_CACHE_RACK.get(playerId) != rack || cachedVersion == null || cachedVersion != gunsVersion) {
+            guns = SatelliteRackItem.loadedGuns(rack);
+            GUN_CACHE.put(playerId, guns);
+            GUN_CACHE_VERSION.put(playerId, gunsVersion);
+            GUN_CACHE_RACK.put(playerId, rack);
+            gunsChanged = true;
+        } else {
+            guns = GUN_CACHE.get(playerId);
+            gunsChanged = false;
+        }
         List<SatelliteGunEntity> existing = satellites(player);
         if (guns.isEmpty()) {
             existing.forEach(SatelliteGunEntity::discard);
@@ -154,7 +178,8 @@ public final class SatelliteRackManager {
         int count = guns.size();
         for (int i = 0; i < count; i++) {
             SatelliteGunEntity entity;
-            if (i < existing.size()) {
+            boolean fresh = i >= existing.size();
+            if (!fresh) {
                 entity = existing.get(i);
             } else {
                 entity = new SatelliteGunEntity(ModEntities.SATELLITE_GUN.get(), player.level());
@@ -174,7 +199,7 @@ public final class SatelliteRackManager {
 
             long now = player.level().getGameTime();
             // Every gun chooses for itself; a marked target overrides all of them.
-            LivingEntity prey = gunTarget(entity, player, rack, now, claims);
+            LivingEntity prey = gunTarget(entity, player, rack, focus, now, claims);
             if (prey != null) {
                 claims.merge(prey.getUUID(), 1, Integer::sum);
                 // Track the prey with the muzzle; the bullet is aimed by velocity,
@@ -199,7 +224,11 @@ public final class SatelliteRackManager {
                 roll = FAN_ROLL;
             }
             entity.setRoll(roll);
-            entity.setGunIfChanged(guns.get(i));
+            // Rebuilding the signature and pushing the stack is only needed when the
+            // rack actually changed or this entity is new.
+            if (gunsChanged || fresh) {
+                entity.setGunIfChanged(guns.get(i));
+            }
             entity.setSlotIndex(i);
 
             boolean shouldFire = prey != null && now >= entity.getNextFire();
@@ -237,8 +266,7 @@ public final class SatelliteRackManager {
      */
     @Nullable
     private static LivingEntity gunTarget(SatelliteGunEntity satellite, Player player, ItemStack rack,
-                                          long tick, Map<UUID, Integer> claims) {
-        UUID focusId = SatelliteRackItem.focus(rack);
+                                          @Nullable UUID focusId, long tick, Map<UUID, Integer> claims) {
         LivingEntity cached = satellite.getTarget();
         if (cached != null && (!cached.isAlive() || cached.level() != satellite.level())) {
             cached = null;
@@ -739,9 +767,23 @@ public final class SatelliteRackManager {
                 return stack;
             }
         }
-        if (ModList.get().isLoaded("curios")) {
-            return CuriosCompat.findCurio(player, stack -> stack.getItem() instanceof SatelliteRackItem);
+        if (!ModList.get().isLoaded("curios")) {
+            return ItemStack.EMPTY;
         }
-        return ItemStack.EMPTY;
+        // Curios lookups are capability queries; without a rack in the inventory they
+        // would run for every player every tick. Retry the slot only a few times a second.
+        UUID id = player.getUUID();
+        long now = player.level().getGameTime();
+        Long retryAt = RACK_RETRY.get(id);
+        if (retryAt != null && now < retryAt) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack found = CuriosCompat.findCurio(player, stack -> stack.getItem() instanceof SatelliteRackItem);
+        if (found.isEmpty()) {
+            RACK_RETRY.put(id, now + 10L);
+        } else {
+            RACK_RETRY.remove(id);
+        }
+        return found;
     }
 }

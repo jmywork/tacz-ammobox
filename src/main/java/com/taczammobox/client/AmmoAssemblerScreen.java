@@ -3,7 +3,6 @@ package com.taczammobox.client;
 import com.taczammobox.block.AmmoAssemblerBlockEntity;
 import com.taczammobox.menu.AmmoAssemblerMenu;
 import com.taczammobox.util.AssemblerRecipes;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import com.taczammobox.client.ui.TechButton;

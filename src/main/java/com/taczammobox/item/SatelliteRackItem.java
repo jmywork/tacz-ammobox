@@ -28,6 +28,7 @@ import java.util.UUID;
 public class SatelliteRackItem extends Item {
     public static final int SLOTS = 10;
     private static final String TAG_GUNS = "Guns";
+    private static final String TAG_GUNS_VERSION = "GunsVersion";
     private static final String TAG_FOCUS = "Focus";
     private static final String TAG_AMMO = "Ammo";
 
@@ -116,7 +117,17 @@ public class SatelliteRackItem extends Item {
         for (ItemStack stack : guns) {
             list.add(stack.save(new CompoundTag()));
         }
-        rack.getOrCreateTag().put(TAG_GUNS, list);
+        CompoundTag tag = rack.getOrCreateTag();
+        tag.put(TAG_GUNS, list);
+        // Bumped on every edit so the server tick can cache the deserialised list
+        // instead of rebuilding ten ItemStacks every tick.
+        tag.putInt(TAG_GUNS_VERSION, tag.getInt(TAG_GUNS_VERSION) + 1);
+    }
+
+    /** Monotonic counter bumped by {@link #setGun}; 0 means the list never changed. */
+    public static int gunsVersion(ItemStack rack) {
+        CompoundTag tag = rack.getTag();
+        return tag == null ? 0 : tag.getInt(TAG_GUNS_VERSION);
     }
 
     public static int loadedCount(ItemStack rack) {

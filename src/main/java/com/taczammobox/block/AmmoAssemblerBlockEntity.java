@@ -84,6 +84,10 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
         }
     };
 
+    /** Internal views for the tick: the side-facing views above restrict access. */
+    private final RangedWrapper internalInputs = new RangedWrapper(inventory, 0, INPUT_SLOTS);
+    private final RangedWrapper internalOutputs = new RangedWrapper(inventory, INPUT_SLOTS, SLOTS);
+
     private final LazyOptional<IItemHandler> inputOptional = LazyOptional.of(() -> inputView);
     private final LazyOptional<IItemHandler> outputOptional = LazyOptional.of(() -> outputView);
 
@@ -278,13 +282,16 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
             assembler.craft(entry);
             assembler.progress = 0;
             assembler.pushOutputs(level, pos);
+            assembler.setChanged();
+        } else if (assembler.progress == 1) {
+            // Persist the start of a run, but do not dirty the chunk every single tick.
+            assembler.setChanged();
         }
-        assembler.setChanged();
     }
 
     /** Pulls just enough of each required ingredient from containers on INPUT faces. */
     private void pullIngredients(Level level, BlockPos pos, AssemblerRecipes.Entry entry) {
-        IItemHandler inputs = new RangedWrapper(inventory, 0, INPUT_SLOTS);
+        IItemHandler inputs = internalInputs;
         for (Direction direction : Direction.values()) {
             if (sides[direction.ordinal()] != SideMode.INPUT) {
                 continue;
@@ -347,7 +354,7 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
     }
 
     private boolean canOutput(ItemStack result) {
-        ItemStack remainder = ItemHandlerHelper.insertItemStacked(new RangedWrapper(inventory, INPUT_SLOTS, SLOTS),
+        ItemStack remainder = ItemHandlerHelper.insertItemStacked(internalOutputs,
                 result.copy(), true);
         return remainder.isEmpty();
     }
@@ -365,12 +372,23 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
                 remaining -= taken;
             }
         }
-        ItemHandlerHelper.insertItemStacked(new RangedWrapper(inventory, INPUT_SLOTS, SLOTS),
+        ItemHandlerHelper.insertItemStacked(internalOutputs,
                 entry.output().copy(), false);
     }
 
     private void pushOutputs(Level level, BlockPos pos) {
-        IItemHandlerModifiable outputs = new RangedWrapper(inventory, INPUT_SLOTS, SLOTS);
+        boolean empty = true;
+        for (int slot = INPUT_SLOTS; slot < SLOTS; slot++) {
+            if (!inventory.getStackInSlot(slot).isEmpty()) {
+                empty = false;
+                break;
+            }
+        }
+        if (empty) {
+            // No output waiting: skip the neighbour lookups this tick.
+            return;
+        }
+        IItemHandlerModifiable outputs = internalOutputs;
         for (Direction direction : Direction.values()) {
             if (sides[direction.ordinal()] != SideMode.OUTPUT) {
                 continue;

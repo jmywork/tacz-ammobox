@@ -52,10 +52,6 @@ public final class AmmoBeltHelper {
         if (gun == null) {
             return;
         }
-        ItemStack belt = findBelt(player);
-        if (belt.isEmpty()) {
-            return;
-        }
         if (gun.hasHeatData(gunStack) && gun.isOverheatLocked(gunStack)) {
             return;
         }
@@ -77,6 +73,12 @@ public final class AmmoBeltHelper {
         }
         int current = gun.getCurrentAmmoCount(gunStack);
         if (current >= magazine) {
+            // Full magazine is the common case; search the inventory only when the
+            // belt actually has room to fill.
+            return;
+        }
+        ItemStack belt = findBelt(player);
+        if (belt.isEmpty()) {
             return;
         }
 
@@ -87,10 +89,6 @@ public final class AmmoBeltHelper {
             return;
         }
         if (stored <= 0) {
-            int cap = WasteSettings.beltMaxStore();
-            if (cap > 0 && stored >= cap) {
-                return;
-            }
             int loaded = consumeAmmo(player, ammoId);
             if (loaded <= 0) {
                 return;
@@ -130,13 +128,16 @@ public final class AmmoBeltHelper {
     }
 
     private static ItemStack findBelt(Player player) {
-        for (IItemHandler handler : handlers(player)) {
-            for (int slot = 0; slot < handler.getSlots(); slot++) {
-                ItemStack stack = handler.getStackInSlot(slot);
-                if (stack.getItem() instanceof AmmoBeltItem) {
-                    return stack;
-                }
+        // Straight inventory scan first: it covers almost every player and does not
+        // allocate a handler list just to look for one item.
+        for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
+            ItemStack stack = player.getInventory().getItem(slot);
+            if (stack.getItem() instanceof AmmoBeltItem) {
+                return stack;
             }
+        }
+        if (ModList.get().isLoaded("curios")) {
+            return CuriosCompat.findCurio(player, stack -> stack.getItem() instanceof AmmoBeltItem);
         }
         return ItemStack.EMPTY;
     }
