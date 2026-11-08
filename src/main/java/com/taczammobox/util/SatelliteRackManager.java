@@ -322,12 +322,16 @@ public final class SatelliteRackManager {
             // aim()/postChangeEvent() may replace tacz$data with a fresh holder,
             // so re-read it and stamp the *current* instance as late as possible.
             data = operator.getDataHolder();
-            data.baseTimestamp = System.currentTimeMillis();
-            data.shootTimestamp = LONG_AGO;
-            data.lastShootTimestamp = LONG_AGO;
-            data.drawTimestamp = LONG_AGO;
-            data.reloadTimestamp = LONG_AGO;
-            data.boltTimestamp = LONG_AGO;
+            // Never touch baseTimestamp: TACZ computes the shoot timestamp as
+            // GunTime.nowMillis() - baseTimestamp, and baseTimestamp lives in that
+            // clock's domain. Overwriting it with System.currentTimeMillis() made the
+            // timestamp hugely negative, so the cooldown looked like a million ms.
+            // Negative sentinels mean "never fired", which is exactly our state.
+            data.shootTimestamp = -1L;
+            data.lastShootTimestamp = -1L;
+            data.drawTimestamp = -1L;
+            data.reloadTimestamp = -1L;
+            data.boltTimestamp = -1L;
             data.reloadStateType = ReloadState.StateType.NOT_RELOADING;
             data.isBolting = false;
             data.setCurrentGunItem(() -> gunStack);
