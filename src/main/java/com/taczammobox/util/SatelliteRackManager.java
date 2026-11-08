@@ -204,11 +204,10 @@ public final class SatelliteRackManager {
                 entity.setYRot((float) Math.toDegrees(Math.atan2(-dirX, dirZ)));
                 entity.setXRot((float) -Math.toDegrees(Math.atan2(dirY, Math.hypot(dirX, dirZ))));
             }
-            // Turn each gun about its barrel so its flat side faces the back plane,
-            // the way a rifle hangs in an item frame: a petal whose muzzle points
-            // sideways needs the full quarter turn, while a gun standing straight up
-            // is already broadside and must not be rolled.
-            entity.setRoll(Math.abs(angle) < 1.0E-4D ? 0.0F : FAN_ROLL);
+            // In the FIXED frame a gun is already broadside when its muzzle points
+            // sideways, so the petal guns must not be rolled at all; only the gun
+            // aiming straight up sits edge-on and needs the quarter turn.
+            entity.setRoll(Math.abs(angle) < 1.0E-4D ? FAN_ROLL : 0.0F);
             entity.setGunIfChanged(guns.get(i));
             entity.setSlotIndex(i);
 
