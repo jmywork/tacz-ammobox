@@ -64,11 +64,17 @@ public final class SatelliteRackManager {
      * The fan lies in the player's back plane, so from behind every gun shows its
      * broadside.
      */
-    private static final double FAN_BACK_OFFSET = 0.55D;
-    private static final double FAN_PIVOT_HEIGHT = 1.02D;
-    private static final double FAN_RADIUS = 0.82D;
+    private static final double FAN_BACK_OFFSET = 0.60D;
+    private static final double FAN_PIVOT_HEIGHT = 1.25D;
+    private static final double FAN_RADIUS = 1.10D;
     /** Total opening angle in degrees, symmetric around straight up. */
-    private static final double FAN_ARC = 168.0D;
+    private static final double FAN_ARC = 170.0D;
+    /**
+     * When a target is engaged the guns swing level, so the fan steps back and
+     * opens a little wider to keep the barrels out of the player's head.
+     */
+    private static final double FAN_COMBAT_BACK = 0.14D;
+    private static final double FAN_COMBAT_RADIUS = 0.14D;
     /** Roll that lays each gun broadside to the viewer instead of edge-on. */
     private static final float FAN_ROLL = 90.0F;
     /** Spawn height for a fresh entity, before the first layout pass moves it. */
@@ -152,14 +158,17 @@ public final class SatelliteRackManager {
         // spread across the arc, so the fan opens as a single shape. With ten guns
         // the inner pair stands almost upright and the outer pair lies out to the
         // sides; with one gun it sits dead centre.
+        boolean engaging = target != null;
+        double backOffset = FAN_BACK_OFFSET + (engaging ? FAN_COMBAT_BACK : 0.0D);
+        double radius = FAN_RADIUS + (engaging ? FAN_COMBAT_RADIUS : 0.0D);
         float yawRad = (float) Math.toRadians(player.getYRot());
         double forwardX = -Math.sin(yawRad);
         double forwardZ = Math.cos(yawRad);
         double rightX = Math.cos(yawRad);
         double rightZ = Math.sin(yawRad);
-        double pivotX = player.getX() - forwardX * FAN_BACK_OFFSET;
+        double pivotX = player.getX() - forwardX * backOffset;
         double pivotY = player.getY() + FAN_PIVOT_HEIGHT;
-        double pivotZ = player.getZ() - forwardZ * FAN_BACK_OFFSET;
+        double pivotZ = player.getZ() - forwardZ * backOffset;
 
         int count = guns.size();
         for (int i = 0; i < count; i++) {
@@ -175,8 +184,8 @@ public final class SatelliteRackManager {
 
             double fraction = count <= 1 ? 0.5D : i / (double) (count - 1);
             double angle = Math.toRadians(-FAN_ARC / 2.0D + fraction * FAN_ARC);
-            double across = Math.sin(angle) * FAN_RADIUS;
-            double rise = Math.cos(angle) * FAN_RADIUS;
+            double across = Math.sin(angle) * radius;
+            double rise = Math.cos(angle) * radius;
             double x = pivotX + rightX * across;
             double y = pivotY + rise;
             double z = pivotZ + rightZ * across;
