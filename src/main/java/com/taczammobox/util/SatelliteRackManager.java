@@ -40,9 +40,9 @@ public final class SatelliteRackManager {
     /** Halo geometry in degrees; the gap between ARC_END and ARC_START+360 is the bottom. */
     private static final double ARC_START = -55.0D;
     private static final double ARC_END = 235.0D;
-    private static final double RING_RADIUS = 1.75D;
-    private static final double BACK_OFFSET = 1.55D;
-    private static final double CENTER_HEIGHT = 1.60D;
+    private static final double RING_RADIUS = 1.25D;
+    private static final double BACK_OFFSET = 1.35D;
+    private static final double CENTER_HEIGHT = 1.45D;
     private static final double AIM_DISTANCE = 16.0D;
     private static final GameProfile PROFILE = new GameProfile(
             UUID.nameUUIDFromBytes("taczammobox:satellite".getBytes(StandardCharsets.UTF_8)), "[Satellite]");
