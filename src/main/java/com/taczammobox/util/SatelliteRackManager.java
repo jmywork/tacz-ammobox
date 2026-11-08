@@ -192,7 +192,15 @@ public final class SatelliteRackManager {
             // In the FIXED frame a gun is already broadside when its muzzle points
             // sideways, so the petal guns must not be rolled at all; only the gun
             // aiming straight up sits edge-on and needs the quarter turn.
-            entity.setRoll(Math.abs(angle) < 1.0E-4D ? FAN_ROLL : 0.0F);
+            //
+            // Experiment: flip one half by 180 degrees so both halves show the same
+            // flank. If the left/right depth gap shrinks, the gap comes from the
+            // model's own off-centre geometry rather than from the layout.
+            float roll = across < 0.0D ? 180.0F : 0.0F;
+            if (Math.abs(angle) < 1.0E-4D) {
+                roll = FAN_ROLL;
+            }
+            entity.setRoll(roll);
             entity.setGunIfChanged(guns.get(i));
             entity.setSlotIndex(i);
 
