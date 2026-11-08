@@ -189,15 +189,13 @@ public final class SatelliteRackManager {
                 entity.setYRot((float) Math.toDegrees(Math.atan2(-dirX, dirZ)));
                 entity.setXRot((float) -Math.toDegrees(Math.atan2(dirY, Math.hypot(dirX, dirZ))));
             }
-            // In the FIXED frame a gun is already broadside when its muzzle points
-            // sideways, so the petal guns must not be rolled at all; only the gun
-            // aiming straight up sits edge-on and needs the quarter turn.
-            //
-            // Experiment: flip one half by 180 degrees so both halves show the same
-            // flank. If the left/right depth gap shrinks, the gap comes from the
-            // model's own off-centre geometry rather than from the layout.
+            // A gun is broadside in the FIXED frame when it is not rolled, but the
+            // model is not centred on its render origin, so the two halves showing
+            // opposite flanks land at slightly different depths. Rolling one half by
+            // 180 degrees puts both halves on the same flank and on one plane.
             float roll = across < 0.0D ? 180.0F : 0.0F;
             if (Math.abs(angle) < 1.0E-4D) {
+                // The single gun pointing straight up is edge-on without the turn.
                 roll = FAN_ROLL;
             }
             entity.setRoll(roll);
