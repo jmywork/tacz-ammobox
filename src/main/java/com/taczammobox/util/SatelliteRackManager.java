@@ -5,6 +5,7 @@ import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ShootResult;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
+import com.tacz.guns.resource.pojo.data.gun.GunHeatData;
 import com.tacz.guns.api.entity.ReloadState;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
@@ -169,6 +170,8 @@ public final class SatelliteRackManager {
                 bindShooter(entity, serverLevel, guns.get(i), shouldFire);
             }
 
+            coolHeat(entity);
+
             // Each satellite fires on its own gun's cadence.
             if (shouldFire) {
                 long interval = fire(entity);
@@ -176,6 +179,10 @@ public final class SatelliteRackManager {
                     entity.setNextFire(now + interval);
                     entity.setFlash(2);
                     muzzleFx(entity);
+                } else {
+                    // Locked (heat, no target line, empty cache): back off a little
+                    // instead of hammering the gun every tick.
+                    entity.setNextFire(now + 2L);
                 }
             }
         }
@@ -263,6 +270,29 @@ public final class SatelliteRackManager {
      * that never "drew" the gun, so build the bullet that script would have built:
      * the same EntityKineticBullet, the same gun data, our own direction.
      */
+    /** Bleed heat off after the pack's cooling delay; unsynced, server only. */
+    private static void coolHeat(SatelliteGunEntity satellite) {
+        if (!(satellite.level() instanceof ServerLevel level)) {
+            return;
+        }
+        ItemStack stack = satellite.getGun();
+        IGun gun = IGun.getIGunOrNull(stack);
+        if (gun == null || !gun.hasHeatData(stack)) {
+            satellite.setHeat(0.0F);
+            return;
+        }
+        GunHeatData heatData = TimelessAPI.getCommonGunIndex(gun.getGunId(stack))
+                .map(index -> index.getGunData().getHeatData()).orElse(null);
+        if (heatData == null || satellite.getHeat() <= 0.0F) {
+            return;
+        }
+        long delay = Math.max(0L, heatData.getCoolingDelay() / 50L);
+        if (level.getGameTime() - satellite.getLastShotTick() < delay) {
+            return;
+        }
+        satellite.setHeat(Math.max(0.0F, satellite.getHeat() - Math.max(0.05F, heatData.getInventoryCoolingPerTick())));
+    }
+
     private static boolean spawnBullet(ServerLevel level, FakePlayer shooter, LivingEntity owner,
                                        SatelliteGunEntity satellite, ItemStack gunStack, IGun gun, Vec3 dir) {
         CommonGunIndex index = TimelessAPI.getCommonGunIndex(gun.getGunId(gunStack)).orElse(null);
@@ -346,6 +376,27 @@ public final class SatelliteRackManager {
         // Easter egg: no ammo bookkeeping, every shot starts with a full chamber.
         gun.setCurrentAmmoCount(gunStack, 999);
         gun.setBulletInBarrel(gunStack, true);
+
+        long nowTick = level.getGameTime();
+        if (gun.hasHeatData(gunStack)) {
+            if (nowTick < satellite.getHeatLockUntil()) {
+                return 0L;
+            }
+            GunHeatData heatData = TimelessAPI.getCommonGunIndex(gun.getGunId(gunStack))
+                    .map(index -> index.getGunData().getHeatData()).orElse(null);
+            if (heatData != null) {
+                float nextHeat = satellite.getHeat() + heatData.getHeatPerShot();
+                if (nextHeat >= heatData.getHeatMax()) {
+                    // Overheated: TACZ locks the real gun for a moment; the halo has to
+                    // do the same or it keeps pouring bullets into the world.
+                    satellite.setHeat(0.0F);
+                    satellite.setHeatLockUntil(nowTick + Math.max(10L, heatData.getOverHeatTime() / 50L));
+                    return 0L;
+                }
+                satellite.setHeat(nextHeat);
+                satellite.setLastShotTick(nowTick);
+            }
+        }
 
         FakePlayer shooter = satellite.shooter(level);
         shooter.moveTo(satellite.getX(), satellite.getY(), satellite.getZ(), satellite.getYRot(), satellite.getXRot());

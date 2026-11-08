@@ -46,6 +46,12 @@ public class SatelliteGunEntity extends Entity {
     @Nullable
     private FakePlayer shooter;
 
+    // Heat is server-side only: the halo must overheat like the real gun instead of
+    // firing forever, otherwise magazine-fed energy guns flood the world.
+    private float heat;
+    private long heatLockUntil;
+    private long lastShotTick = Long.MIN_VALUE;
+
     public SatelliteGunEntity(EntityType<? extends SatelliteGunEntity> type, Level level) {
         super(type, level);
         this.noCulling = true;
@@ -201,6 +207,30 @@ public class SatelliteGunEntity extends Entity {
 
     public long getNextFire() {
         return this.nextFire;
+    }
+
+    public float getHeat() {
+        return heat;
+    }
+
+    public void setHeat(float heat) {
+        this.heat = heat;
+    }
+
+    public long getHeatLockUntil() {
+        return heatLockUntil;
+    }
+
+    public void setHeatLockUntil(long tick) {
+        this.heatLockUntil = tick;
+    }
+
+    public long getLastShotTick() {
+        return lastShotTick;
+    }
+
+    public void setLastShotTick(long tick) {
+        this.lastShotTick = tick;
     }
 
     public void setNextFire(long nextFire) {
