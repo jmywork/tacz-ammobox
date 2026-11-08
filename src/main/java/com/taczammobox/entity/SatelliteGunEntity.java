@@ -11,6 +11,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -43,6 +44,12 @@ public class SatelliteGunEntity extends Entity {
     /** Server-side only: the TACZ state holder this gun shoots through. */
     @Nullable
     private FakePlayer shooter;
+
+    // Each gun picks its own prey; only a marked target pulls the whole fan onto
+    // one mob. Server side only, so it is a plain reference instead of entity data.
+    @Nullable
+    private LivingEntity target;
+    private long targetCheckTick = Long.MIN_VALUE;
 
     // Heat is server-side only: the halo must overheat like the real gun instead of
     // firing forever, otherwise magazine-fed energy guns flood the world.
@@ -206,6 +213,24 @@ public class SatelliteGunEntity extends Entity {
 
     public long getNextFire() {
         return this.nextFire;
+    }
+
+    /** The mob this gun picked for itself, or null while nothing is in reach. */
+    @Nullable
+    public LivingEntity getTarget() {
+        return this.target;
+    }
+
+    public void setTarget(@Nullable LivingEntity target) {
+        this.target = target;
+    }
+
+    public long getTargetCheckTick() {
+        return this.targetCheckTick;
+    }
+
+    public void setTargetCheckTick(long tick) {
+        this.targetCheckTick = tick;
     }
 
     /** Upkeep rack: rounds left in this gun's magazine. */

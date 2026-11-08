@@ -33,7 +33,9 @@ import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.TickEvent;
@@ -98,8 +100,6 @@ public final class SatelliteRackManager {
     private static final int MAX_BULLETS_PER_TICK = 32;
     /** Live satellite bullets around one gun before it waits for them to land. */
     private static final int MAX_LIVE_BULLETS = 10;
-    private static final Map<UUID, LivingEntity> TARGET_CACHE = new HashMap<>();
-    private static final Map<UUID, Long> TARGET_TICK = new HashMap<>();
     private static final Map<UUID, int[]> SPAWN_BUDGET = new HashMap<>();
     private static boolean warned;
 
@@ -110,8 +110,6 @@ public final class SatelliteRackManager {
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         UUID id = event.getEntity().getUUID();
-        TARGET_CACHE.remove(id);
-        TARGET_TICK.remove(id);
         SPAWN_BUDGET.remove(id);
         AMMO_NOTICE.keySet().removeIf(key -> key.startsWith(id + "/"));
     }
@@ -129,24 +127,16 @@ public final class SatelliteRackManager {
         }
         long tick = player.level().getGameTime();
         UUID playerId = player.getUUID();
-        Long cachedAt = TARGET_TICK.get(playerId);
-        LivingEntity target;
-        if (cachedAt == null || tick - cachedAt >= SCAN_INTERVAL) {
-            target = findTarget(player, rack);
-            TARGET_CACHE.put(playerId, target);
-            TARGET_TICK.put(playerId, tick);
-        } else {
-            target = TARGET_CACHE.get(playerId);
-            if (target != null && !target.isAlive()) {
-                target = null;
-            }
-        }
         int[] budget = SPAWN_BUDGET.get(playerId);
         if (budget == null) {
             budget = new int[1];
             SPAWN_BUDGET.put(playerId, budget);
         }
         budget[0] = MAX_BULLETS_PER_TICK;
+        // Guns that already picked a mob this tick: the next gun prefers a prey
+        // nobody is shooting yet, so ten guns spread over a group instead of
+        // stacking every barrel on the same one.
+        Map<UUID, Integer> claims = new HashMap<>();
         List<ItemStack> guns = SatelliteRackItem.loadedGuns(rack);
         List<SatelliteGunEntity> existing = satellites(player);
         if (guns.isEmpty()) {
@@ -158,7 +148,15 @@ public final class SatelliteRackManager {
         // spread across the arc, so the fan opens as a single shape. With ten guns
         // the inner pair stands almost upright and the outer pair lies out to the
         // sides; with one gun it sits dead centre.
-        boolean engaging = target != null;
+        boolean engaging = SatelliteRackItem.focus(rack) != null;
+        if (!engaging) {
+            for (SatelliteGunEntity satellite : existing) {
+                if (satellite.getTarget() != null) {
+                    engaging = true;
+                    break;
+                }
+            }
+        }
         double backOffset = FAN_BACK_OFFSET + (engaging ? FAN_COMBAT_BACK : 0.0D);
         double radius = FAN_RADIUS + (engaging ? FAN_COMBAT_RADIUS : 0.0D);
         float yawRad = (float) Math.toRadians(player.getYRot());
@@ -192,8 +190,11 @@ public final class SatelliteRackManager {
             entity.setPos(x, y, z);
 
             long now = player.level().getGameTime();
-            if (target != null) {
-                pointAt(entity, target.getEyePosition());
+            // Every gun chooses for itself; a marked target overrides all of them.
+            LivingEntity prey = gunTarget(entity, player, rack, now, claims);
+            if (prey != null) {
+                claims.merge(prey.getUUID(), 1, Integer::sum);
+                pointAt(entity, prey.getEyePosition());
             } else {
                 // Idle: the muzzle points along its own petal, so the fan reads as
                 // one opening shape instead of a bundle of parallel guns.
@@ -208,13 +209,13 @@ public final class SatelliteRackManager {
             entity.setGunIfChanged(guns.get(i));
             entity.setSlotIndex(i);
 
-            boolean shouldFire = target != null && now >= entity.getNextFire();
+            boolean shouldFire = prey != null && now >= entity.getNextFire();
 
             coolHeat(entity);
 
             // Each satellite fires on its own gun's cadence.
             if (shouldFire) {
-                long interval = fire(entity, target, player, rack);
+                long interval = fire(entity, prey, player, rack);
                 if (interval > 0L) {
                     entity.setNextFire(now + interval);
                     // The muzzle flash itself is TACZ's own, drawn by the renderer
@@ -233,36 +234,96 @@ public final class SatelliteRackManager {
         }
     }
 
-    /** A marked target wins; otherwise the closest hostile with line of sight. */
+    /**
+     * What this one gun should shoot at.
+     *
+     * <p>A marked target beats everything and pulls the whole fan onto it. Without
+     * a mark every gun picks its own prey: the nearest hostile it can actually see,
+     * preferring one the other guns have not claimed yet. Scans are staggered by
+     * slot so ten guns never ray-cast on the same tick.</p>
+     */
     @Nullable
-    private static LivingEntity findTarget(Player player, ItemStack rack) {
-        UUID focus = SatelliteRackItem.focus(rack);
-        if (focus != null) {
-            var entity = player.level() instanceof ServerLevel serverLevel ? serverLevel.getEntity(focus) : null;
-            if (entity instanceof LivingEntity living && isFocusValid(player, living, FOCUS_RANGE)) {
+    private static LivingEntity gunTarget(SatelliteGunEntity satellite, Player player, ItemStack rack,
+                                          long tick, Map<UUID, Integer> claims) {
+        UUID focusId = SatelliteRackItem.focus(rack);
+        LivingEntity cached = satellite.getTarget();
+        if (cached != null && (!cached.isAlive() || cached.level() != satellite.level())) {
+            cached = null;
+            satellite.setTarget(null);
+        }
+        if (focusId != null) {
+            if (cached != null && focusId.equals(cached.getUUID())) {
+                return cached;
+            }
+            var marked = player.level() instanceof ServerLevel serverLevel ? serverLevel.getEntity(focusId) : null;
+            if (marked instanceof LivingEntity living && isFocusValid(player, living, FOCUS_RANGE)) {
+                satellite.setTarget(living);
+                satellite.setTargetCheckTick(tick + SCAN_INTERVAL);
                 return living;
             }
-            if (!rack.isEmpty()) {
-                // The mark died or walked away; drop it so normal search resumes.
-                SatelliteRackItem.setFocus(rack, null);
-            }
+            // The mark died or walked away; drop it so every gun searches again.
+            SatelliteRackItem.setFocus(rack, null);
+            satellite.setTarget(null);
+            cached = null;
         }
-        AABB box = player.getBoundingBox().inflate(AUTO_RANGE);
-        List<LivingEntity> candidates = player.level().getEntitiesOfClass(LivingEntity.class, box,
-                entity -> isTargetCandidate(player, entity, AUTO_RANGE));
-        candidates.sort(Comparator.comparingDouble(player::distanceToSqr));
-        // Ray casts are the expensive part of the search, so only test the nearest
-        // few candidates instead of every mob inside the box.
+        if (cached != null && tick < satellite.getTargetCheckTick()) {
+            return cached;
+        }
+        LivingEntity found = searchTarget(satellite, player, claims);
+        satellite.setTarget(found);
+        satellite.setTargetCheckTick(tick + stagger(satellite.getSlotIndex()));
+        return found;
+    }
+
+    /** Scans are offset per slot so the ray casts spread over the interval. */
+    private static long stagger(int slot) {
+        int step = (int) Math.max(1L, SCAN_INTERVAL);
+        return SCAN_INTERVAL + Math.floorMod(slot, step);
+    }
+
+    /**
+     * The nearest hostile around this gun that it can see, favouring prey no other
+     * gun has claimed yet so a group of mobs gets shared out.
+     */
+    @Nullable
+    private static LivingEntity searchTarget(SatelliteGunEntity satellite, Player player, Map<UUID, Integer> claims) {
+        AABB box = satellite.getBoundingBox().inflate(AUTO_RANGE);
+        List<LivingEntity> candidates = satellite.level().getEntitiesOfClass(LivingEntity.class, box,
+                entity -> isTargetCandidate(satellite, player, entity));
+        if (candidates.isEmpty()) {
+            return null;
+        }
+        candidates.sort(Comparator.comparingDouble(satellite::distanceToSqr));
+        LivingEntity best = null;
+        int bestClaims = Integer.MAX_VALUE;
+        double bestDistance = Double.MAX_VALUE;
+        // Ray casts are the expensive part, so only test the nearest handful.
         int checked = 0;
         for (LivingEntity candidate : candidates) {
-            if (player.hasLineOfSight(candidate)) {
-                return candidate;
-            }
-            if (++checked >= 4) {
+            if (checked++ >= 6) {
                 break;
             }
+            if (!canSee(satellite, candidate)) {
+                continue;
+            }
+            int claimCount = claims.getOrDefault(candidate.getUUID(), 0);
+            double distance = satellite.distanceToSqr(candidate);
+            if (claimCount < bestClaims || (claimCount == bestClaims && distance < bestDistance)) {
+                best = candidate;
+                bestClaims = claimCount;
+                bestDistance = distance;
+            }
         }
-        return null;
+        return best;
+    }
+
+    /** Block ray from the gun's own position, so a gun behind a wall stays quiet. */
+    private static boolean canSee(SatelliteGunEntity satellite, LivingEntity target) {
+        Vec3 from = satellite.position().add(0.0D, 0.2D, 0.0D);
+        Vec3 to = target.getEyePosition();
+        var hit = satellite.level().clip(new ClipContext(from, to,
+                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, satellite));
+        return hit.getType() == HitResult.Type.MISS;
     }
 
     /** A marked target can be anything living, hostiles or not. */
@@ -270,11 +331,11 @@ public final class SatelliteRackManager {
         if (entity == player || !entity.isAlive() || entity.isSpectator() || entity instanceof Player) {
             return false;
         }
-        return player.distanceToSqr(entity) <= range * range && player.hasLineOfSight(entity);
+        return player.distanceToSqr(entity) <= range * range;
     }
 
-    private static boolean isTargetCandidate(Player player, LivingEntity entity, double range) {
-        if (entity == player || !entity.isAlive() || entity.isSpectator()) {
+    private static boolean isTargetCandidate(SatelliteGunEntity satellite, Player player, LivingEntity entity) {
+        if (!entity.isAlive() || entity.isSpectator()) {
             return false;
         }
         if (entity instanceof Player) {
@@ -283,13 +344,14 @@ public final class SatelliteRackManager {
         if (!(entity instanceof Enemy)) {
             return false;
         }
-        if (entity instanceof OwnableEntity ownable && player.getUUID().equals(ownable.getOwnerUUID())) {
+        UUID owner = satellite.getOwner();
+        if (entity instanceof OwnableEntity ownable && owner != null && owner.equals(ownable.getOwnerUUID())) {
             return false;
         }
         if (entity instanceof TamableAnimal tamable && tamable.isTame()) {
             return false;
         }
-        return player.distanceToSqr(entity) <= range * range;
+        return satellite.distanceToSqr(entity) <= AUTO_RANGE * AUTO_RANGE;
     }
 
     private static void pointAt(SatelliteGunEntity satellite, Vec3 target) {
