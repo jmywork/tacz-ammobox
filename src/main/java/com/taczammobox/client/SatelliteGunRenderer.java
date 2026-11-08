@@ -32,12 +32,12 @@ public class SatelliteGunRenderer extends EntityRenderer<SatelliteGunEntity> {
         }
         pose.pushPose();
 
-        // TACZ renders guns with the barrel on +X and the sights on +Y under
-        // FIXED, so the muzzle has to be turned onto -Z before pitch is applied.
-        // Order matters: yaw, then pitch, then the fixed 90 degree barrel turn.
+        // TACZ renders guns with the stock on +X and the barrel on -X under FIXED.
+        // Turning +X onto +Z first lets pitch tilt the barrel properly; the
+        // resulting -X then ends up pointing along the look vector.
         pose.mulPose(Axis.YP.rotationDegrees(180.0F - entity.getYRot()));
         pose.mulPose(Axis.XP.rotationDegrees(-entity.getXRot()));
-        pose.mulPose(Axis.YP.rotationDegrees(90.0F));
+        pose.mulPose(Axis.YP.rotationDegrees(-90.0F));
 
         pose.scale(0.5F, 0.5F, 0.5F);
         Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.FIXED, packedLight,
