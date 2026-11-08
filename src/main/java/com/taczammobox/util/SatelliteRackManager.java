@@ -11,6 +11,7 @@ import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.resource.index.CommonAmmoIndex;
 import com.tacz.guns.resource.index.CommonGunIndex;
 import com.tacz.guns.resource.pojo.data.gun.BulletData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
@@ -327,7 +328,27 @@ public final class SatelliteRackManager {
             return;
         }
         player.sendSystemMessage(Component.translatable("message.taczammobox.satellite.no_ammo",
-                ammoId.getPath().toUpperCase(java.util.Locale.ROOT)));
+                ammoName(ammoId)));
+    }
+
+    /**
+     * The pack index carries the translation key of the caliber ("tacz.ammo.556x45.name"),
+     * so the chat notice can use the same colored name the tooltip shows instead of a
+     * raw id. Packs that forget the key fall back to the id path.
+     */
+    private static Component ammoName(ResourceLocation ammoId) {
+        try {
+            CommonAmmoIndex index = TimelessAPI.getCommonAmmoIndex(ammoId).orElse(null);
+            if (index != null && index.getPojo() != null) {
+                String key = index.getPojo().getName();
+                if (key != null && !key.isBlank()) {
+                    return Component.translatable(key);
+                }
+            }
+        } catch (Throwable ignored) {
+            // A broken third-party pack must not take the notice down with it.
+        }
+        return Component.literal(ammoId.getPath().toUpperCase(java.util.Locale.ROOT));
     }
 
     /** Return unfired rounds to the rack when a satellite goes away. */
