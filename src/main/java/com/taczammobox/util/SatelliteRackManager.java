@@ -69,17 +69,18 @@ public final class SatelliteRackManager {
     private static final double BACK_OFFSET = 1.35D;
     private static final double CENTER_HEIGHT = 1.45D;
     /** Wings hang from just below the shoulder blades. */
-    private static final double WING_BASE_HEIGHT = 1.05D;
-    private static final double WING_INNER = 0.45D;
-    private static final double WING_SPREAD = 1.35D;
-    private static final double WING_TOP = 0.55D;
-    private static final double WING_DROP = 0.85D;
-    private static final double WING_SWEEP = 0.35D;
-    private static final float WING_CANT_YAW = 4.0F;
-    private static final float WING_CANT_SPREAD = 12.0F;
+    private static final double WING_BASE_HEIGHT = 1.45D;
+    private static final double WING_INNER = 0.30D;
+    private static final double WING_SPREAD = 1.05D;
+    private static final double WING_TOP = 0.10D;
+    /** Negative: the wing tip rises above the root. */
+    private static final double WING_DROP = -0.55D;
+    private static final double WING_SWEEP = 0.15D;
+    private static final float WING_CANT_YAW = 5.0F;
+    private static final float WING_CANT_SPREAD = 24.0F;
     private static final float WING_CANT_PITCH = 4.0F;
-    private static final float WING_ROLL = 10.0F;
-    private static final float WING_ROLL_SPREAD = 30.0F;
+    private static final float WING_ROLL = 14.0F;
+    private static final float WING_ROLL_SPREAD = 26.0F;
     /** How far the top of the ring leans forward over the player. */
     private static final double RING_TILT = 30.0D;
     /** Resting inward cant, so the halo looks like a guard rather than a fence. */
@@ -195,14 +196,15 @@ public final class SatelliteRackManager {
             if (target != null) {
                 pointAt(entity, target.getEyePosition());
             } else {
-                // Resting wing pose: muzzles follow the look direction, each feather
-                // opening a few degrees outwards so the fan reads as a wing.
+                // Exusiai pose: the wings hold their muzzles to the sky no matter where
+                // the player looks. Inner vanes stand almost straight up, outer ones
+                // lean outwards as the wing opens.
                 float cantYaw = (float) (side * (WING_CANT_YAW + feather * WING_CANT_SPREAD));
                 entity.setYRot(player.getYRot() + cantYaw);
-                entity.setXRot(Mth.clamp(player.getXRot() - WING_CANT_PITCH, -80.0F, 80.0F));
+                entity.setXRot((float) (-82.0F + feather * 26.0F));
             }
             // Feather tilt: vanes rotate outwards as they leave the shoulder.
-            entity.setRoll((float) (side * (WING_ROLL + feather * WING_ROLL_SPREAD)));
+            entity.setRoll((float) (side * (WING_ROLL * feather + WING_ROLL_SPREAD * feather * feather)));
             entity.setGunIfChanged(guns.get(i));
             entity.setSlotIndex(i);
 
