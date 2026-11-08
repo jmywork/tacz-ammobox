@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ReloadState;
+import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.api.event.common.GunShootEvent;
 import com.tacz.guns.api.item.IGun;
@@ -61,6 +62,7 @@ public final class SatelliteRackManager {
             UUID.nameUUIDFromBytes("taczammobox:satellite".getBytes(StandardCharsets.UTF_8)), "[Satellite]");
     /** Stand-in for "this happened long before the fake player's timeline". */
     private static final long LONG_AGO = -60_000L;
+    private static int debugFires;
     private static boolean warned;
     private static boolean resultWarned;
 
@@ -204,6 +206,14 @@ public final class SatelliteRackManager {
         }
         ItemStack gunStack = satellite.getGun().copy();
         IGun gun = IGun.getIGunOrNull(gunStack);
+        boolean debug = debugFires++ < 12;
+        if (debug) {
+            TaczAmmoBoxMod.LOGGER.info("sat fire enter: item={} gun={} ammo={} mode={} combat={} now={}",
+                    gunStack.getItem().getClass().getSimpleName(), gun == null ? "null" : gun.getGunId(gunStack),
+                    gun == null ? -1 : gun.getCurrentAmmoCount(gunStack),
+                    gun == null ? "?" : gun.getFireMode(gunStack), satellite.getCombatUntil(),
+                    satellite.level().getGameTime());
+        }
         if (gun == null) {
             return 0L;
         }
@@ -242,6 +252,14 @@ public final class SatelliteRackManager {
             // the gate entirely. Ammo is refilled above, so nothing is consumed.
             if (gunStack.getItem() instanceof AbstractGunItem gunItem) {
                 gunItem.shoot(data, gunStack, satellite::getXRot, satellite::getYRot, shooter);
+                if (debug) {
+                    int bullets = level.getEntitiesOfClass(EntityKineticBullet.class,
+                            satellite.getBoundingBox().inflate(4.0D)).size();
+                    TaczAmmoBoxMod.LOGGER.info("sat fire after: bulletsNear={} ammoAfter={} shootTs={}",
+                            bullets, gun.getCurrentAmmoCount(gunStack), data.shootTimestamp);
+                }
+            } else if (debug) {
+                TaczAmmoBoxMod.LOGGER.warn("sat fire: item is not AbstractGunItem: {}", gunStack.getItem());
             }
         } catch (Throwable throwable) {
             if (!warned) {
