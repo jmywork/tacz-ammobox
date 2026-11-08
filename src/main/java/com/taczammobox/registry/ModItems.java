@@ -59,6 +59,11 @@ public final class ModItems {
     public static final RegistryObject<Item> SATELLITE_RACK =
             ITEMS.register("satellite_rack", () -> new SatelliteRackItem(new Item.Properties().stacksTo(1)));
 
+    /** Same halo, but it eats real ammo instead of firing for free. */
+    public static final RegistryObject<Item> SATELLITE_RACK_UPKEEP =
+            ITEMS.register("satellite_rack_upkeep",
+                    () -> new SatelliteRackItem(new Item.Properties().stacksTo(1), true));
+
 
     static {
         for (AmmoType type : TYPES) {

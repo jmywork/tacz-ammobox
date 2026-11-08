@@ -3,6 +3,7 @@ package com.taczammobox.item;
 import com.tacz.guns.api.item.IGun;
 import com.taczammobox.config.FeatureFlags;
 import net.minecraft.ChatFormatting;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -29,9 +30,58 @@ public class SatelliteRackItem extends Item {
     public static final int SLOTS = 10;
     private static final String TAG_GUNS = "Guns";
     private static final String TAG_FOCUS = "Focus";
+    private static final String TAG_AMMO = "Ammo";
+
+    private final boolean upkeep;
 
     public SatelliteRackItem(Properties properties) {
+        this(properties, false);
+    }
+
+    public SatelliteRackItem(Properties properties, boolean upkeep) {
         super(properties);
+        this.upkeep = upkeep;
+    }
+
+    /** Upkeep racks feed the halo from real ammo; the easter one never runs dry. */
+    public boolean isUpkeep() {
+        return upkeep;
+    }
+
+    public static boolean consumesAmmo(ItemStack stack) {
+        return stack.getItem() instanceof SatelliteRackItem rack && rack.upkeep;
+    }
+
+    /** Rounds of one ammo id kept in the rack's own cache. */
+    public static int cachedRounds(ItemStack rack, ResourceLocation ammoId) {
+        CompoundTag tag = rack.getTag();
+        if (tag == null || !tag.contains(TAG_AMMO, Tag.TAG_COMPOUND)) {
+            return 0;
+        }
+        return tag.getCompound(TAG_AMMO).getInt(ammoId.toString());
+    }
+
+    public static void addCachedRounds(ItemStack rack, ResourceLocation ammoId, int delta) {
+        if (delta == 0) {
+            return;
+        }
+        int next = Math.max(0, cachedRounds(rack, ammoId) + delta);
+        CompoundTag tag = rack.getOrCreateTag();
+        CompoundTag ammo = tag.getCompound(TAG_AMMO);
+        if (next == 0) {
+            ammo.remove(ammoId.toString());
+        } else {
+            ammo.putInt(ammoId.toString(), next);
+        }
+        tag.put(TAG_AMMO, ammo);
+    }
+
+    public static int cachedTypes(ItemStack rack) {
+        CompoundTag tag = rack.getTag();
+        if (tag == null || !tag.contains(TAG_AMMO, Tag.TAG_COMPOUND)) {
+            return 0;
+        }
+        return tag.getCompound(TAG_AMMO).getAllKeys().size();
     }
 
     public static List<ItemStack> guns(ItemStack rack) {
@@ -134,7 +184,9 @@ public class SatelliteRackItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.taczammobox.satellite_rack.desc")
+        tooltip.add(Component.translatable(upkeep
+                        ? "item.taczammobox.satellite_rack_upkeep.desc"
+                        : "item.taczammobox.satellite_rack.desc")
                 .withStyle(ChatFormatting.GRAY));
         int loaded = loadedCount(stack);
         if (loaded > 0) {
@@ -144,7 +196,14 @@ public class SatelliteRackItem extends Item {
             tooltip.add(Component.translatable("item.taczammobox.satellite_rack.empty")
                     .withStyle(ChatFormatting.DARK_GRAY));
         }
-        tooltip.add(Component.translatable("item.taczammobox.satellite_rack.hint")
+        if (upkeep) {
+            int cache = cachedTypes(stack);
+            tooltip.add(Component.translatable("item.taczammobox.satellite_rack.cache", cache)
+                    .withStyle(ChatFormatting.GOLD));
+        }
+        tooltip.add(Component.translatable(upkeep
+                        ? "item.taczammobox.satellite_rack_upkeep.hint"
+                        : "item.taczammobox.satellite_rack.hint")
                 .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
     }
 

@@ -35,6 +35,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.FakePlayerFactory;
@@ -42,6 +44,10 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -187,6 +193,7 @@ public final class SatelliteRackManager {
             }
         }
         for (int i = guns.size(); i < existing.size(); i++) {
+            refundMagazine(existing.get(i));
             existing.get(i).discard();
         }
     }
@@ -270,6 +277,47 @@ public final class SatelliteRackManager {
      * that never "drew" the gun, so build the bullet that script would have built:
      * the same EntityKineticBullet, the same gun data, our own direction.
      */
+    private static final Map<UUID, Long> AMMO_NOTICE = new HashMap<>();
+
+    /** Action-bar nudge, once per second, when an upkeep gun has nothing to eat. */
+    private static void noticeMissingAmmo(@Nullable Player player, ResourceLocation ammoId) {
+        if (player == null) {
+            return;
+        }
+        long now = player.level().getGameTime();
+        Long last = AMMO_NOTICE.put(player.getUUID(), now);
+        if (last != null && now - last < 20L) {
+            return;
+        }
+        player.displayClientMessage(Component.translatable("message.taczammobox.satellite.no_ammo",
+                ammoId.toString()), true);
+    }
+
+    /** Return unfired rounds to the rack when a satellite goes away. */
+    private static void refundMagazine(SatelliteGunEntity satellite) {
+        if (!(satellite.level() instanceof ServerLevel level) || satellite.getMagazine() <= 0) {
+            return;
+        }
+        Player player = level.getPlayerByUUID(satellite.getOwner());
+        if (player == null) {
+            return;
+        }
+        ItemStack rack = findRack(player);
+        if (rack.isEmpty() || !SatelliteRackItem.consumesAmmo(rack)) {
+            return;
+        }
+        IGun gun = IGun.getIGunOrNull(satellite.getGun());
+        if (gun == null) {
+            return;
+        }
+        CommonGunIndex index = TimelessAPI.getCommonGunIndex(gun.getGunId(satellite.getGun())).orElse(null);
+        if (index == null || index.getGunData().getAmmoId() == null) {
+            return;
+        }
+        SatelliteAmmo.refund(rack, index.getGunData().getAmmoId(), satellite.getMagazine());
+        satellite.setMagazine(0);
+    }
+
     /** Bleed heat off after the pack's cooling delay; unsynced, server only. */
     private static void coolHeat(SatelliteGunEntity satellite) {
         if (!(satellite.level() instanceof ServerLevel level)) {
@@ -393,9 +441,29 @@ public final class SatelliteRackManager {
         if (gun == null) {
             return 0L;
         }
-        // Easter egg: no ammo bookkeeping, every shot starts with a full chamber.
-        gun.setCurrentAmmoCount(gunStack, 999);
-        gun.setBulletInBarrel(gunStack, true);
+        CommonGunIndex index = TimelessAPI.getCommonGunIndex(gun.getGunId(gunStack)).orElse(null);
+        GunData gunData = index == null ? null : index.getGunData();
+        Player player = level.getPlayerByUUID(satellite.getOwner());
+        ItemStack rack = player == null ? ItemStack.EMPTY : findRack(player);
+        boolean upkeep = !rack.isEmpty() && SatelliteRackItem.consumesAmmo(rack);
+        int magazine = satellite.getMagazine();
+        if (upkeep && gunData != null && gunData.getAmmoId() != null) {
+            int magSize = Math.max(1, gunData.getAmmoAmount());
+            if (magazine <= 0) {
+                magazine = SatelliteAmmo.draw(player, rack, gunData.getAmmoId(), magSize);
+                satellite.setMagazine(magazine);
+            }
+            if (magazine <= 0) {
+                noticeMissingAmmo(player, gunData.getAmmoId());
+                return 0L;
+            }
+            gun.setCurrentAmmoCount(gunStack, magazine);
+            gun.setBulletInBarrel(gunStack, true);
+        } else {
+            // Easter egg: no ammo bookkeeping, every shot starts with a full chamber.
+            gun.setCurrentAmmoCount(gunStack, 999);
+            gun.setBulletInBarrel(gunStack, true);
+        }
 
         long nowTick = level.getGameTime();
         if (gun.hasHeatData(gunStack)) {
@@ -403,7 +471,7 @@ public final class SatelliteRackManager {
                 return 0L;
             }
             GunHeatData heatData = TimelessAPI.getCommonGunIndex(gun.getGunId(gunStack))
-                    .map(index -> index.getGunData().getHeatData()).orElse(null);
+                    .map(gunIndex -> gunIndex.getGunData().getHeatData()).orElse(null);
             if (heatData != null) {
                 float nextHeat = satellite.getHeat() + heatData.getHeatPerShot();
                 if (nextHeat >= heatData.getHeatMax()) {
@@ -496,6 +564,11 @@ public final class SatelliteRackManager {
                 spawned = spawnBullet(level, shooter, owner == null ? shooter : owner, satellite, gunStack, gun,
                         dir, target);
             }
+            if (upkeep && spawned) {
+                magazine = Math.max(0, magazine - 1);
+                satellite.setMagazine(magazine);
+                gun.setCurrentAmmoCount(gunStack, magazine);
+            }
             if (debug) {
                 int bullets = level.getEntitiesOfClass(EntityKineticBullet.class,
                         satellite.getBoundingBox().inflate(4.0D)).size();
@@ -512,9 +585,9 @@ public final class SatelliteRackManager {
             shooter.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
         }
         // GunData.getShootInterval() is in milliseconds, not ticks.
-        long intervalMs = TimelessAPI.getCommonGunIndex(gun.getGunId(gunStack))
-                .map(index -> index.getGunData().getShootInterval(shooter, gun.getFireMode(gunStack), gunStack))
-                .orElse(200L);
+        long intervalMs = gunData != null
+                ? gunData.getShootInterval(shooter, gun.getFireMode(gunStack), gunStack)
+                : 200L;
         // A zero interval means the pack drives the gun through a Lua script (most
         // energy weapons); we cannot run that script, so give them a slow cadence.
         long interval = intervalMs <= 0L ? 4L : Math.max(MIN_INTERVAL_TICKS, intervalMs / 50L);

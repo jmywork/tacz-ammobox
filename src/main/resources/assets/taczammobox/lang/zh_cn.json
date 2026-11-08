@@ -118,5 +118,10 @@
   "key.taczammobox.focus": "标记集火目标",
   "message.taczammobox.focus.set": "浮游炮已锁定：%s",
   "message.taczammobox.focus.cleared": "已取消集火标记",
-  "message.taczammobox.focus.none": "准星没有可锁定的目标"
+  "message.taczammobox.focus.none": "准星没有可锁定的目标",
+  "item.taczammobox.satellite_rack_upkeep": "制式浮游炮挂架",
+  "item.taczammobox.satellite_rack_upkeep.desc": "按需供弹的浮游炮挂架，弹药取自背包里的盒、箱与散装弹药。",
+  "item.taczammobox.satellite_rack_upkeep.hint": "放在饰品背槽或背包里生效；某种弹药打光时会提示缺少的弹种。",
+  "item.taczammobox.satellite_rack.cache": "已缓存 %s 种弹药",
+  "message.taczammobox.satellite.no_ammo": "浮游炮缺少弹药：%s"
 }
