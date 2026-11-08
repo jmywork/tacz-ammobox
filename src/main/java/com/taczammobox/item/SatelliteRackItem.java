@@ -1,7 +1,6 @@
 package com.taczammobox.item;
 
 import com.tacz.guns.api.item.IGun;
-import com.taczammobox.config.FeatureFlags;
 import net.minecraft.ChatFormatting;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.nbt.CompoundTag;
@@ -205,10 +204,5 @@ public class SatelliteRackItem extends Item {
                         ? "item.taczammobox.satellite_rack_upkeep.hint"
                         : "item.taczammobox.satellite_rack.hint")
                 .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
-    }
-
-    /** Set by the creative tab / tooltip code so the easter-egg tag stays in one place. */
-    public static boolean isEasterEgg() {
-        return FeatureFlags.easterEggTab();
     }
 }

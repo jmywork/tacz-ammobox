@@ -31,8 +31,6 @@ public class SatelliteGunEntity extends Entity {
             SynchedEntityData.defineId(SatelliteGunEntity.class, EntityDataSerializers.ITEM_STACK);
     private static final EntityDataAccessor<Integer> DATA_INDEX =
             SynchedEntityData.defineId(SatelliteGunEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Float> DATA_RECOIL =
-            SynchedEntityData.defineId(SatelliteGunEntity.class, EntityDataSerializers.FLOAT);
     private boolean flashSeen;
     private static final EntityDataAccessor<Integer> DATA_FLASH =
             SynchedEntityData.defineId(SatelliteGunEntity.class, EntityDataSerializers.INT);
@@ -42,9 +40,6 @@ public class SatelliteGunEntity extends Entity {
     @Nullable
     private UUID owner;
     private long nextFire;
-    private net.minecraft.world.phys.Vec3 aimTarget;
-    private long aimUntil;
-    private long combatUntil;
     /** Server-side only: the TACZ state holder this gun shoots through. */
     @Nullable
     private FakePlayer shooter;
@@ -72,7 +67,6 @@ public class SatelliteGunEntity extends Entity {
     protected void defineSynchedData() {
         this.entityData.define(DATA_GUN, ItemStack.EMPTY);
         this.entityData.define(DATA_INDEX, 0);
-        this.entityData.define(DATA_RECOIL, 0.0F);
         this.entityData.define(DATA_FLASH, 0);
         this.entityData.define(DATA_ROLL, 0.0F);
     }
@@ -80,10 +74,6 @@ public class SatelliteGunEntity extends Entity {
     @Override
     public void tick() {
         if (this.level().isClientSide()) {
-            float recoil = this.getRecoil();
-            if (recoil > 0.0F) {
-                this.setRecoil(Math.max(0.0F, recoil - 0.25F));
-            }
             int flash = this.getFlash();
             if (flash > 0) {
                 this.setFlash(flash - 1);
@@ -186,14 +176,6 @@ public class SatelliteGunEntity extends Entity {
         this.entityData.set(DATA_INDEX, index);
     }
 
-    public float getRecoil() {
-        return this.entityData.get(DATA_RECOIL);
-    }
-
-    public void setRecoil(float recoil) {
-        this.entityData.set(DATA_RECOIL, recoil);
-    }
-
     /**
      * True once per shot on the client, so the renderer can kick off TACZ's
      * own muzzle flash exactly once instead of every frame.
@@ -220,27 +202,6 @@ public class SatelliteGunEntity extends Entity {
 
     public void setRoll(float roll) {
         this.entityData.set(DATA_ROLL, roll);
-    }
-
-    public void setAimTarget(net.minecraft.world.phys.Vec3 target, long until) {
-        this.aimTarget = target;
-        this.aimUntil = until;
-    }
-
-    public net.minecraft.world.phys.Vec3 getAimTarget() {
-        return this.aimTarget;
-    }
-
-    public void setCombatUntil(long until) {
-        this.combatUntil = until;
-    }
-
-    public long getCombatUntil() {
-        return this.combatUntil;
-    }
-
-    public long getAimUntil() {
-        return this.aimUntil;
     }
 
     public long getNextFire() {

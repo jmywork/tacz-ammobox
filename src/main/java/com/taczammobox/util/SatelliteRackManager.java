@@ -1,62 +1,54 @@
 package com.taczammobox.util;
 
-import com.mojang.authlib.GameProfile;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
-import com.tacz.guns.api.entity.ShootResult;
-import com.tacz.guns.api.item.gun.AbstractGunItem;
-import com.tacz.guns.resource.pojo.data.gun.GunHeatData;
 import com.tacz.guns.api.entity.ReloadState;
-import com.tacz.guns.entity.EntityKineticBullet;
-import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
-import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.gun.FireMode;
+import com.tacz.guns.entity.EntityKineticBullet;
+import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.resource.index.CommonAmmoIndex;
 import com.tacz.guns.resource.index.CommonGunIndex;
+import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
 import com.tacz.guns.resource.pojo.data.gun.BulletData;
 import com.tacz.guns.resource.pojo.data.gun.BurstData;
 import com.tacz.guns.resource.pojo.data.gun.ChargeData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
-import org.joml.Vector2d;
+import com.tacz.guns.resource.pojo.data.gun.GunHeatData;
 import com.taczammobox.TaczAmmoBoxMod;
 import com.taczammobox.compat.CuriosCompat;
 import com.taczammobox.config.FeatureFlags;
 import com.taczammobox.entity.SatelliteGunEntity;
 import com.taczammobox.item.SatelliteRackItem;
 import com.taczammobox.registry.ModEntities;
-
-import javax.annotation.Nullable;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.monster.Enemy;
-import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.OwnableEntity;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.util.Mth;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.OwnableEntity;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.common.util.FakePlayerFactory;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
+import org.joml.Vector2d;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
-import java.nio.charset.StandardCharsets;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -92,19 +84,6 @@ public final class SatelliteRackManager {
      * halo never needs to wait longer than that between shots.
      */
     private static final long MIN_INTERVAL_TICKS = 1L;
-    /** Live bullets per satellite before it stops adding more. */
-    private static final int BULLET_BUDGET = 8;
-    private static final GameProfile PROFILE = new GameProfile(
-            UUID.nameUUIDFromBytes("taczammobox:satellite".getBytes(StandardCharsets.UTF_8)), "[Satellite]");
-    /** Stand-in for "this happened long before the fake player's timeline". */
-    private static final long LONG_AGO = -60_000L;
-    /**
-     * TACZ 1.2.0 gates every shot behind its own feed-type check
-     * (FeedType.INVENTORY needs matching ammo in the shooter's inventory), which a
-     * fake player cannot satisfy; the sentry arm breaks on 1.2.0 for the same
-     * reason. So the halo builds its bullets itself and never asks TACZ to shoot.
-     */
-    private static final boolean USE_NATIVE_SHOOT = false;
     /**
      * Safety valve only: ten guns can never legitimately need more than a few
      * bullets in one tick, and this number is high enough not to touch real
@@ -117,9 +96,18 @@ public final class SatelliteRackManager {
     private static final Map<UUID, Long> TARGET_TICK = new HashMap<>();
     private static final Map<UUID, int[]> SPAWN_BUDGET = new HashMap<>();
     private static boolean warned;
-    private static boolean resultWarned;
 
     private SatelliteRackManager() {
+    }
+
+    /** Drop every per-player entry so a long running server does not accumulate them. */
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        UUID id = event.getEntity().getUUID();
+        TARGET_CACHE.remove(id);
+        TARGET_TICK.remove(id);
+        SPAWN_BUDGET.remove(id);
+        AMMO_NOTICE.keySet().removeIf(key -> key.startsWith(id + "/"));
     }
 
     @SubscribeEvent
@@ -134,19 +122,25 @@ public final class SatelliteRackManager {
             return;
         }
         long tick = player.level().getGameTime();
-        Long cachedAt = TARGET_TICK.get(player.getUUID());
+        UUID playerId = player.getUUID();
+        Long cachedAt = TARGET_TICK.get(playerId);
         LivingEntity target;
-        if (cachedAt == null || tick - cachedAt >= 4L) {
-            target = findTarget(player);
-            TARGET_CACHE.put(player.getUUID(), target);
-            TARGET_TICK.put(player.getUUID(), tick);
+        if (cachedAt == null || tick - cachedAt >= SCAN_INTERVAL) {
+            target = findTarget(player, rack);
+            TARGET_CACHE.put(playerId, target);
+            TARGET_TICK.put(playerId, tick);
         } else {
-            target = TARGET_CACHE.get(player.getUUID());
+            target = TARGET_CACHE.get(playerId);
             if (target != null && !target.isAlive()) {
                 target = null;
             }
         }
-        SPAWN_BUDGET.put(player.getUUID(), new int[] {MAX_BULLETS_PER_TICK});
+        int[] budget = SPAWN_BUDGET.get(playerId);
+        if (budget == null) {
+            budget = new int[1];
+            SPAWN_BUDGET.put(playerId, budget);
+        }
+        budget[0] = MAX_BULLETS_PER_TICK;
         List<ItemStack> guns = SatelliteRackItem.loadedGuns(rack);
         List<SatelliteGunEntity> existing = satellites(player);
         if (guns.isEmpty()) {
@@ -206,9 +200,6 @@ public final class SatelliteRackManager {
             entity.setSlotIndex(i);
 
             boolean shouldFire = target != null && now >= entity.getNextFire();
-            if (player.level() instanceof ServerLevel serverLevel) {
-                bindShooter(entity, serverLevel, guns.get(i), shouldFire);
-            }
 
             coolHeat(entity);
 
@@ -217,8 +208,9 @@ public final class SatelliteRackManager {
                 long interval = fire(entity, target, player, rack);
                 if (interval > 0L) {
                     entity.setNextFire(now + interval);
+                    // The muzzle flash itself is TACZ's own, drawn by the renderer
+                    // from this flag; no extra particle packets are sent.
                     entity.setFlash(2);
-                    muzzleFx(entity);
                 } else {
                     // Locked (heat, no target line, empty cache): back off a little
                     // instead of hammering the gun every tick.
@@ -234,8 +226,7 @@ public final class SatelliteRackManager {
 
     /** A marked target wins; otherwise the closest hostile with line of sight. */
     @Nullable
-    private static LivingEntity findTarget(Player player) {
-        ItemStack rack = findRack(player);
+    private static LivingEntity findTarget(Player player, ItemStack rack) {
         UUID focus = SatelliteRackItem.focus(rack);
         if (focus != null) {
             var entity = player.level() instanceof ServerLevel serverLevel ? serverLevel.getEntity(focus) : null;
@@ -290,18 +281,6 @@ public final class SatelliteRackManager {
             return false;
         }
         return player.distanceToSqr(entity) <= range * range;
-    }
-
-    private static void muzzleFx(SatelliteGunEntity satellite) {
-        if (!(satellite.level() instanceof ServerLevel level)) {
-            return;
-        }
-        Vec3 look = satellite.getViewVector(1.0F);
-        double mx = satellite.getX() + look.x * 0.45D;
-        double my = satellite.getY() + look.y * 0.45D;
-        double mz = satellite.getZ() + look.z * 0.45D;
-        level.sendParticles(ParticleTypes.SMOKE, mx, my, mz, 2, 0.03D, 0.03D, 0.03D, 0.01D);
-        level.sendParticles(ParticleTypes.FLAME, mx, my, mz, 1, 0.02D, 0.02D, 0.02D, 0.0D);
     }
 
     private static void pointAt(SatelliteGunEntity satellite, Vec3 target) {
@@ -391,6 +370,10 @@ public final class SatelliteRackManager {
         if (!(satellite.level() instanceof ServerLevel level)) {
             return;
         }
+        // Most guns never build heat; skip the gun and pack lookups entirely then.
+        if (satellite.getHeat() <= 0.0F) {
+            return;
+        }
         ItemStack stack = satellite.getGun();
         IGun gun = IGun.getIGunOrNull(stack);
         if (gun == null || !gun.hasHeatData(stack)) {
@@ -399,7 +382,7 @@ public final class SatelliteRackManager {
         }
         GunHeatData heatData = TimelessAPI.getCommonGunIndex(gun.getGunId(stack))
                 .map(index -> index.getGunData().getHeatData()).orElse(null);
-        if (heatData == null || satellite.getHeat() <= 0.0F) {
+        if (heatData == null) {
             return;
         }
         long delay = Math.max(0L, heatData.getCoolingDelay() / 50L);
@@ -410,14 +393,11 @@ public final class SatelliteRackManager {
     }
 
     private static boolean spawnBullet(ServerLevel level, FakePlayer shooter, LivingEntity owner,
-                                       SatelliteGunEntity satellite, ItemStack gunStack, IGun gun, Vec3 dir,
+                                       SatelliteGunEntity satellite, ItemStack gunStack, IGun gun,
+                                       @Nullable CommonGunIndex index, Vec3 dir,
                                        @Nullable LivingEntity target) {
-        CommonGunIndex index = TimelessAPI.getCommonGunIndex(gun.getGunId(gunStack)).orElse(null);
-        if (index == null) {
-            return false;
-        }
-        GunData gunData = index.getGunData();
-        BulletData bulletData = index.getBulletData();
+        GunData gunData = index == null ? null : index.getGunData();
+        BulletData bulletData = index == null ? null : index.getBulletData();
         if (gunData == null || bulletData == null || gunData.getAmmoId() == null) {
             return false;
         }
@@ -453,49 +433,29 @@ public final class SatelliteRackManager {
         Vec3 muzzle = satellite.position().add(0.0D, 0.35D, 0.0D).add(dir.scale(0.6D));
         bullet.setPos(muzzle.x, muzzle.y, muzzle.z);
         float speed = Math.max(1.0F, bulletData.getSpeed());
-        bullet.shootFromRotation(owner, satellite.getXRot(), satellite.getYRot(), 0.0F, speed,
-                new Vector2d(0.0D, 0.0D));
-        if (target != null) {
+        if (target == null) {
+            bullet.shootFromRotation(owner, satellite.getXRot(), satellite.getYRot(), 0.0F, speed,
+                    new Vector2d(0.0D, 0.0D));
+        } else {
             // Aim from the actual muzzle at the torso and lead a walking mob: the
-            // angle-only shot drifts behind a moving target because the ring sits
-            // ~1.5 blocks behind the player. Overriding the velocity vector makes the
-            // trajectory independent of any yaw/pitch convention mismatch.
+            // angle-only shot drifts behind a moving target because the fan sits
+            // behind the player. Setting the velocity vector directly makes the
+            // trajectory independent of any yaw/pitch convention mismatch, and
+            // skips the angle shot that would only be overwritten.
             Vec3 aim = target.getBoundingBox().getCenter();
             double distance = muzzle.distanceTo(aim);
             double seconds = distance / speed;
             aim = aim.add(target.getDeltaMovement().scale(Math.min(6.0D, seconds * 20.0D)));
             Vec3 delta = aim.subtract(muzzle);
-            if (delta.lengthSqr() > 1.0E-6D) {
-                Vec3 velocity = delta.normalize().scale(speed);
-                bullet.setDeltaMovement(velocity);
-                bullet.setYRot((float) Math.toDegrees(Math.atan2(-velocity.x, velocity.z)));
-                bullet.setXRot((float) -Math.toDegrees(Math.atan2(velocity.y,
-                        Math.hypot(velocity.x, velocity.z))));
-            }
+            Vec3 velocity = delta.lengthSqr() > 1.0E-6D ? delta.normalize().scale(speed) : dir.scale(speed);
+            bullet.setDeltaMovement(velocity);
+            bullet.setYRot((float) Math.toDegrees(Math.atan2(-velocity.x, velocity.z)));
+            bullet.setXRot((float) -Math.toDegrees(Math.atan2(velocity.y,
+                    Math.hypot(velocity.x, velocity.z))));
         }
         return level.addFreshEntity(bullet);
     }
 
-
-    /** Keeps the fake player's TACZ state (aim, draw, heat) alive between shots. */
-    private static void bindShooter(SatelliteGunEntity satellite, ServerLevel level, ItemStack gunStack,
-                                    boolean firing) {
-        FakePlayer shooter = satellite.shooter(level);
-        shooter.moveTo(satellite.getX(), satellite.getY(), satellite.getZ(), satellite.getYRot(), satellite.getXRot());
-        shooter.setYHeadRot(satellite.getYRot());
-        shooter.setXRot(satellite.getXRot());
-        // A full player tick ten times a game tick was the biggest TPS sink here:
-        // the bullets are built by us, so the fake player only has to stay a valid
-        // TACZ subject with a warm attachment cache.
-        IGunOperator operator = IGunOperator.fromLivingEntity(shooter);
-        if (operator.getCacheProperty() == null) {
-            AttachmentPropertyManager.postChangeEvent(shooter, gunStack);
-        }
-        if (gunStack.getItem() instanceof AbstractGunItem gunItem) {
-            ShooterDataHolder data = operator.getDataHolder();
-            gunItem.tickHeat(data, gunStack, shooter);
-        }
-    }
 
     private static long fire(SatelliteGunEntity satellite, @Nullable LivingEntity target, Player player,
                              ItemStack rack) {
@@ -534,8 +494,7 @@ public final class SatelliteRackManager {
             if (nowTick < satellite.getHeatLockUntil()) {
                 return 0L;
             }
-            GunHeatData heatData = TimelessAPI.getCommonGunIndex(gun.getGunId(gunStack))
-                    .map(gunIndex -> gunIndex.getGunData().getHeatData()).orElse(null);
+            GunHeatData heatData = gunData == null ? null : gunData.getHeatData();
             if (heatData != null) {
                 float nextHeat = satellite.getHeat() + heatData.getHeatPerShot();
                 if (nextHeat >= heatData.getHeatMax()) {
@@ -604,7 +563,7 @@ public final class SatelliteRackManager {
             ServerPlayer owner = level.getPlayerByUUID(satellite.getOwner()) instanceof ServerPlayer serverPlayer
                     ? serverPlayer : null;
             boolean spawned = spawnBullet(level, shooter, owner == null ? shooter : owner, satellite, gunStack,
-                    gun, dir, target);
+                    gun, index, dir, target);
             if (upkeep && spawned) {
                 magazine = Math.max(0, magazine - 1);
                 satellite.setMagazine(magazine);
