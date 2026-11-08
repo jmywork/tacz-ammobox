@@ -34,7 +34,7 @@ public class SatelliteGunRenderer extends EntityRenderer<SatelliteGunEntity> {
         pose.mulPose(Axis.YP.rotationDegrees(180.0F - entity.getYRot()));
         // TACZ's FIXED model puts the barrel along +X; turn it onto -Z so the
         // muzzle follows the entity's yaw, then pitch around the new X axis.
-        pose.mulPose(Axis.YP.rotationDegrees(90.0F));
+        pose.mulPose(Axis.YP.rotationDegrees(-90.0F));
         pose.mulPose(Axis.XP.rotationDegrees(-entity.getXRot()));
         pose.mulPose(Axis.ZP.rotationDegrees(entity.getRoll()));
         pose.scale(0.5F, 0.5F, 0.5F);
