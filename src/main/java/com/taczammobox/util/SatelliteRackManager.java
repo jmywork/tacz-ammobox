@@ -9,7 +9,10 @@ import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.api.event.common.GunShootEvent;
 import com.tacz.guns.api.item.IGun;
-import com.tacz.guns.api.item.gun.AbstractGunItem;
+import com.tacz.guns.resource.index.CommonGunIndex;
+import com.tacz.guns.resource.pojo.data.gun.BulletData;
+import com.tacz.guns.resource.pojo.data.gun.GunData;
+import org.joml.Vector2d;
 import com.taczammobox.TaczAmmoBoxMod;
 import com.taczammobox.compat.CuriosCompat;
 import com.taczammobox.config.FeatureFlags;
@@ -201,6 +204,32 @@ public final class SatelliteRackManager {
     }
 
     /** @return the cooldown in ticks, or 0 when the shot did not happen. */
+
+    /**
+     * TACZ's own shoot path ends in a script that bails out silently for entities
+     * that never "drew" the gun, so build the bullet that script would have built:
+     * the same EntityKineticBullet, the same gun data, our own direction.
+     */
+    private static boolean spawnBullet(ServerLevel level, FakePlayer shooter, SatelliteGunEntity satellite,
+                                       ItemStack gunStack, IGun gun, Vec3 dir) {
+        CommonGunIndex index = TimelessAPI.getCommonGunIndex(gun.getGunId(gunStack)).orElse(null);
+        if (index == null) {
+            return false;
+        }
+        GunData gunData = index.getGunData();
+        BulletData bulletData = index.getBulletData();
+        if (gunData == null || bulletData == null || gunData.getAmmoId() == null) {
+            return false;
+        }
+        EntityKineticBullet bullet = new EntityKineticBullet(level, shooter, gunStack, gunData.getAmmoId(),
+                gun.getGunId(gunStack), false, gunData, bulletData);
+        Vec3 muzzle = satellite.position().add(0.0D, 0.35D, 0.0D).add(dir.scale(0.6D));
+        bullet.setPos(muzzle.x, muzzle.y, muzzle.z);
+        bullet.shootFromRotation(shooter, satellite.getXRot(), satellite.getYRot(), 0.0F,
+                Math.max(1.0F, bulletData.getSpeed()), new Vector2d(0.0D, 0.0D));
+        return level.addFreshEntity(bullet);
+    }
+
     private static long fire(SatelliteGunEntity satellite) {
         if (!(satellite.level() instanceof ServerLevel level)) {
             return 0L;
@@ -255,17 +284,13 @@ public final class SatelliteRackManager {
             // cache, and a fake player never receives the event that builds it, so
             // rebuild it here before asking the gun to fire.
             AttachmentPropertyManager.postChangeEvent(shooter, gunStack);
-            if (gunStack.getItem() instanceof AbstractGunItem gunItem) {
-                gunItem.shoot(data, gunStack, satellite::getXRot, satellite::getYRot, shooter);
-                if (debug) {
-                    int bullets = level.getEntitiesOfClass(EntityKineticBullet.class,
-                            satellite.getBoundingBox().inflate(4.0D)).size();
-                    TaczAmmoBoxMod.LOGGER.info("sat fire after: bulletsNear={} ammoAfter={} cache={}",
-                            bullets, gun.getCurrentAmmoCount(gunStack),
-                            operator.getCacheProperty() == null ? "null" : "ok");
-                }
-            } else if (debug) {
-                TaczAmmoBoxMod.LOGGER.warn("sat fire: item is not AbstractGunItem: {}", gunStack.getItem());
+            Vec3 dir = Vec3.directionFromRotation(satellite.getXRot(), satellite.getYRot());
+            boolean spawned = spawnBullet(level, shooter, satellite, gunStack, gun, dir);
+            if (debug) {
+                int bullets = level.getEntitiesOfClass(EntityKineticBullet.class,
+                        satellite.getBoundingBox().inflate(4.0D)).size();
+                TaczAmmoBoxMod.LOGGER.info("sat fire after: spawned={} bulletsNear={} cache={}",
+                        spawned, bullets, operator.getCacheProperty() == null ? "null" : "ok");
             }
         } catch (Throwable throwable) {
             if (!warned) {
