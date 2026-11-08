@@ -9,7 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Keeps the client's chamber flag in step with the server for tier magazines.
@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(LocalPlayerShoot.class)
 public abstract class LocalPlayerShootChamberMixin {
     @Inject(method = "shoot", at = @At("HEAD"), remap = false)
-    private void taczammobox$keepChamberLoaded(CallbackInfo ci) {
+    private void taczammobox$keepChamberLoaded(CallbackInfoReturnable<com.tacz.guns.api.entity.ShootResult> cir) {
         try {
             LocalPlayer player = Minecraft.getInstance().player;
             if (player == null) {
