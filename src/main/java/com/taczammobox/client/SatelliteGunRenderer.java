@@ -58,12 +58,6 @@ public class SatelliteGunRenderer extends EntityRenderer<SatelliteGunEntity> {
         pose.mulPose(Axis.XP.rotationDegrees(entity.getRoll()));
 
         pose.scale(0.5F, 0.5F, 0.5F);
-        // TACZ's FIXED draw offsets the model to the block centre (0.5, 2, 0.5)
-        // before its own positioning nodes. That offset lies along the gun's thin
-        // axis, so on a radial fan it pushes one half of the fan backwards and the
-        // other forwards. Cancelling it puts both halves on one plane; the sign is
-        // the one that shrinks the gap, not the one that doubles it.
-        pose.translate(0.0F, 0.0F, 0.5F);
 
         LivingEntity previous = ThirdPersonMuzzleParticleManager.currentEntity;
         ThirdPersonMuzzleParticleManager.currentEntity = player;
