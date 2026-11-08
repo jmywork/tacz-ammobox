@@ -319,12 +319,18 @@ public final class SatelliteRackManager {
             // cache, and a fake player never receives the event that builds it, so
             // rebuild it here before asking the gun to fire.
             AttachmentPropertyManager.postChangeEvent(shooter, gunStack);
-            // aim()/postChangeEvent() may touch the holder again, so stamp the
-            // timestamps as late as possible.
+            // aim()/postChangeEvent() may replace tacz$data with a fresh holder,
+            // so re-read it and stamp the *current* instance as late as possible.
+            data = operator.getDataHolder();
             data.baseTimestamp = System.currentTimeMillis();
             data.shootTimestamp = LONG_AGO;
             data.lastShootTimestamp = LONG_AGO;
             data.drawTimestamp = LONG_AGO;
+            data.reloadTimestamp = LONG_AGO;
+            data.boltTimestamp = LONG_AGO;
+            data.reloadStateType = ReloadState.StateType.NOT_RELOADING;
+            data.isBolting = false;
+            data.setCurrentGunItem(() -> gunStack);
             if (debug) {
                 TaczAmmoBoxMod.LOGGER.info("sat gate: shootTs={} cool={} drawCd={} bolting={}",
                         data.shootTimestamp, operator.getSynShootCoolDown(), operator.getSynDrawCoolDown(),
