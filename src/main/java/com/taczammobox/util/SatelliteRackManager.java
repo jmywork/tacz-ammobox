@@ -3,6 +3,9 @@ package com.taczammobox.util;
 import com.mojang.authlib.GameProfile;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
+import com.tacz.guns.api.entity.ReloadState;
+import com.tacz.guns.api.entity.ShootResult;
+import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.api.event.common.GunShootEvent;
 import com.tacz.guns.api.item.IGun;
 import com.taczammobox.TaczAmmoBoxMod;
@@ -57,6 +60,7 @@ public final class SatelliteRackManager {
     private static final GameProfile PROFILE = new GameProfile(
             UUID.nameUUIDFromBytes("taczammobox:satellite".getBytes(StandardCharsets.UTF_8)), "[Satellite]");
     private static boolean warned;
+    private static boolean resultWarned;
 
     private SatelliteRackManager() {
     }
@@ -211,11 +215,26 @@ public final class SatelliteRackManager {
         shooter.setItemInHand(InteractionHand.MAIN_HAND, gunStack);
         try {
             IGunOperator operator = IGunOperator.fromLivingEntity(shooter);
+            // A fake player never receives the timestamp sync a real client sends,
+            // so TACZ's anti-cheat rejects every shot as NETWORK_FAIL unless we
+            // seed the holder ourselves.
+            ShooterDataHolder data = operator.getDataHolder();
+            data.baseTimestamp = System.currentTimeMillis();
+            data.shootTimestamp = 0L;
+            data.drawTimestamp = 0L;
+            data.reloadStateType = ReloadState.StateType.NOT_RELOADING;
+            data.sprintTimeS = 0.0F;
+            data.isBolting = false;
+            data.setCurrentGunItem(() -> gunStack);
             // Aiming state tightens TACZ's inaccuracy modifiers a little; there is
             // no public API for a truly zero-spread shot, so this is as close as
             // we get without touching their internals.
             operator.aim(true);
-            operator.shoot(satellite::getXRot, satellite::getYRot);
+            ShootResult result = operator.shoot(satellite::getXRot, satellite::getYRot);
+            if (result != ShootResult.SUCCESS && !resultWarned) {
+                resultWarned = true;
+                TaczAmmoBoxMod.LOGGER.warn("Satellite shot rejected: {}", result);
+            }
         } catch (Throwable throwable) {
             if (!warned) {
                 warned = true;
