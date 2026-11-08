@@ -101,16 +101,11 @@ public final class SatelliteRackManager {
             double z = centerZ + rightZ * Math.cos(theta) * RING_RADIUS;
             entity.setPos(x, y, z);
 
-            double dx = target.x - x;
-            double dy = target.y - y;
-            double dz = target.z - z;
-            double horizontal = Math.sqrt(dx * dx + dz * dz);
-            float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
-            float pitch = (float) -Math.toDegrees(Math.atan2(dy, horizontal));
-            entity.setYRot(yaw);
-            entity.setXRot(Mth.clamp(pitch, -60.0F, 60.0F));
-            // Roll the gun so its top points away from the centre of the ring.
-            entity.setRoll((float) (thetaDeg - 90.0D));
+            // Every muzzle points exactly where the player is looking, so the
+            // ring reads as one firing line instead of a converging mess.
+            entity.setYRot(player.getYRot());
+            entity.setXRot(player.getXRot());
+            entity.setRoll(0.0F);
             entity.setGun(guns.get(i));
             entity.setSlotIndex(i);
         }
