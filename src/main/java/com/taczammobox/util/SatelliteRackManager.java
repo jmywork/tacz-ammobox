@@ -11,6 +11,7 @@ import com.taczammobox.config.FeatureFlags;
 import com.taczammobox.entity.SatelliteGunEntity;
 import com.taczammobox.item.SatelliteRackItem;
 import com.taczammobox.registry.ModEntities;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -161,8 +162,23 @@ public final class SatelliteRackManager {
             long interval = fire(satellite);
             if (interval > 0L) {
                 satellite.setNextFire(now + interval);
+                satellite.setRecoil(1.0F);
+                satellite.setFlash(2);
+                muzzleFx(satellite);
             }
         }
+    }
+
+    private static void muzzleFx(SatelliteGunEntity satellite) {
+        if (!(satellite.level() instanceof ServerLevel level)) {
+            return;
+        }
+        Vec3 look = satellite.getViewVector(1.0F);
+        double mx = satellite.getX() + look.x * 0.45D;
+        double my = satellite.getY() + look.y * 0.45D;
+        double mz = satellite.getZ() + look.z * 0.45D;
+        level.sendParticles(ParticleTypes.SMOKE, mx, my, mz, 2, 0.03D, 0.03D, 0.03D, 0.01D);
+        level.sendParticles(ParticleTypes.FLAME, mx, my, mz, 1, 0.02D, 0.02D, 0.02D, 0.0D);
     }
 
     private static void pointAt(SatelliteGunEntity satellite, Vec3 target) {

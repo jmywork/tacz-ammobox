@@ -32,6 +32,15 @@ public class SatelliteGunRenderer extends EntityRenderer<SatelliteGunEntity> {
         }
         pose.pushPose();
 
+        // Kick the gun back along the aim vector; the value decays on the client.
+        double yawRad = Math.toRadians(entity.getYRot());
+        double pitchRad = Math.toRadians(entity.getXRot());
+        double lookX = -Math.sin(yawRad) * Math.cos(pitchRad);
+        double lookY = -Math.sin(pitchRad);
+        double lookZ = Math.cos(yawRad) * Math.cos(pitchRad);
+        float kick = entity.getRecoil() * 0.22F;
+        pose.translate(-lookX * kick, -lookY * kick, -lookZ * kick);
+
         // TACZ renders guns with the stock on +X and the barrel on -X under FIXED.
         // Turning +X onto +Z first lets pitch tilt the barrel properly; the
         // resulting -X then ends up pointing along the look vector.

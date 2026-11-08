@@ -24,6 +24,10 @@ public class SatelliteGunEntity extends Entity {
             SynchedEntityData.defineId(SatelliteGunEntity.class, EntityDataSerializers.ITEM_STACK);
     private static final EntityDataAccessor<Integer> DATA_INDEX =
             SynchedEntityData.defineId(SatelliteGunEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Float> DATA_RECOIL =
+            SynchedEntityData.defineId(SatelliteGunEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Integer> DATA_FLASH =
+            SynchedEntityData.defineId(SatelliteGunEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_ROLL =
             SynchedEntityData.defineId(SatelliteGunEntity.class, EntityDataSerializers.FLOAT);
 
@@ -44,11 +48,23 @@ public class SatelliteGunEntity extends Entity {
     protected void defineSynchedData() {
         this.entityData.define(DATA_GUN, ItemStack.EMPTY);
         this.entityData.define(DATA_INDEX, 0);
+        this.entityData.define(DATA_RECOIL, 0.0F);
+        this.entityData.define(DATA_FLASH, 0);
         this.entityData.define(DATA_ROLL, 0.0F);
     }
 
     @Override
     public void tick() {
+        if (this.level().isClientSide()) {
+            float recoil = this.getRecoil();
+            if (recoil > 0.0F) {
+                this.setRecoil(Math.max(0.0F, recoil - 0.25F));
+            }
+            int flash = this.getFlash();
+            if (flash > 0) {
+                this.setFlash(flash - 1);
+            }
+        }
         super.tick();
         this.setDeltaMovement(0.0D, 0.0D, 0.0D);
     }
@@ -113,6 +129,22 @@ public class SatelliteGunEntity extends Entity {
 
     public void setSlotIndex(int index) {
         this.entityData.set(DATA_INDEX, index);
+    }
+
+    public float getRecoil() {
+        return this.entityData.get(DATA_RECOIL);
+    }
+
+    public void setRecoil(float recoil) {
+        this.entityData.set(DATA_RECOIL, recoil);
+    }
+
+    public int getFlash() {
+        return this.entityData.get(DATA_FLASH);
+    }
+
+    public void setFlash(int ticks) {
+        this.entityData.set(DATA_FLASH, ticks);
     }
 
     public float getRoll() {
