@@ -59,6 +59,8 @@ public final class SatelliteRackManager {
     private static final double AIM_DISTANCE = 16.0D;
     private static final GameProfile PROFILE = new GameProfile(
             UUID.nameUUIDFromBytes("taczammobox:satellite".getBytes(StandardCharsets.UTF_8)), "[Satellite]");
+    /** Stand-in for "this happened long before the fake player's timeline". */
+    private static final long LONG_AGO = -60_000L;
     private static boolean warned;
     private static boolean resultWarned;
 
@@ -219,9 +221,15 @@ public final class SatelliteRackManager {
             // so TACZ's anti-cheat rejects every shot as NETWORK_FAIL unless we
             // seed the holder ourselves.
             ShooterDataHolder data = operator.getDataHolder();
+            // TACZ treats the 2-arg shoot() as "the client sent timestamp 0", so the
+            // cooldown becomes interval - (0 - shootTimestamp). Pushing the stamps
+            // far into the past is the fake-player way of saying "last shot ages ago".
             data.baseTimestamp = System.currentTimeMillis();
-            data.shootTimestamp = 0L;
-            data.drawTimestamp = 0L;
+            data.shootTimestamp = LONG_AGO;
+            data.lastShootTimestamp = LONG_AGO;
+            data.drawTimestamp = LONG_AGO;
+            data.reloadTimestamp = LONG_AGO;
+            data.boltTimestamp = LONG_AGO;
             data.reloadStateType = ReloadState.StateType.NOT_RELOADING;
             data.sprintTimeS = 0.0F;
             data.isBolting = false;
