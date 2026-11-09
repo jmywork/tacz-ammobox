@@ -26,6 +26,9 @@ import net.minecraftforge.fml.common.Mod;
  */
 @Mod.EventBusSubscriber(modid = TaczAmmoBoxMod.MOD_ID, value = Dist.CLIENT)
 public final class AutoTriggerClient {
+    private static int taczammobox$ticks;
+    private static long taczammobox$lastTickReport = System.currentTimeMillis();
+
     private AutoTriggerClient() {
     }
 
@@ -33,6 +36,14 @@ public final class AutoTriggerClient {
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) {
             return;
+        }
+        taczammobox$ticks++;
+        long now = System.currentTimeMillis();
+        if (now - taczammobox$lastTickReport >= 1000L) {
+            com.taczammobox.util.AutoFireServer.DIAG.logChange("ticks",
+                    "ticks/s=" + taczammobox$ticks + " fps=" + Minecraft.getInstance().getFps());
+            taczammobox$ticks = 0;
+            taczammobox$lastTickReport = now;
         }
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
