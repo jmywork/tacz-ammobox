@@ -7,7 +7,7 @@ TACZ（Timeless and Classics Zero）的弹药包装附属。把散装弹药装�
 - Create 6.0.x 可选
 - 协议 GPL-3.0-only
 - 作者 jmywork
-- 版本 `0.4.1`
+- 版本 `0.4.0-hotfix`
 
 English: [README.en.md](README.en.md)
 
@@ -22,7 +22,7 @@ English: [README.en.md](README.en.md)
 
 1. 安装 Forge 1.20.1。
 2. 安装 TACZ 1.2.0。
-3. 把 `taczammobox-1.20.1-0.4.1.jar` 放进 `mods/`。
+3. 把 `taczammobox-1.20.1-0.4.0-hotfix.jar` 放进 `mods/`。
 4. 想用 Create 部署器兼容再装 Create 6.0.x，不装也能正常玩。
 
 ## 快速开始
