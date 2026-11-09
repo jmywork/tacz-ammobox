@@ -57,7 +57,7 @@ public final class FeatureFlags {
         return capacityOverride && autoFire() && !safeMode;
     }
 
-    /** 400/600/1200 RPM override. */
+    /** 400/600/800 RPM override. */
     public static boolean rpmOverride() {
         return rpmOverride && autoFire() && !safeMode;
     }
@@ -153,7 +153,7 @@ public final class FeatureFlags {
             Files.createDirectories(file.getParent());
             JsonObject root = new JsonObject();
             root.addProperty("_comment_cn",
-                    "autoFire: 自动击发弹匣总开关; capacityOverride: 弹匣容量覆盖(30/45/60); rpmOverride: 射速覆盖(400/600/1200); belt: 自动供弹弹链; easterEggTab: 彩蛋物品是否出现在创造栏; createCompat: Create 部署器兼容; safeMode: 总开关，关掉所有对其它模组的行为改动(物品与机器仍可用). 修改后执行 /taczammobox reload");
+                    "autoFire: 自动击发弹匣总开关; capacityOverride: 弹匣容量覆盖(30/45/60); rpmOverride: 射速覆盖(400/600/800); belt: 自动供弹弹链; easterEggTab: 彩蛋物品是否出现在创造栏; createCompat: Create 部署器兼容; safeMode: 总开关，关掉所有对其它模组的行为改动(物品与机器仍可用). 修改后执行 /taczammobox reload");
             root.addProperty("_comment_en",
                     "autoFire: auto-fire magazine master switch; capacityOverride: magazine capacity override; rpmOverride: RPM override; belt: auto-feeding ammo belt; easterEggTab: show the easter-egg items in the creative tab; createCompat: Create deployer compatibility; safeMode: disable all cross-mod behaviour (items and machines still work). Run /taczammobox reload after editing.");
 

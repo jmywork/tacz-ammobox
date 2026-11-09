@@ -96,7 +96,7 @@
   "message.taczammobox.storage.full": "Ammo storage is full",
   "taczammobox.attachment.auto_sear.name": "Auto-Fire Extended Magazine I (400 RPM / 30 rounds)",
   "taczammobox.attachment.auto_sear_2.name": "Auto-Fire Extended Magazine II (600 RPM / 45 rounds)",
-  "taczammobox.attachment.auto_sear_3.name": "Auto-Fire Extended Magazine III (1200 RPM / 60 rounds)",
+  "taczammobox.attachment.auto_sear_3.name": "Auto-Fire Extended Magazine III (800 RPM / 60 rounds)",
   "tooltip.taczammobox.ammo": "Ammo: %s",
   "tooltip.taczammobox.fill": "Press %s to fill an ammo box",
   "tooltip.taczammobox.mode": "Mode: %s",

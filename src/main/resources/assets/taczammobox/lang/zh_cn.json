@@ -96,7 +96,7 @@
   "message.taczammobox.storage.full": "弹药库已满",
   "taczammobox.attachment.auto_sear.name": "自动击发扩容弹匣 I（400 RPM / 30 发）",
   "taczammobox.attachment.auto_sear_2.name": "自动击发扩容弹匣 II（600 RPM / 45 发）",
-  "taczammobox.attachment.auto_sear_3.name": "自动击发扩容弹匣 III（1200 RPM / 60 发）",
+  "taczammobox.attachment.auto_sear_3.name": "自动击发扩容弹匣 III（800 RPM / 60 发）",
   "tooltip.taczammobox.ammo": "弹种：%s",
   "tooltip.taczammobox.fill": "按 %s 装填弹药盒",
   "tooltip.taczammobox.mode": "模式：%s",

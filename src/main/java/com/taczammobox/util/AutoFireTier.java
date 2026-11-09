@@ -23,7 +23,7 @@ import java.util.List;
  * The three auto-fire magazine tiers.
  *
  * <p>Capacity and RPM live in {@code config/taczammobox/autofire.json} so pack authors can
- * rebalance them without a code change. Defaults match 0.3.0: 30/400, 45/600, 60/1200.</p>
+ * rebalance them without a code change. Defaults: 30/400, 45/600, 60/800.</p>
  */
 public final class AutoFireTier {
     public static final int MAX_RPM = 1200;
@@ -165,7 +165,7 @@ public final class AutoFireTier {
     private static int defaultRpm(int index) {
         return switch (index) {
             case 1 -> 600;
-            case 2 -> 1200;
+            case 2 -> 800;
             default -> 400;
         };
     }

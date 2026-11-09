@@ -7,7 +7,7 @@
 ### 配置文件
 
 - [ ] 启动后生成 `config/taczammobox/features.json`，含中英注释与示例
-- [ ] 启动后生成 `config/taczammobox/autofire.json`，三档默认 30/400、45/600、60/1200
+- [ ] 启动后生成 `config/taczammobox/autofire.json`，三档默认 30/400、45/600、60/800
 - [ ] `settings.json` 出现 `beltMaxStore` 字段（默认 0）
 - [ ] 启动日志出现 `[taczammobox] features: ...` 与 `auto-fire tiers: ...`
 - [ ] 启动日志出现 `TACZ compatibility check passed`
