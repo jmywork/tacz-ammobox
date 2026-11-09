@@ -7,7 +7,7 @@
 ### 配置文件
 
 - [ ] 启动后生成 `config/taczammobox/features.json`，含中英注释与示例
-- [ ] 启动后生成 `config/taczammobox/autofire.json`，四档（第一条彩蛋 300/1200，后三条标准 10/200、20/400、30/600）
+- [ ] 启动后生成 `config/taczammobox/autofire.json`，四档（第一条彩蛋 300/1000，后三条标准 10/200、20/400、30/600）
 - [ ] `settings.json` 出现 `beltMaxStore` 字段（默认 0）
 - [ ] 启动日志出现 `[taczammobox] features: ...` 与 `auto-fire tiers: ...`
 - [ ] 启动日志出现 `TACZ compatibility check passed`
@@ -79,7 +79,7 @@
 - [ ] 标准 I + 下界合金锭 ×4 + 下界之星 ×4 → 标准 II
 - [ ] 标准 II + 下界合金块 ×8 → 标准 III
 - [ ] 标准 I / II / III 装上拉栓枪后弹容 10 / 20 / 30、射速 200 / 400 / 600 RPM
-- [ ] 彩蛋只保留 III 级：创造限定，弹容 300、射速 1200 RPM，说明标注「彩蛋物品」
+- [ ] 彩蛋只保留 III 级：创造限定，弹容 300、射速 1000 RPM，说明标注「彩蛋物品」
 - [ ] 标准三档不显示「彩蛋物品」标签，且出现在创造栏机器一组里
 ### TACZ 1.2.0 适配回归
 

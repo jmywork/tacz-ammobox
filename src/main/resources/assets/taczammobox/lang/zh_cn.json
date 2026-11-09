@@ -94,7 +94,7 @@
   "message.taczammobox.no_space": "背包里没有空间足够的同类弹药盒",
   "message.taczammobox.storage.filled": "已灌入 %s 发 %s 弹药",
   "message.taczammobox.storage.full": "弹药库已满",
-  "taczammobox.attachment.auto_sear_3.name": "自动击发扩容弹匣 III（彩蛋 1200 RPM / 300 发）",
+  "taczammobox.attachment.auto_sear_3.name": "自动击发扩容弹匣 III（彩蛋 1000 RPM / 300 发）",
   "tooltip.taczammobox.ammo": "弹种：%s",
   "tooltip.taczammobox.fill": "按 %s 装填弹药盒",
   "tooltip.taczammobox.mode": "模式：%s",

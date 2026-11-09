@@ -195,7 +195,7 @@ public final class AutoFireTier {
 
     private static int defaultRpm(int index) {
         return switch (index) {
-            case 0 -> 1200;
+            case 0 -> 1000;
             case 1 -> 200;
             case 2 -> 400;
             case 3 -> 600;

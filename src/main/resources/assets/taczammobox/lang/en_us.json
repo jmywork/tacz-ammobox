@@ -94,7 +94,7 @@
   "message.taczammobox.no_space": "No matching ammo box with enough space",
   "message.taczammobox.storage.filled": "Poured %s rounds of %s",
   "message.taczammobox.storage.full": "Ammo storage is full",
-  "taczammobox.attachment.auto_sear_3.name": "Auto-Fire Extended Magazine III (Easter egg · 1200 RPM / 300 rounds)",
+  "taczammobox.attachment.auto_sear_3.name": "Auto-Fire Extended Magazine III (Easter egg · 1000 RPM / 300 rounds)",
   "tooltip.taczammobox.ammo": "Ammo: %s",
   "tooltip.taczammobox.fill": "Press %s to fill an ammo box",
   "tooltip.taczammobox.mode": "Mode: %s",
