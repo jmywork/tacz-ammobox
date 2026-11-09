@@ -17,22 +17,24 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The auto-fire magazine tiers, in two sets that share one table.
  *
- * <p>The first three entries are the easter-egg set (creative only). The last three are the
- * standard set, which is craftable in the gun smith table and deliberately weaker. Capacity
+ * <p>The first entry is the single easter-egg magazine (creative only, deliberately absurd).
+ * The last three are the standard set, which is craftable in the gun smith table. Capacity
  * and RPM live in {@code config/taczammobox/autofire.json} so pack authors can rebalance
  * them without a code change.</p>
  */
 public final class AutoFireTier {
     public static final int MAX_RPM = 1200;
-    /** Total number of tiers, easter-egg set first. */
-    public static final int TIER_COUNT = 6;
+    /** Total number of tiers, the easter-egg magazine first. */
+    public static final int TIER_COUNT = 4;
     /** Entries before this index belong to the easter-egg set. */
-    public static final int EASTER_COUNT = 3;
+    public static final int EASTER_COUNT = 1;
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final List<AutoFireTier> ALL = new ArrayList<>();
@@ -127,11 +129,12 @@ public final class AutoFireTier {
     /** Loads (and rewrites) the tier table; call before the gun pack is generated. */
     public static void init() {
         ALL.clear();
-        List<JsonObject> entries = load();
+        Map<String, JsonObject> entries = load();
         for (int index = 0; index < TIER_COUNT; index++) {
-            JsonObject tier = index < entries.size() ? entries.get(index) : null;
-            String id = tier != null && tier.has("id") ? tier.get("id").getAsString() : defaultPath(index);
-            int level = tier != null && tier.has("level") ? tier.get("level").getAsInt() : index % 3 + 1;
+            String id = defaultPath(index);
+            // Entries are matched by id, so retired magazines from older configs are ignored.
+            JsonObject tier = entries.get(id);
+            int level = tier != null && tier.has("level") ? tier.get("level").getAsInt() : defaultLevel(index);
             int capacity = tier != null && tier.has("capacity")
                     ? tier.get("capacity").getAsInt() : defaultCapacity(index);
             int rpm = tier != null && tier.has("rpm") ? tier.get("rpm").getAsInt() : defaultRpm(index);
@@ -142,8 +145,8 @@ public final class AutoFireTier {
         TaczAmmoBoxMod.LOGGER.info("[taczammobox] auto-fire tiers: {}", describe());
     }
 
-    private static List<JsonObject> load() {
-        List<JsonObject> entries = new ArrayList<>();
+    private static Map<String, JsonObject> load() {
+        Map<String, JsonObject> entries = new HashMap<>();
         Path file = file();
         if (!Files.exists(file)) {
             return entries;
@@ -153,8 +156,12 @@ public final class AutoFireTier {
             JsonArray tiers = root.has("tiers") ? root.getAsJsonArray("tiers") : null;
             if (tiers != null) {
                 for (JsonElement element : tiers) {
-                    if (element.isJsonObject()) {
-                        entries.add(element.getAsJsonObject());
+                    if (!element.isJsonObject()) {
+                        continue;
+                    }
+                    JsonObject tier = element.getAsJsonObject();
+                    if (tier.has("id")) {
+                        entries.put(tier.get("id").getAsString(), tier);
                     }
                 }
             }
@@ -166,31 +173,33 @@ public final class AutoFireTier {
 
     private static String defaultPath(int index) {
         if (index < EASTER_COUNT) {
-            return index == 0 ? "auto_sear" : "auto_sear_" + (index + 1);
+            return "auto_sear_3";
         }
         int standard = index - EASTER_COUNT;
         return standard == 0 ? "auto_sear_normal" : "auto_sear_normal_" + (standard + 1);
     }
 
+    private static int defaultLevel(int index) {
+        return index < EASTER_COUNT ? 3 : index;
+    }
+
     private static int defaultCapacity(int index) {
         return switch (index) {
-            case 1 -> 45;
-            case 2 -> 60;
-            case 3 -> 10;
-            case 4 -> 20;
-            case 5 -> 30;
-            default -> 30;
+            case 0 -> 300;
+            case 1 -> 10;
+            case 2 -> 20;
+            case 3 -> 30;
+            default -> 10;
         };
     }
 
     private static int defaultRpm(int index) {
         return switch (index) {
-            case 1 -> 600;
-            case 2 -> 800;
-            case 3 -> 200;
-            case 4 -> 400;
-            case 5 -> 600;
-            default -> 400;
+            case 0 -> 1200;
+            case 1 -> 200;
+            case 2 -> 400;
+            case 3 -> 600;
+            default -> 200;
         };
     }
 
