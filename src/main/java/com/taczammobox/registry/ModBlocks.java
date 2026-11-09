@@ -2,6 +2,7 @@ package com.taczammobox.registry;
 
 import com.taczammobox.AmmoType;
 import com.taczammobox.TaczAmmoBoxMod;
+import com.taczammobox.block.AmmoAssemblerBlock;
 import com.taczammobox.block.AmmoBoxPileBlock;
 import com.taczammobox.block.AmmoLoaderBlock;
 import com.taczammobox.block.AmmoPackerBlock;
@@ -31,6 +32,11 @@ public final class ModBlocks {
 
     public static final RegistryObject<Block> PACKER = BLOCKS.register("ammo_packer",
             () -> new AmmoPackerBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F)
+                    .sound(SoundType.METAL)));
+
+    public static final RegistryObject<Block> ASSEMBLER = BLOCKS.register("ammo_assembler",
+            () -> new AmmoAssemblerBlock(BlockBehaviour.Properties.of()
                     .strength(2.0F)
                     .sound(SoundType.METAL)));
 

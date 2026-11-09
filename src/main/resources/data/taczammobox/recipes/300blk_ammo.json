@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "taczammobox:box_300blk"
+    }
+  ],
+  "result": {
+    "item": "tacz:ammo",
+    "count": 50,
+    "nbt": "{AmmoId:\"tacz:300blk\"}"
+  }
+}

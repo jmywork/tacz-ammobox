@@ -4,9 +4,11 @@ import com.taczammobox.AmmoType;
 import com.taczammobox.TaczAmmoBoxMod;
 import com.taczammobox.config.WasteSettings;
 import com.taczammobox.item.AmmoBeltItem;
+import com.taczammobox.item.AmmoChainItem;
 import com.taczammobox.item.AmmoBoxItem;
 import com.taczammobox.item.CrateBlockItem;
 import com.taczammobox.item.DynamicCrateBlockItem;
+import com.taczammobox.item.SatelliteRackItem;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -44,8 +46,24 @@ public final class ModItems {
     public static final RegistryObject<Item> LOADER =
             ITEMS.register("ammo_loader", () -> new BlockItem(ModBlocks.LOADER.get(), new Item.Properties()));
 
+    public static final RegistryObject<Item> ASSEMBLER =
+            ITEMS.register("ammo_assembler", () -> new BlockItem(ModBlocks.ASSEMBLER.get(), new Item.Properties()));
+
     public static final RegistryObject<Item> AMMO_BELT =
             ITEMS.register("ammo_belt", () -> new AmmoBeltItem(new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<Item> AMMO_CHAIN =
+            ITEMS.register("ammo_chain", () -> new AmmoChainItem(new Item.Properties().stacksTo(1)));
+
+    /** Easter egg: the halo of guns that fires with the wearer. */
+    public static final RegistryObject<Item> SATELLITE_RACK =
+            ITEMS.register("satellite_rack", () -> new SatelliteRackItem(new Item.Properties().stacksTo(1)));
+
+    /** Same halo, but it eats real ammo instead of firing for free. */
+    public static final RegistryObject<Item> SATELLITE_RACK_UPKEEP =
+            ITEMS.register("satellite_rack_upkeep",
+                    () -> new SatelliteRackItem(new Item.Properties().stacksTo(1), true));
+
 
     static {
         for (AmmoType type : TYPES) {

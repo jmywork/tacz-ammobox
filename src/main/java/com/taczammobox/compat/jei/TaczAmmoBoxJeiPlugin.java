@@ -22,18 +22,37 @@ public final class TaczAmmoBoxJeiPlugin implements IModPlugin {
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
         var helper = registration.getJeiHelpers().getGuiHelper();
-        registration.addRecipeCategories(new PackerCategory(helper), new LoaderCategory(helper));
+        registration.addRecipeCategories(new PackerCategory(helper), new LoaderCategory(helper),
+                new AssemblerCategory(helper), new AutoFireCategory(helper));
     }
 
     @Override
     public void registerRecipes(IRecipeRegistration registration) {
         registration.addRecipes(PackerCategory.TYPE, PackerCategory.recipes());
         registration.addRecipes(LoaderCategory.TYPE, LoaderCategory.recipes());
+        registration.addRecipes(AssemblerCategory.TYPE, AssemblerCategory.recipes());
+        if (com.taczammobox.config.FeatureFlags.autoFire()) {
+            try {
+                registration.addRecipes(AutoFireCategory.TYPE, AutoFireCategory.recipes());
+            } catch (Throwable throwable) {
+                TaczAmmoBoxMod.LOGGER.warn("[taczammobox] auto-fire JEI page disabled", throwable);
+            }
+        }
+        registration.addIngredientInfo(ModItems.AMMO_CHAIN.get(),
+                net.minecraft.network.chat.Component.translatable("jei.taczammobox.ammo_chain.info1"),
+                net.minecraft.network.chat.Component.translatable("jei.taczammobox.ammo_chain.info2"));
     }
 
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
         registration.addRecipeCatalysts(PackerCategory.TYPE, ModItems.PACKER.get());
         registration.addRecipeCatalysts(LoaderCategory.TYPE, ModItems.LOADER.get());
+        registration.addRecipeCatalysts(AssemblerCategory.TYPE, ModItems.ASSEMBLER.get());
+    }
+
+    @Override
+    public void registerRecipeTransferHandlers(mezz.jei.api.registration.IRecipeTransferRegistration registration) {
+        registration.addRecipeTransferHandler(new AssemblerTransferHandler(registration.getTransferHelper()),
+                AssemblerCategory.TYPE);
     }
 }

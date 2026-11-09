@@ -26,6 +26,13 @@ public final class ModKeyMappings {
             GLFW.GLFW_KEY_H,
             "key.categories.taczammobox");
 
+    public static final KeyMapping FOCUS_TARGET = new KeyMapping(
+            "key.taczammobox.focus",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_X,
+            "key.categories.taczammobox");
+
     private ModKeyMappings() {
     }
 
@@ -33,5 +40,6 @@ public final class ModKeyMappings {
     public static void register(RegisterKeyMappingsEvent event) {
         event.register(FILL_AMMO_BOX);
         event.register(SORT_AMMO);
+        event.register(FOCUS_TARGET);
     }
 }

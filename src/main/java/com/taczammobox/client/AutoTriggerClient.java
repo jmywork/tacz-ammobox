@@ -50,6 +50,17 @@ public final class AutoTriggerClient {
         if (gun.getFireMode(gunStack) != FireMode.AUTO) {
             gun.setFireMode(gunStack, FireMode.AUTO);
         }
+        // The server keeps the chamber loaded because the bolt script never runs. The
+        // client's own copy of that flag is what TACZ's shoot gate reads, though, and it
+        // is only refreshed by item sync, so mirror the server here or every other shot
+        // is refused as NEED_BOLT (half the rated fire rate).
+        int ammoCount = gun.getCurrentAmmoCount(gunStack);
+        boolean chambered = gun.hasBulletInBarrel(gunStack);
+        if (ammoCount > 0 && !chambered) {
+            gun.setBulletInBarrel(gunStack, true);
+        } else if (ammoCount <= 0 && chambered) {
+            gun.setBulletInBarrel(gunStack, false);
+        }
         IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(player);
         if (operator != null && operator.getDataHolder() != null) {
             operator.getDataHolder().isBolting = false;

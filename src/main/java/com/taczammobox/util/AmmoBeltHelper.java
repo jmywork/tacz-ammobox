@@ -11,6 +11,7 @@ import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.taczammobox.TaczAmmoBoxMod;
 import com.taczammobox.compat.CuriosCompat;
+import com.taczammobox.config.WasteSettings;
 import com.taczammobox.item.AmmoBeltItem;
 import com.taczammobox.item.PackagedAmmo;
 import net.minecraft.resources.ResourceLocation;
@@ -39,6 +40,9 @@ public final class AmmoBeltHelper {
                 || event.player.isSpectator()) {
             return;
         }
+        if (!com.taczammobox.config.FeatureFlags.belt()) {
+            return;
+        }
         feed(event.player);
     }
 
@@ -46,10 +50,6 @@ public final class AmmoBeltHelper {
         ItemStack gunStack = player.getMainHandItem();
         IGun gun = IGun.getIGunOrNull(gunStack);
         if (gun == null) {
-            return;
-        }
-        ItemStack belt = findBelt(player);
-        if (belt.isEmpty()) {
             return;
         }
         if (gun.hasHeatData(gunStack) && gun.isOverheatLocked(gunStack)) {
@@ -73,6 +73,12 @@ public final class AmmoBeltHelper {
         }
         int current = gun.getCurrentAmmoCount(gunStack);
         if (current >= magazine) {
+            // Full magazine is the common case; search the inventory only when the
+            // belt actually has room to fill.
+            return;
+        }
+        ItemStack belt = findBelt(player);
+        if (belt.isEmpty()) {
             return;
         }
 
@@ -88,6 +94,10 @@ public final class AmmoBeltHelper {
                 return;
             }
             stored = loaded;
+            int maxStore = WasteSettings.beltMaxStore();
+            if (maxStore > 0 && stored > maxStore) {
+                stored = maxStore;
+            }
             AmmoBeltItem.store(belt, ammoId, stored);
         }
 
@@ -118,13 +128,16 @@ public final class AmmoBeltHelper {
     }
 
     private static ItemStack findBelt(Player player) {
-        for (IItemHandler handler : handlers(player)) {
-            for (int slot = 0; slot < handler.getSlots(); slot++) {
-                ItemStack stack = handler.getStackInSlot(slot);
-                if (stack.getItem() instanceof AmmoBeltItem) {
-                    return stack;
-                }
+        // Straight inventory scan first: it covers almost every player and does not
+        // allocate a handler list just to look for one item.
+        for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
+            ItemStack stack = player.getInventory().getItem(slot);
+            if (stack.getItem() instanceof AmmoBeltItem) {
+                return stack;
             }
+        }
+        if (ModList.get().isLoaded("curios")) {
+            return CuriosCompat.findCurio(player, stack -> stack.getItem() instanceof AmmoBeltItem);
         }
         return ItemStack.EMPTY;
     }

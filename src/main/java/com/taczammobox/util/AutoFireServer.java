@@ -4,6 +4,7 @@ import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.event.common.GunShootEvent;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.resource.index.CommonGunIndex;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
@@ -46,6 +47,16 @@ public final class AutoFireServer {
         CommonGunIndex index = TimelessAPI.getCommonGunIndex(gun.getGunId(gunStack)).orElse(null);
         if (index == null || index.getGunData().getBolt() != Bolt.MANUAL_ACTION) {
             return;
+        }
+        // TACZ's client fire loop only keeps shooting while the gun is in AUTO. This has
+        // to be set on the server stack too, otherwise the item sync keeps overwriting the
+        // client's forced AUTO and the gun fires in stutters.
+        if (gun.getFireMode(gunStack) != FireMode.AUTO) {
+            gun.setFireMode(gunStack, FireMode.AUTO);
+            player.getInventory().setChanged();
+            if (player.containerMenu != null) {
+                player.containerMenu.broadcastChanges();
+            }
         }
         ShooterDataHolder holder = IGunOperator.fromLivingEntity(player).getDataHolder();
         holder.isBolting = false;

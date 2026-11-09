@@ -31,11 +31,37 @@ public final class AutoFirePack {
     public static void install() {
         Path root = FMLPaths.GAMEDIR.get().resolve("tacz").resolve(PACK_DIR);
         write(root.resolve("gunpack.meta.json"), META);
-        for (AutoFireTier tier : AutoFireTier.values()) {
+        java.util.Set<String> expected = new java.util.HashSet<>();
+        for (AutoFireTier tier : AutoFireTier.all()) {
             String path = tier.path();
             write(root.resolve("data/taczammobox/index/attachments/" + path + ".json"), index(tier));
             write(root.resolve("data/taczammobox/data/attachments/" + path + "_data.json"), data(tier));
             write(root.resolve("assets/taczammobox/display/attachments/" + path + "_display.json"), display(tier));
+            expected.add(path + ".json");
+            expected.add(path + "_data.json");
+            expected.add(path + "_display.json");
+        }
+        // Retired magazines must disappear as items too, otherwise TACZ keeps loading them.
+        prune(root.resolve("data/taczammobox/index/attachments"), expected);
+        prune(root.resolve("data/taczammobox/data/attachments"), expected);
+        prune(root.resolve("assets/taczammobox/display/attachments"), expected);
+    }
+
+    private static void prune(Path directory, java.util.Set<String> expected) {
+        if (!Files.isDirectory(directory)) {
+            return;
+        }
+        try (var files = Files.list(directory)) {
+            files.filter(file -> !expected.contains(file.getFileName().toString())).forEach(file -> {
+                try {
+                    Files.deleteIfExists(file);
+                    TaczAmmoBoxMod.LOGGER.info("Removed retired TACZ gun pack file {}", file);
+                } catch (Exception exception) {
+                    TaczAmmoBoxMod.LOGGER.error("Failed to remove retired TACZ gun pack file {}", file, exception);
+                }
+            });
+        } catch (Exception exception) {
+            TaczAmmoBoxMod.LOGGER.error("Failed to scan TACZ gun pack directory {}", directory, exception);
         }
     }
 
@@ -52,16 +78,20 @@ public final class AutoFirePack {
     }
 
     private static String data(AutoFireTier tier) {
+        // The easter-egg magazine is meant to feel absurd, so it cancels the gun's recoil.
+        String recoil = tier.isEasterEgg()
+                ? ",\n  \"recoil\": {\n    \"pitch\": {\n      \"multiplier\": 0.0\n    },\n    \"yaw\": {\n      \"multiplier\": 0.0\n    }\n  }"
+                : "";
         return """
                 {
                   "weight": %s,
-                  "extended_mag_level": %d
+                  "extended_mag_level": %d%s
                 }
                 """.formatted(switch (tier.level()) {
                     case 2 -> "0.15";
                     case 3 -> "0.3";
                     default -> "0.05";
-                }, tier.level());
+                }, tier.level(), recoil);
     }
 
     private static String display(AutoFireTier tier) {

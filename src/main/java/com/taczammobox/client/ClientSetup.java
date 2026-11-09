@@ -1,9 +1,11 @@
 package com.taczammobox.client;
 
 import com.taczammobox.TaczAmmoBoxMod;
+import com.taczammobox.registry.ModEntities;
 import com.taczammobox.registry.ModMenus;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
@@ -19,10 +21,17 @@ public final class ClientSetup {
         event.enqueueWork(() -> {
             MenuScreens.register(ModMenus.PACKER.get(), AmmoPackerScreen::new);
             MenuScreens.register(ModMenus.LOADER.get(), AmmoLoaderScreen::new);
+            MenuScreens.register(ModMenus.ASSEMBLER.get(), AmmoAssemblerScreen::new);
+            MenuScreens.register(ModMenus.SATELLITE_RACK.get(), SatelliteRackScreen::new);
             // Curios is optional; the renderer class is only touched when it is present.
             if (ModList.get().isLoaded("curios")) {
                 AmmoBeltCurioRenderer.register();
             }
         });
+    }
+
+    @SubscribeEvent
+    public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(ModEntities.SATELLITE_GUN.get(), SatelliteGunRenderer::new);
     }
 }

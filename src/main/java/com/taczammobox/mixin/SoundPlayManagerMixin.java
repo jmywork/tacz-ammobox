@@ -2,7 +2,7 @@ package com.taczammobox.mixin;
 
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.sound.SoundPlayManager;
-import com.taczammobox.util.AutoFireTier;
+import com.taczammobox.config.FeatureFlags;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -17,11 +17,23 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(SoundPlayManager.class)
 public abstract class SoundPlayManagerMixin {
-    @Inject(method = "playBoltSound", at = @At("HEAD"), cancellable = true)
+    private static boolean taczammobox$warned;
+
+    @Inject(method = "playBoltSound", at = @At("HEAD"), cancellable = true, remap = false)
     private static void taczammobox$skipBoltSound(LivingEntity entity, GunDisplayInstance display, CallbackInfo ci) {
-        LocalPlayer player = Minecraft.getInstance().player;
-        if (player != null && AutoFireTier.of(player.getMainHandItem()) != null) {
-            ci.cancel();
+        try {
+            if (!FeatureFlags.autoFire()) {
+                return;
+            }
+            LocalPlayer player = Minecraft.getInstance().player;
+            if (player != null && FeatureFlags.isTierMagazine(player.getMainHandItem())) {
+                ci.cancel();
+            }
+        } catch (Throwable throwable) {
+            if (!taczammobox$warned) {
+                taczammobox$warned = true;
+                throwable.printStackTrace();
+            }
         }
     }
 }

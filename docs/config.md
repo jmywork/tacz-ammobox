@@ -198,6 +198,26 @@ You can also avoid editing JSON:
 
 When the server detects a different capacity, it writes a **per-level multiplier** such as `"tacz:ammo_box#0": 2.0`; if the value is not a clean multiple, it writes an absolute capacity into `ammoBoxCapacity` to avoid rounding drift.
 
+## 自动击发弹匣 / Auto-fire magazines
+
+`config/taczammobox/autofire.json`（首次启动生成，`/taczammobox reload` 会重读并重新生成枪包）：
+
+```json
+{
+  "tiers": [
+    { "id": "auto_sear_3", "level": 3, "capacity": 300, "rpm": 1000, "easter_egg": true },
+    { "id": "auto_sear_normal", "level": 1, "capacity": 10, "rpm": 200 },
+    { "id": "auto_sear_normal_2", "level": 2, "capacity": 20, "rpm": 400 },
+    { "id": "auto_sear_normal_3", "level": 3, "capacity": 30, "rpm": 600 }
+  ]
+}
+```
+
+- 第一条是彩蛋弹匣（创造限定），后三条是枪械工作台可合成的标准弹匣
+- `capacity`：弹容（1–2000）；`rpm`：射速（1–1200，实际间隔 = `60000 / rpm` 毫秒）；`level`：贴图与 tooltip 等级（1–3）
+- 按 `id` 匹配读取：删掉或改名的条目会被忽略，被删除的档位会在启动/重载时从 TACZ 枪包目录清理掉
+- 改完执行 `/taczammobox reload`，射速与弹容会同步到客户端；物品名与贴图需要重启游戏
+
 ## 第三方弹种 / Third-party ammo
 
 第三方枪包的弹种写在 `config/taczammobox/ammo_boxes.json`，由 `/taczammobox scan` 自动补充。这个文件会影响物品注册，**客户端和服务端必须一致**。

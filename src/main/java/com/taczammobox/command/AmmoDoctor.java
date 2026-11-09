@@ -66,6 +66,8 @@ public final class AmmoDoctor {
         lines.add("[doctor] orphan ammo entries: " + orphans.size()
                 + (orphans.isEmpty() ? "" : " (" + String.join(", ", orphans.stream()
                 .map(ResourceLocation::toString).toList()) + ")"));
+        lines.add("features: " + com.taczammobox.config.FeatureFlags.describe());
+        lines.add("guards: " + com.taczammobox.util.FeatureGuard.describe());
         return lines;
     }
 

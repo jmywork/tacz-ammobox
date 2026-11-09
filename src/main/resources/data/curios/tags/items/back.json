@@ -1,6 +1,8 @@
 {
   "replace": false,
   "values": [
-    "taczammobox:ammo_belt"
+    "taczammobox:ammo_belt",
+    "taczammobox:ammo_chain",
+    "taczammobox:satellite_rack"
   ]
 }
