@@ -94,9 +94,9 @@
   "message.taczammobox.no_space": "背包里没有空间足够的同类弹药盒",
   "message.taczammobox.storage.filled": "已灌入 %s 发 %s 弹药",
   "message.taczammobox.storage.full": "弹药库已满",
-  "taczammobox.attachment.auto_sear.name": "自动击发扩容弹匣 I（400 RPM / 30 发）",
-  "taczammobox.attachment.auto_sear_2.name": "自动击发扩容弹匣 II（600 RPM / 45 发）",
-  "taczammobox.attachment.auto_sear_3.name": "自动击发扩容弹匣 III（800 RPM / 60 发）",
+  "taczammobox.attachment.auto_sear.name": "自动击发扩容弹匣 I（彩蛋 400 RPM / 30 发）",
+  "taczammobox.attachment.auto_sear_2.name": "自动击发扩容弹匣 II（彩蛋 600 RPM / 45 发）",
+  "taczammobox.attachment.auto_sear_3.name": "自动击发扩容弹匣 III（彩蛋 800 RPM / 60 发）",
   "tooltip.taczammobox.ammo": "弹种：%s",
   "tooltip.taczammobox.fill": "按 %s 装填弹药盒",
   "tooltip.taczammobox.mode": "模式：%s",
@@ -124,5 +124,8 @@
   "item.taczammobox.satellite_rack_upkeep.hint": "放在饰品背槽或背包里生效；某种弹药打光时会提示缺少的弹种。",
   "item.taczammobox.satellite_rack.cache": "已缓存 %s 种弹药",
   "message.taczammobox.satellite.no_ammo": "浮游炮缺少弹药：%s，请补充对应的弹药盒或散装弹药",
-  "entity.taczammobox.satellite_gun": "浮游炮"
+  "entity.taczammobox.satellite_gun": "浮游炮",
+  "taczammobox.attachment.auto_sear_normal.name": "自动击发扩容弹匣 I（标准 200 RPM / 10 发）",
+  "taczammobox.attachment.auto_sear_normal_2.name": "自动击发扩容弹匣 II（标准 400 RPM / 20 发）",
+  "taczammobox.attachment.auto_sear_normal_3.name": "自动击发扩容弹匣 III（标准 600 RPM / 30 发）"
 }

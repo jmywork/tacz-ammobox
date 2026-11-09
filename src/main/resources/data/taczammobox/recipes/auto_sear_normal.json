@@ -1,0 +1,27 @@
+{
+  "materials": [
+    {
+      "item": {
+        "item": "tacz:sniper_extended_mag_3"
+      },
+      "count": 1
+    },
+    {
+      "item": {
+        "item": "minecraft:netherite_ingot"
+      },
+      "count": 4
+    },
+    {
+      "item": {
+        "item": "minecraft:nether_star"
+      },
+      "count": 4
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "taczammobox:auto_sear_normal"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

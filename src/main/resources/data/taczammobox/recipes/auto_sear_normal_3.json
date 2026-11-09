@@ -1,0 +1,21 @@
+{
+  "materials": [
+    {
+      "item": {
+        "item": "taczammobox:auto_sear_normal_2"
+      },
+      "count": 1
+    },
+    {
+      "item": {
+        "item": "minecraft:netherite_block"
+      },
+      "count": 8
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "taczammobox:auto_sear_normal_3"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

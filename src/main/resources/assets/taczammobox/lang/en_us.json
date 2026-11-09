@@ -94,9 +94,9 @@
   "message.taczammobox.no_space": "No matching ammo box with enough space",
   "message.taczammobox.storage.filled": "Poured %s rounds of %s",
   "message.taczammobox.storage.full": "Ammo storage is full",
-  "taczammobox.attachment.auto_sear.name": "Auto-Fire Extended Magazine I (400 RPM / 30 rounds)",
-  "taczammobox.attachment.auto_sear_2.name": "Auto-Fire Extended Magazine II (600 RPM / 45 rounds)",
-  "taczammobox.attachment.auto_sear_3.name": "Auto-Fire Extended Magazine III (800 RPM / 60 rounds)",
+  "taczammobox.attachment.auto_sear.name": "Auto-Fire Extended Magazine I (Easter egg · 400 RPM / 30 rounds)",
+  "taczammobox.attachment.auto_sear_2.name": "Auto-Fire Extended Magazine II (Easter egg · 600 RPM / 45 rounds)",
+  "taczammobox.attachment.auto_sear_3.name": "Auto-Fire Extended Magazine III (Easter egg · 800 RPM / 60 rounds)",
   "tooltip.taczammobox.ammo": "Ammo: %s",
   "tooltip.taczammobox.fill": "Press %s to fill an ammo box",
   "tooltip.taczammobox.mode": "Mode: %s",
@@ -124,5 +124,8 @@
   "item.taczammobox.satellite_rack_upkeep.hint": "Works from the back slot or inventory; warns you when a caliber runs dry.",
   "item.taczammobox.satellite_rack.cache": "%s caliber(s) cached",
   "message.taczammobox.satellite.no_ammo": "Satellite guns are out of %s. Load a matching ammo box or loose rounds.",
-  "entity.taczammobox.satellite_gun": "Satellite Gun"
+  "entity.taczammobox.satellite_gun": "Satellite Gun",
+  "taczammobox.attachment.auto_sear_normal.name": "Auto-Fire Extended Magazine I (Standard · 200 RPM / 10 rounds)",
+  "taczammobox.attachment.auto_sear_normal_2.name": "Auto-Fire Extended Magazine II (Standard · 400 RPM / 20 rounds)",
+  "taczammobox.attachment.auto_sear_normal_3.name": "Auto-Fire Extended Magazine III (Standard · 600 RPM / 30 rounds)"
 }

@@ -239,6 +239,17 @@ public final class FeatureFlags {
         return ids;
     }
 
+    /** True only for the creative-only (easter-egg) magazine set. */
+    public static boolean isEasterTierMagazine(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        AutoFireTier tier = stack.getItem() instanceof IAttachment attachment
+                ? AutoFireTier.of(attachment.getAttachmentId(stack))
+                : AutoFireTier.of(stack);
+        return tier != null && tier.isEasterEgg();
+    }
+
     /** Feed belt lookup, kept here so the reload mixin only talks to this class. */
     /** Registry id of a stack, used by diagnostics. */
     public static String itemIdForLog(ItemStack stack) {
