@@ -78,16 +78,20 @@ public final class AutoFirePack {
     }
 
     private static String data(AutoFireTier tier) {
+        // The easter-egg magazine is meant to feel absurd, so it cancels the gun's recoil.
+        String recoil = tier.isEasterEgg()
+                ? ",\n  \"recoil\": {\n    \"pitch\": {\n      \"multiplier\": 0.0\n    },\n    \"yaw\": {\n      \"multiplier\": 0.0\n    }\n  }"
+                : "";
         return """
                 {
                   "weight": %s,
-                  "extended_mag_level": %d
+                  "extended_mag_level": %d%s
                 }
                 """.formatted(switch (tier.level()) {
                     case 2 -> "0.15";
                     case 3 -> "0.3";
                     default -> "0.05";
-                }, tier.level());
+                }, tier.level(), recoil);
     }
 
     private static String display(AutoFireTier tier) {
