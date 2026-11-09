@@ -6,6 +6,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.tacz.guns.api.item.IAttachment;
+import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.attachment.AttachmentType;
+import net.minecraft.resources.ResourceLocation;
 import com.taczammobox.TaczAmmoBoxMod;
 import com.taczammobox.util.AmmoChainHelper;
 import com.taczammobox.util.AutoFireTier;
@@ -240,6 +243,17 @@ public final class FeatureFlags {
     /** Registry id of a stack, used by diagnostics. */
     public static String itemIdForLog(ItemStack stack) {
         return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+    }
+
+    /** Gun id and mounted extended magazine, used by diagnostics. */
+    public static String magazineForLog(ItemStack stack) {
+        IGun gun = IGun.getIGunOrNull(stack);
+        if (gun == null) {
+            return "no-gun";
+        }
+        ResourceLocation gunId = gun.getGunId(stack);
+        ResourceLocation mag = gun.getAttachmentId(stack, AttachmentType.EXTENDED_MAG);
+        return gunId.getPath() + "|" + mag;
     }
 
     public static boolean chainHasReloadSource(Player player, ItemStack gunStack) {

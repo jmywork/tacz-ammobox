@@ -39,9 +39,12 @@ public abstract class GunDataShootIntervalMixin {
             }
             long interval = FeatureFlags.tierIntervalFor(gunStack);
             if (interval > 0L) {
-                com.taczammobox.util.AutoFireServer.DIAG.log("interval", interval + "ms for "
-                        + FeatureFlags.itemIdForLog(gunStack));
+                com.taczammobox.util.AutoFireServer.DIAG.logChange("interval", interval + "ms "
+                        + FeatureFlags.magazineForLog(gunStack));
                 cir.setReturnValue(interval);
+            } else {
+                com.taczammobox.util.AutoFireServer.DIAG.logChange("interval-none", "no tier "
+                        + FeatureFlags.magazineForLog(gunStack));
             }
         } catch (Throwable throwable) {
             if (!taczammobox$warned) {

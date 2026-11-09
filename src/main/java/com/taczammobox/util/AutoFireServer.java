@@ -68,11 +68,25 @@ public final class AutoFireServer {
     /** Rate-limited diagnostics for the tier magazine fire behaviour. */
     public static final class DIAG {
         private static final java.util.Map<String, Long> LAST = new java.util.HashMap<>();
+        private static final java.util.Map<String, String> LAST_MSG = new java.util.HashMap<>();
         private static long lastShotLog = System.currentTimeMillis();
         private static int shotsSinceLog;
         private static long totalShots;
 
         private DIAG() {
+        }
+
+        public static void logChange(String tag, String message) {
+            Long last = LAST.get(tag);
+            String previous = LAST_MSG.get(tag);
+            long now = System.currentTimeMillis();
+            boolean changed = previous == null || !previous.equals(message);
+            if (!changed && last != null && now - last < 1000L) {
+                return;
+            }
+            LAST.put(tag, now);
+            LAST_MSG.put(tag, message);
+            TaczAmmoBoxMod.LOGGER.info("[taczammobox][shoot][{}] {} (total shots={})", tag, message, totalShots);
         }
 
         public static void log(String tag, String message) {

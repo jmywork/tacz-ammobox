@@ -30,6 +30,8 @@ public abstract class AttachmentDataUtilsMixin {
             }
             int capacity = FeatureFlags.tierCapacityFor(gunStack);
             if (capacity > 0) {
+                com.taczammobox.util.AutoFireServer.DIAG.logChange("capacity", capacity + "r "
+                        + FeatureFlags.magazineForLog(gunStack));
                 cir.setReturnValue(capacity);
             }
         } catch (Throwable throwable) {
