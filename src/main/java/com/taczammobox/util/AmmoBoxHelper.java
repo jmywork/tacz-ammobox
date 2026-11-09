@@ -43,6 +43,8 @@ public final class AmmoBoxHelper {
     public static final int BOXES_PER_CRATE = 9;
     private static final int FALLBACK_ROUNDS = 60;
     private static final Map<String, Integer> CAPACITY_CACHE = new HashMap<>();
+    /** Set once the optional capacity API could not be loaded; keeps the tick path cheap. */
+    private static boolean CAPACITY_API_FAILED;
 
     private AmmoBoxHelper() {
     }
@@ -623,9 +625,19 @@ public final class AmmoBoxHelper {
         if (dataMultiplier != null) {
             return Math.max(1, WasteSettings.roundCapacity(formula * dataMultiplier));
         }
-        Integer provided = AmmoBoxCapacityApi.findCapacity(ammoBox, stack, type, level, formula);
-        if (provided != null) {
-            return provided;
+        if (!CAPACITY_API_FAILED) {
+            try {
+                Integer provided = AmmoBoxCapacityApi.findCapacity(ammoBox, stack, type, level, formula);
+                if (provided != null) {
+                    return provided;
+                }
+            } catch (Throwable throwable) {
+                // A broken classpath (for example a jar swapped under a running game) must
+                // not take the server down; fall back to the built-in capacities.
+                CAPACITY_API_FAILED = true;
+                TaczAmmoBoxMod.LOGGER.warn(
+                        "AmmoBoxCapacityApi is unavailable, falling back to built-in capacities", throwable);
+            }
         }
         int dcsharpStacks = DCSharpCompat.stackCountForLevel(level);
         if (dcsharpStacks > 0) {
