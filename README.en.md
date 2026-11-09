@@ -7,7 +7,7 @@ Ammo packaging for **Timeless and Classics Zero (TACZ)**: pack loose ammo into b
 - Create 6.0.x optional
 - GPL-3.0-only
 - Author jmywork
-- Version `0.4.0`
+- Version `0.4.1`
 
 中文: [README.md](README.md)
 
@@ -17,7 +17,7 @@ Capacity API and data-driven config: [docs/api.md](docs/api.md).
 
 1. Install Forge 1.20.1.
 2. Install TACZ 1.2.0.
-3. Put `taczammobox-1.20.1-0.4.0.jar` into `mods/`.
+3. Put `taczammobox-1.20.1-0.4.1.jar` into `mods/`.
 4. Create is optional; install it only if you want deployer support.
 
 ## Quick start
