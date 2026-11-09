@@ -125,5 +125,7 @@
   "entity.taczammobox.satellite_gun": "浮游炮",
   "taczammobox.attachment.auto_sear_normal.name": "自动击发扩容弹匣 I（标准 200 RPM / 10 发）",
   "taczammobox.attachment.auto_sear_normal_2.name": "自动击发扩容弹匣 II（标准 400 RPM / 20 发）",
-  "taczammobox.attachment.auto_sear_normal_3.name": "自动击发扩容弹匣 III（标准 600 RPM / 30 发）"
+  "taczammobox.attachment.auto_sear_normal_3.name": "自动击发扩容弹匣 III（标准 600 RPM / 30 发）",
+  "pack.taczammobox.autofire.name": "自动击发弹匣附属包",
+  "pack.taczammobox.autofire.desc": "为拉栓枪提供标准与彩蛋自动击发扩容弹匣。"
 }
