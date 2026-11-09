@@ -110,6 +110,11 @@ public final class AutoFireServer {
             TaczAmmoBoxMod.LOGGER.info("[taczammobox][shoot][{}] {} (total shots={})", tag, message, totalShots);
         }
 
+        /** Unthrottled logging for rare events such as the trigger state flipping. */
+        public static void logNow(String tag, String message) {
+            TaczAmmoBoxMod.LOGGER.info("[taczammobox][shoot][{}] {} (total shots={})", tag, message, totalShots);
+        }
+
         public static void shot() {
             shotsSinceLog++;
             totalShots++;
