@@ -25,12 +25,28 @@ public final class AutoFirePack {
             }
             """;
 
+    /** Shown in the gun smith table's pack-info panel; without it TACZ draws an error there. */
+    private static final String PACK_INFO = """
+            {
+              "version": "%s",
+              "name": "pack.taczammobox.autofire.name",
+              "desc": "pack.taczammobox.autofire.desc",
+              "license": "GPL-3.0-only",
+              "authors": [
+                "jmywork"
+              ],
+              "date": "%s"
+            }
+            """;
+
     private AutoFirePack() {
     }
 
     public static void install() {
         Path root = FMLPaths.GAMEDIR.get().resolve("tacz").resolve(PACK_DIR);
         write(root.resolve("gunpack.meta.json"), META);
+        write(root.resolve("assets/taczammobox/gunpack_info.json"),
+                PACK_INFO.formatted(modVersion(), java.time.LocalDate.now().toString()));
         java.util.Set<String> expected = new java.util.HashSet<>();
         for (AutoFireTier tier : AutoFireTier.all()) {
             String path = tier.path();
@@ -45,6 +61,12 @@ public final class AutoFirePack {
         prune(root.resolve("data/taczammobox/index/attachments"), expected);
         prune(root.resolve("data/taczammobox/data/attachments"), expected);
         prune(root.resolve("assets/taczammobox/display/attachments"), expected);
+    }
+
+    private static String modVersion() {
+        return net.minecraftforge.fml.ModList.get().getModContainerById(TaczAmmoBoxMod.MOD_ID)
+                .map(container -> container.getModInfo().getVersion().toString())
+                .orElse("0.4.0");
     }
 
     private static void prune(Path directory, java.util.Set<String> expected) {

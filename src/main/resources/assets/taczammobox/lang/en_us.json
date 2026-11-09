@@ -125,5 +125,7 @@
   "entity.taczammobox.satellite_gun": "Satellite Gun",
   "taczammobox.attachment.auto_sear_normal.name": "Auto-Fire Extended Magazine I (Standard · 200 RPM / 10 rounds)",
   "taczammobox.attachment.auto_sear_normal_2.name": "Auto-Fire Extended Magazine II (Standard · 400 RPM / 20 rounds)",
-  "taczammobox.attachment.auto_sear_normal_3.name": "Auto-Fire Extended Magazine III (Standard · 600 RPM / 30 rounds)"
+  "taczammobox.attachment.auto_sear_normal_3.name": "Auto-Fire Extended Magazine III (Standard · 600 RPM / 30 rounds)",
+  "pack.taczammobox.autofire.name": "Auto-fire Magazine Add-on Pack",
+  "pack.taczammobox.autofire.desc": "Standard and easter-egg auto-fire extended magazines for bolt-action guns."
 }
