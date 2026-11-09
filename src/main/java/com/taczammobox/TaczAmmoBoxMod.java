@@ -1,6 +1,7 @@
 package com.taczammobox;
 
 import com.taczammobox.compat.AutoFirePack;
+import com.taczammobox.crafting.AttachmentIngredientSerializer;
 import com.taczammobox.compat.CompatSelfCheck;
 import com.taczammobox.config.AmmoFactorySettings;
 import com.taczammobox.config.FeatureFlags;
@@ -15,6 +16,7 @@ import com.taczammobox.registry.ModEntities;
 import com.taczammobox.registry.ModItems;
 import com.taczammobox.registry.ModMenus;
 import com.mojang.logging.LogUtils;
+import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -27,6 +29,7 @@ public class TaczAmmoBoxMod {
 
     public TaczAmmoBoxMod(FMLJavaModLoadingContext context) {
         // Must run before ModItems is loaded: item ids have to exist at registry time.
+        CraftingHelper.register(AttachmentIngredientSerializer.ID, AttachmentIngredientSerializer.INSTANCE);
         AmmoTypes.init();
         WasteSettings.load();
         FeatureFlags.load();

@@ -2,7 +2,8 @@
   "materials": [
     {
       "item": {
-        "item": "taczammobox:auto_sear_normal"
+        "type": "taczammobox:attachment",
+        "id": "taczammobox:auto_sear_normal"
       },
       "count": 1
     },
