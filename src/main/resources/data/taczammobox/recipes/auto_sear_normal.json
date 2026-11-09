@@ -2,7 +2,8 @@
   "materials": [
     {
       "item": {
-        "item": "tacz:sniper_extended_mag_3"
+        "type": "taczammobox:attachment",
+        "id": "tacz:sniper_extended_mag_3"
       },
       "count": 1
     },
