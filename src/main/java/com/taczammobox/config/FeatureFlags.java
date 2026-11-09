@@ -253,7 +253,7 @@ public final class FeatureFlags {
         }
         ResourceLocation gunId = gun.getGunId(stack);
         ResourceLocation mag = gun.getAttachmentId(stack, AttachmentType.EXTENDED_MAG);
-        return gunId.getPath() + "|" + mag;
+        return gunId.getPath() + "|" + mag + "|" + gun.getFireMode(stack);
     }
 
     public static boolean chainHasReloadSource(Player player, ItemStack gunStack) {
