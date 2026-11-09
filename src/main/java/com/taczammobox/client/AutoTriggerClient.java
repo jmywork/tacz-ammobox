@@ -2,7 +2,6 @@ package com.taczammobox.client;
 
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
-import com.tacz.guns.client.input.ShootKey;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.resource.index.CommonGunIndex;
@@ -27,10 +26,6 @@ import net.minecraftforge.fml.common.Mod;
  */
 @Mod.EventBusSubscriber(modid = TaczAmmoBoxMod.MOD_ID, value = Dist.CLIENT)
 public final class AutoTriggerClient {
-    private static int taczammobox$ticks;
-    private static long taczammobox$lastTickReport = System.currentTimeMillis();
-    private static boolean taczammobox$lastTrigger;
-
     private AutoTriggerClient() {
     }
 
@@ -38,14 +33,6 @@ public final class AutoTriggerClient {
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) {
             return;
-        }
-        taczammobox$ticks++;
-        long now = System.currentTimeMillis();
-        if (now - taczammobox$lastTickReport >= 1000L) {
-            com.taczammobox.util.AutoFireServer.DIAG.logChange("ticks",
-                    "ticks/s=" + taczammobox$ticks + " fps=" + Minecraft.getInstance().getFps());
-            taczammobox$ticks = 0;
-            taczammobox$lastTickReport = now;
         }
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
@@ -63,12 +50,6 @@ public final class AutoTriggerClient {
         if (gun.getFireMode(gunStack) != FireMode.AUTO) {
             gun.setFireMode(gunStack, FireMode.AUTO);
         }
-        boolean trigger = ShootKey.SHOOT_KEY.isDown();
-        if (trigger != taczammobox$lastTrigger) {
-            taczammobox$lastTrigger = trigger;
-            com.taczammobox.util.AutoFireServer.DIAG.logNow("trigger",
-                    (trigger ? "down" : "up") + " ammo=" + gun.getCurrentAmmoCount(gunStack));
-        }
         // The server keeps the chamber loaded because the bolt script never runs. The
         // client's own copy of that flag is what TACZ's shoot gate reads, though, and it
         // is only refreshed by item sync, so mirror the server here or every other shot
@@ -82,9 +63,6 @@ public final class AutoTriggerClient {
         }
         IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(player);
         if (operator != null && operator.getDataHolder() != null) {
-            if (operator.getDataHolder().isBolting) {
-                com.taczammobox.util.AutoFireServer.DIAG.log("client-bolt", "cleared isBolting");
-            }
             operator.getDataHolder().isBolting = false;
         }
     }

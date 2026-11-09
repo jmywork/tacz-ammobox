@@ -16,7 +16,6 @@
   "client": [
     "AnimationStateMachineMixin",
     "SoundPlayManagerMixin",
-    "LocalPlayerShootDiagMixin",
     "LocalPlayerShootChamberMixin"
   ],
   "injectors": {

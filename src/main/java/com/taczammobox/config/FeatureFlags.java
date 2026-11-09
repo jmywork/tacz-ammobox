@@ -6,13 +6,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.tacz.guns.api.item.IAttachment;
-import com.tacz.guns.api.item.IGun;
-import com.tacz.guns.api.item.attachment.AttachmentType;
-import net.minecraft.resources.ResourceLocation;
 import com.taczammobox.TaczAmmoBoxMod;
 import com.taczammobox.util.AmmoChainHelper;
 import com.taczammobox.util.AutoFireTier;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.fml.loading.FMLPaths;
@@ -251,21 +247,6 @@ public final class FeatureFlags {
     }
 
     /** Feed belt lookup, kept here so the reload mixin only talks to this class. */
-    /** Registry id of a stack, used by diagnostics. */
-    public static String itemIdForLog(ItemStack stack) {
-        return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
-    }
-
-    /** Gun id and mounted extended magazine, used by diagnostics. */
-    public static String magazineForLog(ItemStack stack) {
-        IGun gun = IGun.getIGunOrNull(stack);
-        if (gun == null) {
-            return "no-gun";
-        }
-        ResourceLocation gunId = gun.getGunId(stack);
-        ResourceLocation mag = gun.getAttachmentId(stack, AttachmentType.EXTENDED_MAG);
-        return gunId.getPath() + "|" + mag + "|" + gun.getFireMode(stack);
-    }
 
     public static boolean chainHasReloadSource(Player player, ItemStack gunStack) {
         return ammoChain() && AmmoChainHelper.hasReloadSource(player, gunStack);

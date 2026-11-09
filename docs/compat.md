@@ -6,7 +6,7 @@
 |---|---|
 | Minecraft | 1.20.1 |
 | Forge | 47.3.19（47.4.x 未完整验证） |
-| TACZ | **1.1.8-hotfix2**（硬依赖） |
+| TACZ | **1.2.0**（硬依赖） |
 | Create | 6.0.x（可选，仅部署器兼容与哨戒臂） |
 | Curios | 5.14.x（可选，弹链与饰品搜索） |
 
@@ -16,8 +16,8 @@
 
 | Mixin | 目标 | 作用 | 开关 |
 |---|---|---|---|
-| `AttachmentsTagMixin` | TACZ `AttachmentsTagManager` | 让所有拉栓枪接受三个弹匣 | `autoFire` |
-| `AttachmentDataUtilsMixin` | TACZ 容量计算 | 按档位返回 30/45/60 | `capacityOverride` |
+| `AttachmentsTagMixin` | TACZ `AttachmentsTagManager` | 让所有拉栓枪接受全部自动击发弹匣（标准 + 彩蛋） | `autoFire` |
+| `AttachmentDataUtilsMixin` | TACZ 容量计算 | 按档位返回弹容（标准 10/20/30、彩蛋 300） | `capacityOverride` |
 | `GunDataShootIntervalMixin` | TACZ 射击间隔 | 按档位返回 60000/RPM | `rpmOverride` |
 | `ModernKineticGunBoltMixin` | TACZ `startBolt` | 玩家跳过拉栓脚本（FakePlayer 不跳） | `autoFire` |
 | `AnimationStateMachineMixin`（客户端） | TACZ 动画状态机 | 屏蔽 `blot` 拉栓动画 | `autoFire` |

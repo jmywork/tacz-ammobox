@@ -3,11 +3,11 @@
 TACZ（Timeless and Classics Zero）的弹药包装附属。把散装弹药装成盒、箱，并自动化装进 TACZ 弹药盒。
 
 - Minecraft 1.20.1 / Forge 47.3.19
-- 需要 TACZ 1.1.8-hotfix2
+- 需要 TACZ 1.2.0
 - Create 6.0.x 可选
 - 协议 GPL-3.0-only
 - 作者 jmywork
-- 版本 `0.3.0`
+- 版本 `0.4.0`
 
 English: [README.en.md](README.en.md)
 
@@ -21,8 +21,8 @@ English: [README.en.md](README.en.md)
 ## 安装
 
 1. 安装 Forge 1.20.1。
-2. 安装 TACZ 1.1.8-hotfix2。
-3. 把 `taczammobox-1.20.1-0.3.0.jar` 放进 `mods/`。
+2. 安装 TACZ 1.2.0。
+3. 把 `taczammobox-1.20.1-0.4.0.jar` 放进 `mods/`。
 4. 想用 Create 部署器兼容再装 Create 6.0.x，不装也能正常玩。
 
 ## 快速开始
@@ -35,7 +35,11 @@ English: [README.en.md](README.en.md)
 - **一键打包**：按 `H`（可改键）或 `/taczammobox pack`，把玩家背包、Curios、当前打开容器（含精妙背包/箱子）里的满组散弹打包成新盒；不满一组会留在原位。
 - **自动供弹弹链**：放在背包/Curios 中，主手枪低于满弹匣时自动从压缩弹药盒/箱补弹，不触发换弹；弹链耗尽或武器过热后恢复正常逻辑。
 - **供弹弹链**：生存可合成。携带后 TACZ 枪换弹时直接从盒装/箱装弹药、TACZ 弹药盒或散装弹药取弹，不再需要弹药盒；换弹动作与冷却照常，余弹缓存在弹链里。支持背包、Curios 与精妙背包（不嵌套）。
-- **彩蛋物品**：自动供弹弹链、三级自动击发弹匣这类明显影响平衡的东西和普通物品放在同一个创造分类里，物品说明末尾会标注「彩蛋物品」，**不提供任何合成表**。想在生存里用请自行写数据包配方。
+- **自动击发扩容弹匣**：给拉栓枪用。标准版 I / II / III：弹容 10 / 20 / 30，射速 200 / 400 / 600 RPM；在 TACZ 枪械工作台合成：狙击扩容弹匣 III + 下界合金锭 ×4 + 下界之星 ×4 → 标准 I；标准 I + 下界合金锭 ×4 + 下界之星 ×4 → 标准 II；标准 II + 下界合金块 ×8 → 标准 III。装上后枪自动切全自动并跳过拉栓，射速按弹匣档位生效。
+- **弹药装配机**：配方驱动，界面分「弹药 / 配方 / 产物」三列，配方直接来自 TACZ 枪械工作台；六面输入输出 + 红石控制，自动从「入」面容器抽取材料。
+- **浮游炮机架**（彩蛋）：最多挂 10 把 TACZ 枪，在玩家背后展开成枪扇；每把枪各自索敌，按 `X` 标记集火目标。
+- **制式浮游炮机架**：生存可合成（下界合金块 ×4 + 信标 + 弹链 + 龙息 ×2 + 龙头），自带按弹种分组的弹药缓存。
+- **彩蛋物品**：自动供弹弹链、彩蛋三级自动击发弹匣（300 发 / 1000 RPM / 无后座）、浮游炮机架属于彩蛋，物品说明末尾标注「彩蛋物品」，**不提供合成表**。
 - **装填优先级**：`settings.json` 的 `boxPriority` 可调整 `main_hand / inventory / curios / open_container` 的搜索顺序。
 - **自检/重载配方**：`/taczammobox doctor` 检查配置和生成资源；`/taczammobox reloadrecipes` 重载数据包和第三方配方。
 - **打包机**：散弹 → 盒、9 盒 → 箱；也可以反向拆包。GUI 有过滤槽，放入散弹/盒/箱可只处理该弹种。
@@ -61,6 +65,12 @@ English: [README.en.md](README.en.md)
 - 同样支持六面配置、红石和自动上下料。
 - 比较器输出：0 空闲、1–14 装填进度、15 输出槽有成品。
 
+**装配机**：铁锭 ×4、铜锭 ×4、活塞。
+
+- 三列：弹药 / 配方 / 产物；配方来自 TACZ 枪械工作台，材料齐全才开工。
+- 六面输入输出、红石控制、自动上下料，可选锁定当前配方。
+- 比较器输出：0 空闲、1–14 处理进度、15 输出槽有成品。
+
 ## 可选显示
 
 安装 **Jade** 或 **WTHIT** 后，准星对准机器或第三方箱子可以看到：
@@ -75,7 +85,7 @@ English: [README.en.md](README.en.md)
 
 - **精妙背包**：按 `V` 会搜索背包里的弹药盒
 - **DCSharp**：自动读取它对铁/金/钻石弹药盒的 6/12/20 组容量修改
-- **JEI**：提供打包机/装填机加工关系分类（可选）
+- **JEI**：提供打包机/装填机/装配机加工关系分类与自动击发弹匣分类（可选）
 - **Curios**：饰品栏里如果有弹药盒，也会被搜索
 - 没有安装这些模组时，只搜索玩家普通背包
 
@@ -119,7 +129,10 @@ English: [README.en.md](README.en.md)
 | `/taczammobox scan` | 2 | 只追加缺失弹种，不删除已有条目，重启生效 |
 | `/taczammobox clean` | 2 | 直接清理失效弹种条目 |
 | `/taczammobox cleanup [半径]` | 2 | 直接清理玩家/容器/掉落物里的孤儿盒，默认 64 |
-| `/taczammobox reload` | 2 | 重读 `settings.json` 并同步客户端 |
+| `/taczammobox reload` | 2 | 重读 `settings.json` / `features.json` / `autofire.json` 并同步客户端 |
+| `/taczammobox doctor` | 任意 | 自检配置、生成资源与可选模组兼容状态 |
+| `/taczammobox reloadrecipes` | 2 | 重载数据包与第三方配方注入 |
+| `/taczammobox priority` | 任意 | 查看装填搜索优先级 |
 | `/taczammobox autorefill` | 任意 | 查看自动补货开关 |
 | `/taczammobox autorefill <true\|false>` | 2 | 设置自动补货开关 |
 | `/taczammobox capacity held <容量>` | 2 | 设置主手盒子容量（带弹种） |

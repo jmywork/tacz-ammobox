@@ -33,7 +33,6 @@ public abstract class ModernKineticGunBoltMixin {
             }
             holder.isBolting = false;
             holder.boltTimestamp = 0;
-            com.taczammobox.util.AutoFireServer.DIAG.log("bolt-cancel", "startBolt cancelled");
             cir.setReturnValue(false);
         } catch (Throwable throwable) {
             if (!taczammobox$warned) {
