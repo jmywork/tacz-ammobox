@@ -1,6 +1,7 @@
 package com.taczammobox.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import com.taczammobox.block.AmmoBoxPileBlock;
 import com.taczammobox.block.AmmoBoxPileBlockEntity;
 import com.taczammobox.registry.ModBlockEntities;
@@ -107,16 +108,17 @@ public class AmmoBoxPileRenderer implements BlockEntityRenderer<AmmoBoxPileBlock
         count = Math.max(1, Math.min(AmmoBoxPileBlock.MAX_BOXES, count));
         float[][] layout = layout(count);
 
-        // The layout is authored facing north; rotate the grid around the block
-        // centre so a placed pile follows the direction of whoever placed it.
+        // The boxes are authored with their label on the north face, so both the
+        // grid and every box model have to turn with the pile's facing.
         Direction facing = state.hasProperty(AmmoBoxPileBlock.FACING)
                 ? state.getValue(AmmoBoxPileBlock.FACING) : Direction.NORTH;
-        float radians = (float) Math.toRadians(switch (facing) {
-            case EAST -> 90.0F;
+        float degrees = switch (facing) {
+            case EAST -> -90.0F;
             case SOUTH -> 180.0F;
-            case WEST -> 270.0F;
+            case WEST -> 90.0F;
             default -> 0.0F;
-        });
+        };
+        float radians = (float) Math.toRadians(degrees);
         float cos = (float) Math.cos(radians);
         float sin = (float) Math.sin(radians);
 
@@ -127,8 +129,8 @@ public class AmmoBoxPileRenderer implements BlockEntityRenderer<AmmoBoxPileBlock
             float[] slot = layout[i];
             float dx = slot[0] - 8.0F;
             float dz = slot[1] - 8.0F;
-            float rx = dx * cos - dz * sin;
-            float rz = dx * sin + dz * cos;
+            float rx = dx * cos + dz * sin;
+            float rz = -dx * sin + dz * cos;
             pose.pushPose();
             // ItemRenderer itself applies a -0.5 block translation after the
             // model transform, so compensate here and keep every box centered
@@ -136,6 +138,7 @@ public class AmmoBoxPileRenderer implements BlockEntityRenderer<AmmoBoxPileBlock
             pose.translate((8.0F + rx + 0.5F) / 16.0F,
                     slot[2] * 6.0F / 16.0F + SHIFT_Y / 16.0F,
                     (8.0F + rz + 0.25F) / 16.0F);
+            pose.mulPose(Axis.YP.rotationDegrees(degrees));
             pose.scale(0.4666667F, 0.5F, 0.5F);
             renderer.renderStatic(stack, ItemDisplayContext.NONE, packedLight, packedOverlay,
                     pose, buffer, pile.getLevel(), seed + i);
