@@ -25,12 +25,33 @@ import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.InvWrapper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /** Server-side belt feeding for the main-hand TACZ gun. */
 @Mod.EventBusSubscriber(modid = TaczAmmoBoxMod.MOD_ID)
 public final class AmmoBeltHelper {
+    /**
+     * Inventory slot the belt was found in last time. Feeding runs on every tick the
+     * magazine is not full, which is most of a firefight, so re-checking one remembered
+     * slot beats scanning 36 slots and the Curios inventory each tick.
+     */
+    private static final Map<UUID, Integer> BELT_SLOT = new HashMap<>();
+    /** Curios is a capability query; without a belt there, only retry a few times a second. */
+    private static final Map<UUID, Long> CURIO_RETRY = new HashMap<>();
+    private static final long CURIO_RETRY_TICKS = 5L;
+
     private AmmoBeltHelper() {
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(
+            net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
+        UUID id = event.getEntity().getUUID();
+        BELT_SLOT.remove(id);
+        CURIO_RETRY.remove(id);
     }
 
     @SubscribeEvent
@@ -128,18 +149,39 @@ public final class AmmoBeltHelper {
     }
 
     private static ItemStack findBelt(Player player) {
+        UUID id = player.getUUID();
+        Integer remembered = BELT_SLOT.get(id);
+        if (remembered != null) {
+            ItemStack cached = player.getInventory().getItem(remembered);
+            if (cached.getItem() instanceof AmmoBeltItem) {
+                return cached;
+            }
+            BELT_SLOT.remove(id);
+        }
         // Straight inventory scan first: it covers almost every player and does not
         // allocate a handler list just to look for one item.
         for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
             ItemStack stack = player.getInventory().getItem(slot);
             if (stack.getItem() instanceof AmmoBeltItem) {
+                BELT_SLOT.put(id, slot);
                 return stack;
             }
         }
-        if (ModList.get().isLoaded("curios")) {
-            return CuriosCompat.findCurio(player, stack -> stack.getItem() instanceof AmmoBeltItem);
+        if (!ModList.get().isLoaded("curios")) {
+            return ItemStack.EMPTY;
         }
-        return ItemStack.EMPTY;
+        long now = player.level().getGameTime();
+        Long retryAt = CURIO_RETRY.get(id);
+        if (retryAt != null && now < retryAt) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack found = CuriosCompat.findCurio(player, stack -> stack.getItem() instanceof AmmoBeltItem);
+        if (found.isEmpty()) {
+            CURIO_RETRY.put(id, now + CURIO_RETRY_TICKS);
+        } else {
+            CURIO_RETRY.remove(id);
+        }
+        return found;
     }
 
     private static int consumeAmmo(Player player, ResourceLocation ammoId) {

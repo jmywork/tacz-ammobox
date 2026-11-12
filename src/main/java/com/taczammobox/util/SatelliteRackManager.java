@@ -49,8 +49,10 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -101,6 +103,10 @@ public final class SatelliteRackManager {
     private static final Map<UUID, ItemStack> GUN_CACHE_RACK = new HashMap<>();
     /** Next tick a player without a Curios rack may query the slot again. */
     private static final Map<UUID, Long> RACK_RETRY = new HashMap<>();
+    /** Players that currently have satellite entities spawned. */
+    private static final Set<UUID> ACTIVE = new HashSet<>();
+    /** Next tick a player without spawned satellites may scan the inventory again. */
+    private static final Map<UUID, Long> RACK_SCAN_AT = new HashMap<>();
     private static boolean warned;
 
     private SatelliteRackManager() {
@@ -115,6 +121,8 @@ public final class SatelliteRackManager {
         GUN_CACHE_VERSION.remove(id);
         GUN_CACHE_RACK.remove(id);
         RACK_RETRY.remove(id);
+        ACTIVE.remove(id);
+        RACK_SCAN_AT.remove(id);
         AMMO_NOTICE.keySet().removeIf(key -> key.startsWith(id + "/"));
     }
 
@@ -124,13 +132,35 @@ public final class SatelliteRackManager {
             return;
         }
         Player player = event.player;
-        ItemStack rack = findRack(player);
-        if (rack.isEmpty() || !FeatureFlags.easterEggTab()) {
-            discard(player);
+        UUID playerId = player.getUUID();
+        // The flag is a plain boolean read, so check it before touching the inventory.
+        if (!FeatureFlags.easterEggTab()) {
+            if (ACTIVE.remove(playerId)) {
+                discard(player);
+            }
             return;
         }
+        // Without spawned satellites there is nothing to sync: rescan the inventory a few
+        // times a second instead of every tick, and never run the entity query discard()
+        // needs. Once a rack shows up the player stays ACTIVE and the loop is exact again.
+        boolean active = ACTIVE.contains(playerId);
         long tick = player.level().getGameTime();
-        UUID playerId = player.getUUID();
+        if (!active) {
+            Long nextScan = RACK_SCAN_AT.get(playerId);
+            if (nextScan != null && tick < nextScan) {
+                return;
+            }
+        }
+        ItemStack rack = findRack(player);
+        if (rack.isEmpty()) {
+            RACK_SCAN_AT.put(playerId, tick + 5L);
+            if (active && !discard(player)) {
+                ACTIVE.remove(playerId);
+            }
+            return;
+        }
+        ACTIVE.add(playerId);
+        RACK_SCAN_AT.remove(playerId);
         int[] budget = SPAWN_BUDGET.get(playerId);
         if (budget == null) {
             budget = new int[1];
@@ -159,6 +189,7 @@ public final class SatelliteRackManager {
         List<SatelliteGunEntity> existing = satellites(player);
         if (guns.isEmpty()) {
             existing.forEach(SatelliteGunEntity::discard);
+            ACTIVE.remove(playerId);
             return;
         }
 
@@ -751,10 +782,16 @@ public final class SatelliteRackManager {
         return list;
     }
 
-    private static void discard(Player player) {
-        for (SatelliteGunEntity entity : satellites(player)) {
+    /** Discards the player's satellites; returns false when there were none to discard. */
+    private static boolean discard(Player player) {
+        List<SatelliteGunEntity> list = player.level().getEntitiesOfClass(
+                SatelliteGunEntity.class,
+                player.getBoundingBox().inflate(10.0D),
+                entity -> player.getUUID().equals(entity.getOwner()));
+        for (SatelliteGunEntity entity : list) {
             entity.discard();
         }
+        return !list.isEmpty();
     }
 
     public static ItemStack findRack(Player player) {

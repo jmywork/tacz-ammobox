@@ -34,6 +34,8 @@ import java.util.Map;
 @Mod.EventBusSubscriber(modid = TaczAmmoBoxMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class DynamicCrateRenderer implements BlockEntityRenderer<DynamicCrateBlockEntity> {
     private static final Map<ResourceLocation, Boolean> TEXTURE_CACHE = new HashMap<>();
+    /** {top, label} texture ids per ammo type, so a crate wall does not rebuild strings per frame. */
+    private static final Map<ResourceLocation, ResourceLocation[]> TEXTURE_IDS = new HashMap<>();
 
     public DynamicCrateRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -54,6 +56,7 @@ public class DynamicCrateRenderer implements BlockEntityRenderer<DynamicCrateBlo
             @Override
             protected void apply(Void unused, ResourceManager resourceManager, ProfilerFiller profiler) {
                 TEXTURE_CACHE.clear();
+                TEXTURE_IDS.clear();
             }
         });
     }
@@ -74,8 +77,11 @@ public class DynamicCrateRenderer implements BlockEntityRenderer<DynamicCrateBlo
         if (type == null) {
             return;
         }
-        ResourceLocation texture = new ResourceLocation(TaczAmmoBoxMod.MOD_ID,
-                "textures/item/top/crate_" + type.itemName() + ".png");
+        ResourceLocation[] textures = TEXTURE_IDS.computeIfAbsent(ammo, key -> new ResourceLocation[]{
+                new ResourceLocation(TaczAmmoBoxMod.MOD_ID, "textures/item/top/crate_" + type.itemName() + ".png"),
+                new ResourceLocation(TaczAmmoBoxMod.MOD_ID, "textures/item/label/crate_" + type.itemName() + ".png")
+        });
+        ResourceLocation texture = textures[0];
         if (!hasTexture(texture)) {
             return;
         }
@@ -100,17 +106,11 @@ public class DynamicCrateRenderer implements BlockEntityRenderer<DynamicCrateBlo
                 .normal(0.0F, 1.0F, 0.0F).endVertex();
         pose.popPose();
 
-        renderFrontLabel(crate, pose, buffer, packedLight);
+        renderFrontLabel(crate, textures[1], pose, buffer, packedLight);
     }
 
-    private void renderFrontLabel(DynamicCrateBlockEntity crate, PoseStack pose,
+    private void renderFrontLabel(DynamicCrateBlockEntity crate, ResourceLocation texture, PoseStack pose,
                                   MultiBufferSource buffer, int packedLight) {
-        AmmoType type = AmmoTypes.byId(crate.getAmmoId());
-        if (type == null) {
-            return;
-        }
-        ResourceLocation texture = new ResourceLocation(TaczAmmoBoxMod.MOD_ID,
-                "textures/item/label/crate_" + type.itemName() + ".png");
         if (!hasTexture(texture)) {
             return;
         }
