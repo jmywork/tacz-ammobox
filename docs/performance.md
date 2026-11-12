@@ -29,6 +29,12 @@ rack 为空    → discard() → getEntitiesOfClass(10 格膨胀 AABB) + 排序
 
 代价：从背包第一次装上机架，枪扇最多晚 5 tick（250ms）出现。估算：20 人服务器、无人使用机架时，每秒少 400 次 AABB 实体查询和 400 次背包扫描。
 
+### 1.1 目标扫描：没有目标时也按节拍重扫
+
+`gunTarget` 原来只在「有缓存目标」时才看 `targetCheckTick`，目标为空就直接 `searchTarget`。结果是**和平区域比战斗中更贵**：10 把枪每 tick 各做一次半径 24 格的实体查询，而战斗中每把枪是 4–7 tick 一次。
+
+现在空结果也写 `targetCheckTick` 并尊重它，节拍按槽位错开（每把枪 4–7 tick 一次，10 把合起来约 2 次/tick）。代价：目标死亡或走出范围后重新锁定最多慢 0.35 秒。
+
 ## 2. 供弹弹链：记住格子 + Curios 查询重试
 
 `AmmoBeltHelper.feed` 在「枪没满弹」时每 tick 都跑，而交火中枪基本都不满：

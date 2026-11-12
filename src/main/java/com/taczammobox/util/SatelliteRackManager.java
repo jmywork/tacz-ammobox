@@ -318,7 +318,10 @@ public final class SatelliteRackManager {
             satellite.setTarget(null);
             cached = null;
         }
-        if (cached != null && tick < satellite.getTargetCheckTick()) {
+        // A miss is cached exactly like a hit: without this a gun with nothing in range
+        // rescans the 24 block box every tick, which is the opposite of what an idle
+        // rack should cost. Re-acquiring after a target dies waits at most one scan.
+        if (tick < satellite.getTargetCheckTick()) {
             return cached;
         }
         LivingEntity found = searchTarget(satellite, player, claims);
