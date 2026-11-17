@@ -8,6 +8,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.resource.pojo.data.gun.GunData;
+import com.tacz.guns.util.AttachmentDataUtils;
 import com.taczammobox.TaczAmmoBoxMod;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -92,6 +94,29 @@ public final class AutoFireTier {
     /** Shoot interval in milliseconds. */
     public long shootInterval() {
         return 60000L / Math.max(1, rpm);
+    }
+
+    /**
+     * Refill target for an infinite tier, or {@code -1} when the tier spends ammo.
+     *
+     * <p>The easter magazine does not force a round count: it keeps the gun's own
+     * capacity, plus whatever a level III extended magazine does to it, so the HUD matches
+     * the gun. {@code capacity} from autofire.json is only a fallback when TACZ hands back
+     * something unusable.</p>
+     */
+    public static int refillCapacity(AutoFireTier tier, ItemStack gunStack, GunData gunData) {
+        if (tier == null || !tier.isInfinite() || gunData == null) {
+            return -1;
+        }
+        int computed;
+        try {
+            // TACZ indexes its own 3-entry table with the attachment level; a third-party
+            // pack with a shorter table would throw, so fall back to the stock count.
+            computed = AttachmentDataUtils.getAmmoCountWithAttachment(gunStack, gunData);
+        } catch (Throwable throwable) {
+            computed = gunData.getAmmoAmount();
+        }
+        return computed > 0 ? computed : Math.max(1, tier.capacity());
     }
 
     public static List<AutoFireTier> all() {

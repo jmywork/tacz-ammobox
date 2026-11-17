@@ -56,11 +56,12 @@ public final class AutoTriggerClient {
         // is only refreshed by item sync, so mirror the server here or every other shot
         // is refused as NEED_BOLT (half the rated fire rate).
         int ammoCount = gun.getCurrentAmmoCount(gunStack);
-        if (tier.isInfinite() && ammoCount < tier.capacity()) {
+        int magazine = AutoFireTier.refillCapacity(tier, gunStack, index.getGunData());
+        if (magazine > 0 && ammoCount < magazine) {
             // Mirror the server refill locally so the HUD and the client fire gate never
             // see an empty magazine and start a reload.
-            gun.setCurrentAmmoCount(gunStack, tier.capacity());
-            ammoCount = tier.capacity();
+            gun.setCurrentAmmoCount(gunStack, magazine);
+            ammoCount = magazine;
         }
         boolean chambered = gun.hasBulletInBarrel(gunStack);
         if (ammoCount > 0 && !chambered) {

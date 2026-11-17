@@ -66,12 +66,13 @@ public final class AutoFireServer {
         // block shooting though, otherwise the last round would never run out.
         boolean loaded = gun.hasBulletInBarrel(gunStack);
         int count = gun.getCurrentAmmoCount(gunStack);
-        if (tier.isInfinite() && count < tier.capacity()) {
+        int magazine = AutoFireTier.refillCapacity(tier, gunStack, index.getGunData());
+        if (magazine > 0 && count < magazine) {
             // Easter magazine: the shot was never really spent, so top the stack back up
             // instead of letting TACZ run into a reload. Only write on a mismatch so an
             // idle trigger does not dirty the item every tick.
-            gun.setCurrentAmmoCount(gunStack, tier.capacity());
-            count = tier.capacity();
+            gun.setCurrentAmmoCount(gunStack, magazine);
+            count = magazine;
             loaded = true;
         }
         if (count <= 0 && loaded) {

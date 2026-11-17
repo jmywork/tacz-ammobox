@@ -86,6 +86,11 @@ public final class AmmoBeltHelper {
         // to the real capacity or it would stop feeding once the stock number is reached.
         int magazine = data.getAmmoAmount();
         AutoFireTier tier = AutoFireTier.of(gunStack);
+        if (tier != null && tier.isInfinite()) {
+            // Infinite magazines never spend a round, so there is nothing for the belt to
+            // do; returning here also keeps it from trying to fill up to a bigger number.
+            return;
+        }
         if (tier != null && data.getBolt() == Bolt.MANUAL_ACTION) {
             magazine = tier.capacity();
         }
