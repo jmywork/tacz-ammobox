@@ -3,7 +3,7 @@
 TACZ（Timeless and Classics Zero）的弹药包装附属。把散装弹药装成盒、箱，并自动化装进 TACZ 弹药盒。
 
 - Minecraft 1.20.1 / Forge 47.3.19
-- 需要 TACZ 1.2.0
+- 需要 TACZ 1.2.0 或 1.2.0-hotfix
 - Create 6.0.x 可选
 - 协议 GPL-3.0-only
 - 作者 jmywork
@@ -21,7 +21,7 @@ English: [README.en.md](README.en.md)
 ## 安装
 
 1. 安装 Forge 1.20.1。
-2. 安装 TACZ 1.2.0。
+2. 安装 TACZ 1.2.0 或 1.2.0-hotfix。
 3. 把 `taczammobox-1.20.1-0.5.0.jar` 放进 `mods/`。
 4. 想用 Create 部署器兼容再装 Create 6.0.x，不装也能正常玩。
 

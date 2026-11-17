@@ -6,9 +6,11 @@
 |---|---|
 | Minecraft | 1.20.1 |
 | Forge | 47.3.19（47.4.x 未完整验证） |
-| TACZ | **1.2.0**（硬依赖） |
+| TACZ | **1.2.0 / 1.2.0-hotfix**（硬依赖） |
 | Create | 6.0.x（可选，仅部署器兼容与哨戒臂） |
 | Curios | 5.14.x（可选，弹链与饰品搜索） |
+
+> **1.2.0-hotfix**：与 1.2.0 的 TACZ 类字节码完全一致（1061 个 class 全部相同），唯一差别是内置的 `simplebedrockmodel` 从 2.6.2 升到 2.6.3，只影响 TACZ 自己的动画模型加载。本模组不需要改代码；`mods.toml` 的 `[1.2.0,)` 也接受 `1.2.0-hotfix`（Maven 版本序里 `1.2.0-hotfix > 1.2.0`，已用 maven-artifact 实测过）。
 
 ## 2. 对 TACZ / Create 的注入点
 

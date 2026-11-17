@@ -3,7 +3,7 @@
 Ammo packaging for **Timeless and Classics Zero (TACZ)**: pack loose ammo into boxes and crates, then fill TACZ ammo boxes automatically.
 
 - Minecraft 1.20.1 / Forge 47.3.19
-- TACZ 1.2.0
+- TACZ 1.2.0 or 1.2.0-hotfix
 - Create 6.0.x optional
 - GPL-3.0-only
 - Author jmywork
@@ -16,7 +16,7 @@ Capacity API and data-driven config: [docs/api.md](docs/api.md).
 ## Install
 
 1. Install Forge 1.20.1.
-2. Install TACZ 1.2.0.
+2. Install TACZ 1.2.0 or 1.2.0-hotfix.
 3. Put `taczammobox-1.20.1-0.5.0.jar` into `mods/`.
 4. Create is optional; install it only if you want deployer support.
 
