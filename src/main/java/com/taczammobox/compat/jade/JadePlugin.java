@@ -1,6 +1,7 @@
 package com.taczammobox.compat.jade;
 
 import com.taczammobox.TaczAmmoBoxMod;
+import com.taczammobox.block.AmmoBoxPileBlock;
 import com.taczammobox.block.AmmoLoaderBlock;
 import com.taczammobox.block.AmmoPackerBlock;
 import com.taczammobox.block.DynamicCrateBlock;
@@ -15,5 +16,6 @@ public class JadePlugin implements IWailaPlugin {
         registration.registerBlockComponent(MachineProvider.INSTANCE, AmmoPackerBlock.class);
         registration.registerBlockComponent(MachineProvider.INSTANCE, AmmoLoaderBlock.class);
         registration.registerBlockComponent(CrateProvider.INSTANCE, DynamicCrateBlock.class);
+        registration.registerBlockComponent(PileProvider.INSTANCE, AmmoBoxPileBlock.class);
     }
 }
