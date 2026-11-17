@@ -6,7 +6,7 @@
 - 兼容层兜底：`AmmoBoxHelper.capacity` 与 Create 部署器 mixin 的 `canFill` / 填充回调捕获 `Throwable`，第三方容量 API 或兼容类异常时只记一次日志并跳过该物品，不再带崩服务端 tick
 - 网络协议 9 → 10：盒堆新增方块状态会让方块状态 id 整体位移，0.4.0 / 0.4.0-hotfix 不能与 0.5.0 混用
 - **性能**：浮游炮机架在没有卫星实体时不再每 tick 查实体、背包扫描降到 5 tick 一次（`easterEggTab` 关闭时完全跳过），且**没有目标时也按节拍重扫**（和平区域从每 tick 每枪一次降到约 2 次/tick）；供弹弹链记住命中格并给 Curios 查询加 5 tick 重试，交火中不再每 tick 全背包扫描；动态箱渲染按弹种缓存贴图 id，不再每帧拼字符串。细节见 `docs/performance.md`，负载预估见 `docs/performance-estimate.md`
-- **适配 TACZ 1.2.0-hotfix**：hotfix 与 1.2.0 的 TACZ 类字节码完全一致（1061 个 class 全同），唯一差别是内置 `simplebedrockmodel` 2.6.2 → 2.6.3，因此本模组无需改代码；构建依赖换成 `libs/tacz-forge-1.20.1-1.2.0-hotfix.jar`，`mods.toml` 的 `[1.2.0,)` 实测接受 `1.2.0-hotfix`
+- **适配 TACZ 1.2.0-hotfix**：hotfix 改了 15 个客户端 class（`InteractKey`、`ClientPreventGunClick`、Bedrock 模型/粒子/渲染配置等）并把内置 `simplebedrockmodel` 升到 2.6.3；本模组的 mixin 目标与启动自检项都不在其中，所以不需要改代码。构建依赖换成 `libs/tacz-forge-1.20.1-1.2.0-hotfix.jar`，`mods.toml` 的 `[1.2.0,)` 实测接受两个版本。⚠ 哨戒动力臂 0.3.6 因 `InteractKey.interactBlock` 多了 `boolean` 参数，与 hotfix 启动即崩，需要停用或等更新
 
 ## 0.4.0-hotfix (2026-11-09)
 

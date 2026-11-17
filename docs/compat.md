@@ -10,7 +10,15 @@
 | Create | 6.0.x（可选，仅部署器兼容与哨戒臂） |
 | Curios | 5.14.x（可选，弹链与饰品搜索） |
 
-> **1.2.0-hotfix**：与 1.2.0 的 TACZ 类字节码完全一致（1061 个 class 全部相同），唯一差别是内置的 `simplebedrockmodel` 从 2.6.2 升到 2.6.3，只影响 TACZ 自己的动画模型加载。本模组不需要改代码；`mods.toml` 的 `[1.2.0,)` 也接受 `1.2.0-hotfix`（Maven 版本序里 `1.2.0-hotfix > 1.2.0`，已用 maven-artifact 实测过）。
+> **1.2.0-hotfix 与 1.2.0 的差**（逐 class 做 SHA-256 比对得出）：
+> - 改了 **15 个 class**，全部在客户端：`InteractKey`、`ClientPreventGunClick`、`BedrockGunModel`、`BedrockAttachmentModel`、`bedrock/BedrockModel|CubeBox|CubePerFace|Polygon`、`BulletHoleParticle`、`RenderConfig`、`RenderClothConfig`、`mixin/client/ar/BedrockPartMixin`；
+> - 内置 `simplebedrockmodel` 从 2.6.2 升到 2.6.3。
+>
+> 本模组的 10 个 mixin 目标（`AbstractGunItem`、`AnimationStateMachine`、`AttachmentDataUtils`、`AttachmentsTagManager`、`GunData`、`LocalPlayerShoot`、`ModernKineticGunItem`、`SoundPlayManager` 与两个 Create 类）**都不在这 15 个里**，启动自检反射的类与方法也都没变，所以 0.5.0 不需要改代码。
+>
+> ⚠ **1.2.0-hotfix 与哨戒动力臂（sentrymechanicalarm 0.3.6）冲突**：`InteractKey.interactBlock` 从 3 个参数变成 4 个（多了 `boolean`），而 0.3.6 的 `InteractKeyMixin` 还按 3 个参数注入，启动时 mixin apply 失败、整个游戏加载崩溃。需要停用哨戒臂或等它的更新版；和本模组无关。
+>
+> `mods.toml` 的 `[1.2.0,)` 同时接受两个版本（Maven 版本序里 `1.2.0-hotfix > 1.2.0`，用 maven-artifact 实测过）。
 
 ## 2. 对 TACZ / Create 的注入点
 
