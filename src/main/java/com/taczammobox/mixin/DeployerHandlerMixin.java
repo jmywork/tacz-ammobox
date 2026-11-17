@@ -17,6 +17,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Coerce;
@@ -95,30 +96,36 @@ public class DeployerHandlerMixin {
         int rounds = roundsOf(pkg);
 
         behaviour.handleCenteredProcessingOnAllItems(0.9f, transported -> {
-            if (processed.get()) {
+            try {
+                if (processed.get()) {
+                    return TransportedItemStackHandlerBehaviour.TransportedResult.doNothing();
+                }
+                ItemStack stack = transported.stack;
+                if (!canFill(stack, pkg)) {
+                    return TransportedItemStackHandlerBehaviour.TransportedResult.doNothing();
+                }
+
+                IAmmoBox ammoBox = (IAmmoBox) stack.getItem();
+                ItemStack filled = stack.copy();
+                int current = ammoBox.getAmmoCount(stack);
+                int capacity = AmmoBoxHelper.capacity(ammoBox, stack, pkg.getType());
+                int toAdd = Math.min(rounds, capacity - current);
+                ammoBox.setAmmoId(filled, pkg.getType().ammoId());
+                ammoBox.setAmmoCount(filled, current + toAdd);
+
+                if (!player.isCreative()) {
+                    held.shrink(1);
+                }
+
+                TransportedItemStack newTransported = transported.copy();
+                newTransported.stack = filled;
+                processed.set(true);
+                return TransportedItemStackHandlerBehaviour.TransportedResult.convertTo(newTransported);
+            } catch (Throwable throwable) {
+                // Never let a compat failure escape into Create's block entity tick.
+                warnOnce(throwable);
                 return TransportedItemStackHandlerBehaviour.TransportedResult.doNothing();
             }
-            ItemStack stack = transported.stack;
-            if (!canFill(stack, pkg)) {
-                return TransportedItemStackHandlerBehaviour.TransportedResult.doNothing();
-            }
-
-            IAmmoBox ammoBox = (IAmmoBox) stack.getItem();
-            ItemStack filled = stack.copy();
-            int current = ammoBox.getAmmoCount(stack);
-            int capacity = AmmoBoxHelper.capacity(ammoBox, stack, pkg.getType());
-            int toAdd = Math.min(rounds, capacity - current);
-            ammoBox.setAmmoId(filled, pkg.getType().ammoId());
-            ammoBox.setAmmoCount(filled, current + toAdd);
-
-            if (!player.isCreative()) {
-                held.shrink(1);
-            }
-
-            TransportedItemStack newTransported = transported.copy();
-            newTransported.stack = filled;
-            processed.set(true);
-            return TransportedItemStackHandlerBehaviour.TransportedResult.convertTo(newTransported);
         });
 
         if (processed.get()) {
@@ -130,25 +137,41 @@ public class DeployerHandlerMixin {
         return AmmoBoxHelper.roundsPerBox(pkg.getType()) * pkg.boxesPerItem();
     }
 
+    @Unique
+    private static boolean taczammobox$warned;
+
+    private static void warnOnce(Throwable throwable) {
+        if (taczammobox$warned) {
+            return;
+        }
+        taczammobox$warned = true;
+        com.taczammobox.TaczAmmoBoxMod.LOGGER.error(
+                "Create deployer ammo-box filling failed; the deployer will skip this item", throwable);
+    }
+
     private static boolean canFill(ItemStack stack, PackagedAmmo pkg) {
-        if (!(stack.getItem() instanceof IAmmoBox ammoBox)) {
+        try {
+            if (!(stack.getItem() instanceof IAmmoBox ammoBox)) {
+                return false;
+            }
+            if (ammoBox.isCreative(stack) || ammoBox.isAllTypeCreative(stack)) {
+                return false;
+            }
+            AmmoType type = pkg.getType();
+            ResourceLocation boxAmmo = ammoBox.getAmmoId(stack);
+            boolean empty = boxAmmo.equals(DefaultAssets.EMPTY_AMMO_ID);
+            if (!empty && !boxAmmo.equals(type.ammoId())) {
+                return false;
+            }
+            int space = AmmoBoxHelper.capacity(ammoBox, stack, type) - ammoBox.getAmmoCount(stack);
+            boolean waste = WasteSettings.waste();
+            if (waste) {
+                return space > 0;
+            }
+            return space >= roundsOf(pkg);
+        } catch (Throwable throwable) {
+            warnOnce(throwable);
             return false;
         }
-        if (ammoBox.isCreative(stack) || ammoBox.isAllTypeCreative(stack)) {
-            return false;
-        }
-        AmmoType type = pkg.getType();
-        ResourceLocation boxAmmo = ammoBox.getAmmoId(stack);
-        boolean empty = boxAmmo.equals(DefaultAssets.EMPTY_AMMO_ID);
-        if (!empty && !boxAmmo.equals(type.ammoId())) {
-            return false;
-        }
-        int space = AmmoBoxHelper.capacity(ammoBox, stack, type) - ammoBox.getAmmoCount(stack);
-        boolean waste = WasteSettings.waste();
-        if (waste) {
-            return space > 0;
-        }
-        boolean fits = space >= roundsOf(pkg);
-        return fits;
     }
 }

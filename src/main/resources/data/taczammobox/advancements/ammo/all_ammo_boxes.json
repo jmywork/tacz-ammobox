@@ -1,0 +1,51 @@
+{
+  "parent": "taczammobox:ammo/root",
+  "display": {
+    "icon": {
+      "item": "taczammobox:box_50bmg"
+    },
+    "title": {
+      "translate": "advancements.taczammobox.all_ammo_boxes.title"
+    },
+    "description": {
+      "translate": "advancements.taczammobox.all_ammo_boxes.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "all_ammo_boxes": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+        { "items": [ "taczammobox:box_12g" ] },
+        { "items": [ "taczammobox:box_22wmr" ] },
+        { "items": [ "taczammobox:box_30_06" ] },
+        { "items": [ "taczammobox:box_300blk" ] },
+        { "items": [ "taczammobox:box_308" ] },
+        { "items": [ "taczammobox:box_338" ] },
+        { "items": [ "taczammobox:box_357mag" ] },
+        { "items": [ "taczammobox:box_40mm" ] },
+        { "items": [ "taczammobox:box_45_70" ] },
+        { "items": [ "taczammobox:box_45acp" ] },
+        { "items": [ "taczammobox:box_46x30" ] },
+        { "items": [ "taczammobox:box_500mag" ] },
+        { "items": [ "taczammobox:box_50ae" ] },
+        { "items": [ "taczammobox:box_50bmg" ] },
+        { "items": [ "taczammobox:box_545x39" ] },
+        { "items": [ "taczammobox:box_556x45" ] },
+        { "items": [ "taczammobox:box_57x28" ] },
+        { "items": [ "taczammobox:box_58x42" ] },
+        { "items": [ "taczammobox:box_68x51fury" ] },
+        { "items": [ "taczammobox:box_762x25" ] },
+        { "items": [ "taczammobox:box_762x39" ] },
+        { "items": [ "taczammobox:box_762x54" ] },
+        { "items": [ "taczammobox:box_792x57" ] },
+        { "items": [ "taczammobox:box_9mm" ] },
+        { "items": [ "taczammobox:box_rpg_rocket" ] }
+        ]
+      }
+    }
+  }
+}

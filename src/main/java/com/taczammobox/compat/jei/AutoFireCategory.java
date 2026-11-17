@@ -65,8 +65,10 @@ public final class AutoFireCategory implements IRecipeCategory<AutoFireCategory.
     @Override
     public void draw(Recipe recipe, IRecipeSlotsView slots, GuiGraphics graphics, double mouseX, double mouseY) {
         var font = Minecraft.getInstance().font;
-        graphics.drawString(font, Component.translatable("jei.taczammobox.auto_fire.capacity", recipe.capacity()),
-                48, 10, 0x404040, false);
+        Component capacityText = recipe.capacity() < 0
+                ? Component.translatable("jei.taczammobox.auto_fire.capacity_infinite")
+                : Component.translatable("jei.taczammobox.auto_fire.capacity", recipe.capacity());
+        graphics.drawString(font, capacityText, 48, 10, 0x404040, false);
         graphics.drawString(font, Component.translatable("jei.taczammobox.auto_fire.rpm", recipe.rpm()),
                 48, 26, 0x404040, false);
     }
@@ -85,7 +87,7 @@ public final class AutoFireCategory implements IRecipeCategory<AutoFireCategory.
             if (magazine.isEmpty()) {
                 continue;
             }
-            recipes.add(new Recipe(gun, magazine, tier.capacity(), tier.rpm()));
+            recipes.add(new Recipe(gun, magazine, tier.isInfinite() ? -1 : tier.capacity(), tier.rpm()));
         }
         return recipes;
     }

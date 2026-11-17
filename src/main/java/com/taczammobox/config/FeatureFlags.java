@@ -200,10 +200,17 @@ public final class FeatureFlags {
     // escalating into NoClassDefFoundError: the one behaviour goes quiet instead.
     // ---------------------------------------------------------------------
 
-    /** Capacity of the tier magazine in {@code stack}, or {@code -1} when it is not one. */
+    /**
+     * Capacity override for the tier magazine in {@code stack}, or {@code -1} when it is
+     * not one, or when the tier is infinite: the easter magazine keeps the gun's own
+     * capacity (plus the level III extended-magazine effect) instead of a fixed number.
+     */
     public static int tierCapacityFor(ItemStack stack) {
         AutoFireTier tier = AutoFireTier.of(stack);
-        return tier == null ? -1 : tier.capacity();
+        if (tier == null || tier.isInfinite()) {
+            return -1;
+        }
+        return tier.capacity();
     }
 
     /** Shot interval in milliseconds of the tier magazine in {@code stack}, or {@code -1}. */

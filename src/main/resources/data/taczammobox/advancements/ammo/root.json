@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "taczammobox:box_9mm"
+    },
+    "title": {
+      "translate": "advancements.taczammobox.root.title"
+    },
+    "description": {
+      "translate": "advancements.taczammobox.root.description"
+    },
+    "background": "minecraft:textures/block/iron_block.png",
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": false
+  },
+  "criteria": {
+    "tick": {
+      "trigger": "minecraft:tick"
+    }
+  }
+}

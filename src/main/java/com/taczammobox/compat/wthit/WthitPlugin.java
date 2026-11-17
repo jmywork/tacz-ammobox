@@ -1,6 +1,7 @@
 package com.taczammobox.compat.wthit;
 
 import com.taczammobox.TaczAmmoBoxMod;
+import com.taczammobox.block.AmmoBoxPileBlock;
 import com.taczammobox.block.AmmoLoaderBlock;
 import com.taczammobox.block.AmmoPackerBlock;
 import com.taczammobox.block.DynamicCrateBlock;
@@ -17,5 +18,6 @@ public class WthitPlugin implements IWailaPlugin {
         registrar.addComponent(MachineProvider.INSTANCE, TooltipPosition.BODY, AmmoPackerBlock.class);
         registrar.addComponent(MachineProvider.INSTANCE, TooltipPosition.BODY, AmmoLoaderBlock.class);
         registrar.addComponent(CrateProvider.INSTANCE, TooltipPosition.BODY, DynamicCrateBlock.class);
+        registrar.addComponent(PileProvider.INSTANCE, TooltipPosition.BODY, AmmoBoxPileBlock.class);
     }
 }

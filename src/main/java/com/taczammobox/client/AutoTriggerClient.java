@@ -40,7 +40,8 @@ public final class AutoTriggerClient {
         }
         ItemStack gunStack = player.getMainHandItem();
         IGun gun = IGun.getIGunOrNull(gunStack);
-        if (gun == null || AutoFireTier.of(gunStack) == null) {
+        AutoFireTier tier = AutoFireTier.of(gunStack);
+        if (gun == null || tier == null) {
             return;
         }
         CommonGunIndex index = TimelessAPI.getCommonGunIndex(gun.getGunId(gunStack)).orElse(null);
@@ -55,6 +56,13 @@ public final class AutoTriggerClient {
         // is only refreshed by item sync, so mirror the server here or every other shot
         // is refused as NEED_BOLT (half the rated fire rate).
         int ammoCount = gun.getCurrentAmmoCount(gunStack);
+        int magazine = AutoFireTier.refillCapacity(tier, gunStack, index.getGunData());
+        if (magazine > 0 && ammoCount < magazine) {
+            // Mirror the server refill locally so the HUD and the client fire gate never
+            // see an empty magazine and start a reload.
+            gun.setCurrentAmmoCount(gunStack, magazine);
+            ammoCount = magazine;
+        }
         boolean chambered = gun.hasBulletInBarrel(gunStack);
         if (ammoCount > 0 && !chambered) {
             gun.setBulletInBarrel(gunStack, true);

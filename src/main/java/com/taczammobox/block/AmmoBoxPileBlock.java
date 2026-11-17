@@ -2,17 +2,23 @@ package com.taczammobox.block;
 
 import com.taczammobox.registry.ModItems;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.phys.BlockHitResult;
@@ -29,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 public class AmmoBoxPileBlock extends BaseEntityBlock {
     public static final int MAX_BOXES = 12;
     public static final IntegerProperty BOXES = IntegerProperty.create("boxes", 1, MAX_BOXES);
+    /** Horizontal direction the pile faces, set from the placing player. */
+    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     private static final VoxelShape[] SHAPES = new VoxelShape[MAX_BOXES + 1];
 
@@ -41,12 +49,22 @@ public class AmmoBoxPileBlock extends BaseEntityBlock {
 
     public AmmoBoxPileBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(BOXES, 1));
+        registerDefaultState(stateDefinition.any().setValue(BOXES, 1).setValue(FACING, Direction.NORTH));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(BOXES);
+        builder.add(BOXES, FACING);
+    }
+
+    @Override
+    public BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    @Override
+    public BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override
@@ -77,17 +95,18 @@ public class AmmoBoxPileBlock extends BaseEntityBlock {
     }
 
     /** Takes one box from the pile, or leaves the pile untouched if the player has no room. */
-    public static boolean withdraw(Level level, BlockPos pos, BlockState state, Player player,
-                                   net.minecraft.world.InteractionHand hand) {
+    public static void withdraw(Level level, BlockPos pos, BlockState state, Player player,
+                                net.minecraft.world.InteractionHand hand) {
         if (level.isClientSide
                 || !(level.getBlockEntity(pos) instanceof AmmoBoxPileBlockEntity pile)
                 || pile.getAmmoId() == null) {
-            return false;
+            return;
         }
-        ItemStack one = new ItemStack(ModItems.box(pile.getAmmoId()));
-        if (one.isEmpty()) {
-            return false;
+        Item box = ModItems.box(pile.getAmmoId());
+        if (box == null) {
+            return;
         }
+        ItemStack one = new ItemStack(box);
         ItemStack held = player.getItemInHand(hand);
         boolean stored;
         if (held.isEmpty()) {
@@ -100,7 +119,7 @@ public class AmmoBoxPileBlock extends BaseEntityBlock {
             stored = storeInInventory(player, one);
         }
         if (!stored) {
-            return false;
+            return;
         }
 
         int count = state.getValue(BOXES);
@@ -111,7 +130,6 @@ public class AmmoBoxPileBlock extends BaseEntityBlock {
         }
         level.playSound(null, pos, net.minecraft.sounds.SoundEvents.ITEM_PICKUP,
                 SoundSource.BLOCKS, 0.6F, 1.0F);
-        return true;
     }
 
     private static boolean storeInInventory(Player player, ItemStack one) {
@@ -153,7 +171,11 @@ public class AmmoBoxPileBlock extends BaseEntityBlock {
                 || pile.getAmmoId() == null) {
             return;
         }
-        ItemStack stack = new ItemStack(ModItems.box(pile.getAmmoId()), state.getValue(BOXES));
+        Item box = ModItems.box(pile.getAmmoId());
+        if (box == null) {
+            return;
+        }
+        ItemStack stack = new ItemStack(box, state.getValue(BOXES));
         if (!stack.isEmpty()) {
             Block.popResource(level, pos, stack);
         }

@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -17,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(SoundPlayManager.class)
 public abstract class SoundPlayManagerMixin {
+    @Unique
     private static boolean taczammobox$warned;
 
     @Inject(method = "playBoltSound", at = @At("HEAD"), cancellable = true, remap = false)
@@ -32,7 +34,7 @@ public abstract class SoundPlayManagerMixin {
         } catch (Throwable throwable) {
             if (!taczammobox$warned) {
                 taczammobox$warned = true;
-                throwable.printStackTrace();
+                com.taczammobox.TaczAmmoBoxMod.LOGGER.warn("[taczammobox] hook failed once; that override is now inert", throwable);
             }
         }
     }

@@ -22,7 +22,7 @@ public final class SatelliteHitProbe {
         if (event.getSource().getDirectEntity() instanceof EntityKineticBullet bullet && logged < 20) {
             logged++;
             LivingEntity victim = event.getEntity();
-            TaczAmmoBoxMod.LOGGER.info("sat hit: victim={} gun={} dmg={} attacker={}",
+            TaczAmmoBoxMod.LOGGER.debug("sat hit: victim={} gun={} dmg={} attacker={}",
                     victim.getType().builtInRegistryHolder().key().location(),
                     bullet.getGunId(),
                     event.getAmount(),

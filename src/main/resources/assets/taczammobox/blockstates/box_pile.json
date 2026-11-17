@@ -1,16 +1,148 @@
 {
   "variants": {
-    "boxes=1": {"model": "taczammobox:block/box_pile"},
-    "boxes=2": {"model": "taczammobox:block/box_pile"},
-    "boxes=3": {"model": "taczammobox:block/box_pile"},
-    "boxes=4": {"model": "taczammobox:block/box_pile"},
-    "boxes=5": {"model": "taczammobox:block/box_pile"},
-    "boxes=6": {"model": "taczammobox:block/box_pile"},
-    "boxes=7": {"model": "taczammobox:block/box_pile"},
-    "boxes=8": {"model": "taczammobox:block/box_pile"},
-    "boxes=9": {"model": "taczammobox:block/box_pile"},
-    "boxes=10": {"model": "taczammobox:block/box_pile"},
-    "boxes=11": {"model": "taczammobox:block/box_pile"},
-    "boxes=12": {"model": "taczammobox:block/box_pile"}
+    "facing=north,boxes=1": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=north,boxes=2": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=north,boxes=3": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=north,boxes=4": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=north,boxes=5": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=north,boxes=6": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=north,boxes=7": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=north,boxes=8": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=north,boxes=9": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=north,boxes=10": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=north,boxes=11": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=north,boxes=12": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=east,boxes=1": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=east,boxes=2": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=east,boxes=3": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=east,boxes=4": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=east,boxes=5": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=east,boxes=6": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=east,boxes=7": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=east,boxes=8": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=east,boxes=9": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=east,boxes=10": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=east,boxes=11": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=east,boxes=12": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=south,boxes=1": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=south,boxes=2": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=south,boxes=3": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=south,boxes=4": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=south,boxes=5": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=south,boxes=6": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=south,boxes=7": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=south,boxes=8": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=south,boxes=9": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=south,boxes=10": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=south,boxes=11": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=south,boxes=12": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=west,boxes=1": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=west,boxes=2": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=west,boxes=3": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=west,boxes=4": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=west,boxes=5": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=west,boxes=6": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=west,boxes=7": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=west,boxes=8": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=west,boxes=9": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=west,boxes=10": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=west,boxes=11": {
+      "model": "taczammobox:block/box_pile"
+    },
+    "facing=west,boxes=12": {
+      "model": "taczammobox:block/box_pile"
+    }
   }
 }

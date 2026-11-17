@@ -496,7 +496,7 @@ public class AmmoAssemblerBlockEntity extends BlockEntity implements MenuProvide
             return;
         }
         loggedSides[index] = true;
-        com.taczammobox.TaczAmmoBoxMod.LOGGER.info(
+        com.taczammobox.TaczAmmoBoxMod.LOGGER.debug(
                 "[taczammobox] assembler at {}: side {} queried item handler (mode={})",
                 worldPosition, side == null ? "none" : side,
                 side == null ? "combined" : sides[side.ordinal()]);

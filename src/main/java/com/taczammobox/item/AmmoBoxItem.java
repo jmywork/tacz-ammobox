@@ -118,7 +118,9 @@ public class AmmoBoxItem extends Item implements PackagedAmmo {
                 || !player.mayUseItemAt(pos, net.minecraft.core.Direction.UP, held)) {
             return false;
         }
-        level.setBlock(pos, ModBlocks.BOX_PILE.get().defaultBlockState(), 3);
+        BlockState pileState = ModBlocks.BOX_PILE.get().defaultBlockState()
+                .setValue(AmmoBoxPileBlock.FACING, player.getDirection().getOpposite());
+        level.setBlock(pos, pileState, 3);
         if (level.getBlockEntity(pos) instanceof AmmoBoxPileBlockEntity pile) {
             pile.setAmmoId(type.ammoId());
         }

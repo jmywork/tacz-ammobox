@@ -3,11 +3,11 @@
 Ammo packaging for **Timeless and Classics Zero (TACZ)**: pack loose ammo into boxes and crates, then fill TACZ ammo boxes automatically.
 
 - Minecraft 1.20.1 / Forge 47.3.19
-- TACZ 1.2.0
+- TACZ 1.2.0 or 1.2.0-hotfix
 - Create 6.0.x optional
 - GPL-3.0-only
 - Author jmywork
-- Version `0.4.0-hotfix`
+- Version `0.5.0`
 
 中文: [README.md](README.md)
 
@@ -16,8 +16,8 @@ Capacity API and data-driven config: [docs/api.md](docs/api.md).
 ## Install
 
 1. Install Forge 1.20.1.
-2. Install TACZ 1.2.0.
-3. Put `taczammobox-1.20.1-0.4.0-hotfix.jar` into `mods/`.
+2. Install TACZ 1.2.0 or 1.2.0-hotfix.
+3. Put `taczammobox-1.20.1-0.5.0.jar` into `mods/`.
 4. Create is optional; install it only if you want deployer support.
 
 ## Quick start
@@ -26,14 +26,14 @@ Capacity API and data-driven config: [docs/api.md](docs/api.md).
 - Loose ammo keeps pulling matching stacks from your inventory, Sophisticated Backpacks and Curios: it fills as much as possible and **never wastes**. Boxes/crates also aggregate matching packages: with waste **on** the last package may be partially wasted; with waste **off** filling stops before a package that does not fit.
 - With an inventory/container open, hover loose ammo, a box or a crate and press `V` to fill from that slot. When the held stack runs out, the same item is pulled from your inventory, Sophisticated Backpacks or Curios. Disable this with `autoRefill` in `settings.json` if another refill mod conflicts.
 - **Crate**: right-click to place; 9 boxes ↔ 1 crate.
-- **Box pile**: sneak-right-click a block to place; right-click a pile to take one box (to hand when empty, stack when holding the same box, otherwise into inventory); sneak-right-click a matching pile to add. Up to 12 boxes per pile; breaking drops all.
+- **Box pile**: sneak-right-click a block to place; the pile turns to face you (labels toward you). Right-click a pile to take one box (to hand when empty, stack when holding the same box, otherwise into inventory); sneak-right-click a matching pile to add. Up to 12 boxes per pile; breaking drops all.
 - **Pack**: press `H` (rebindable) or run `/taczammobox pack` to turn full loose-ammo stacks in inventory, Curios and the open container (including Sophisticated Backpacks and chests) into new boxes. Partial stacks stay where they are.
 - **Ammo belt**: keep it in your inventory/Curios; the main-hand gun is fed from compressed boxes/crates whenever its magazine is below full, without starting a reload. Normal behavior resumes when the belt is empty or the gun overheats. Craftable since 0.4.0.
 - **Auto-fire extended magazines**: for bolt-action guns. Standard I / II / III hold 10 / 20 / 30 rounds at 200 / 400 / 600 RPM. Craft them in the TACZ gun smith table: sniper extended mag III + 4 netherite ingots + 4 nether stars → standard I; standard I + 4 netherite ingots + 4 nether stars → standard II; standard II + 8 netherite blocks → standard III. The gun switches to full auto and skips the bolt action while one is installed.
 - **Ammo Assembler**: recipe-driven; the GUI reads TACZ gun smith table recipes into Ammo / Recipe / Output columns, with six configurable faces and redstone control.
 - **Satellite rack** (easter egg): mounts up to 10 TACZ guns in a fan behind the player; each gun picks its own target, press `X` to mark a focus target.
 - **Service satellite rack**: craftable from 4 netherite blocks, a beacon, an ammo chain, 2 dragon breath and a dragon head; keeps its own per-ammo-type feed buffer.
-- **Easter eggs**: the ammo belt, the easter auto-fire magazine III (300 rounds, 1000 RPM, no recoil) and the satellite rack are easter eggs; their tooltip says so and they have **no recipes**.
+- **Easter eggs**: the ammo belt, the easter auto-fire magazine III (infinite ammo, 1200 RPM, gun's own capacity plus the level III extended-mag effect, no recoil) and the satellite rack are easter eggs; their tooltip says so and they have **no recipes**.
 - **Target priority**: `boxPriority` in `settings.json` controls the order of `main_hand / inventory / curios / open_container`.
 - **Doctor / recipe reload**: `/taczammobox doctor` checks config and generated assets; `/taczammobox reloadrecipes` reloads data packs and third-party recipe injection.
 - **Ammo Packer**: loose ammo → box, 9 boxes → crate, or unpack. Its GUI has a filter slot; insert loose ammo/a box/a crate to process only that ammo type.

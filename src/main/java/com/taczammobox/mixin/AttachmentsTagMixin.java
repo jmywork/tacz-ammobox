@@ -7,6 +7,7 @@ import com.tacz.guns.resource.manager.AttachmentsTagManager;
 import com.taczammobox.config.FeatureFlags;
 import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -22,6 +23,7 @@ import java.util.Set;
  */
 @Mixin(AttachmentsTagManager.class)
 public abstract class AttachmentsTagMixin {
+    @Unique
     private static boolean taczammobox$warned;
 
     @Inject(method = "getAllowAttachmentTags", at = @At("RETURN"), cancellable = true, remap = false)
@@ -41,7 +43,7 @@ public abstract class AttachmentsTagMixin {
         } catch (Throwable throwable) {
             if (!taczammobox$warned) {
                 taczammobox$warned = true;
-                throwable.printStackTrace();
+                com.taczammobox.TaczAmmoBoxMod.LOGGER.warn("[taczammobox] hook failed once; that override is now inert", throwable);
             }
         }
     }

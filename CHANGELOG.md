@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0 (2026-11-17)
+
+- 盒堆放置时跟随玩家朝向：新增 `facing` 水平四向方块状态（默认 north），方块实体渲染器同时旋转 2×3 的箱子排布与每只箱子的模型，带标签的一面朝向放置者；旧存档里已放置的盒堆保持原朝向，重新放置即可
+- 兼容层兜底：`AmmoBoxHelper.capacity` 与 Create 部署器 mixin 的 `canFill` / 填充回调捕获 `Throwable`，第三方容量 API 或兼容类异常时只记一次日志并跳过该物品，不再带崩服务端 tick
+- 网络协议 9 → 10：盒堆新增方块状态会让方块状态 id 整体位移，0.4.0 / 0.4.0-hotfix 不能与 0.5.0 混用
+- **性能**：浮游炮机架在没有卫星实体时不再每 tick 查实体、背包扫描降到 5 tick 一次（`easterEggTab` 关闭时完全跳过），且**没有目标时也按节拍重扫**（和平区域从每 tick 每枪一次降到约 2 次/tick）；供弹弹链记住命中格并给 Curios 查询加 5 tick 重试，交火中不再每 tick 全背包扫描；动态箱渲染按弹种缓存贴图 id，不再每帧拼字符串。细节见 `docs/performance.md`，负载预估见 `docs/performance-estimate.md`
+- **彩蛋弹匣：1200 RPM + 无限弹药**：1000 RPM 的间隔是 60 ms，和 50 ms 的 tick 不对齐，实际会 50/100 ms 交替（听感是「突突…突突」）；改成 1200 RPM 后正好一发一个 tick。`autofire.json` 的档位新增 `infinite`（彩蛋档默认 `true`）：服务端不扣弹、两端每 tick 回满，不会再打空进换弹。无限档**不再强制弹容**，改用枪自身的弹容 + III 级扩容弹匣效果（`AttachmentDataUtils.getAmmoCountWithAttachment`），`capacity` 只作回退值。顺带修好了档位参数同步只发 3 档、客户端直接丢弃的问题
+- **盒堆信息显示**：Jade / WTHIT 现在会显示盒堆里的弹种、盒数（x/12）和合计发数；此前只覆盖动态箱和机器，盒堆只有方块名。
+- **全弹种收藏家成就**：新增「TACZ：弹药压制」成就页，根部成就进游戏即得，挑战成就要在背包里集齐 25 种内置弹药盒（`inventory_changed` 判定，第三方弹种不参与）。
+- **适配 TACZ 1.2.0-hotfix**：hotfix 改了 15 个客户端 class（`InteractKey`、`ClientPreventGunClick`、Bedrock 模型/粒子/渲染配置等）并把内置 `simplebedrockmodel` 升到 2.6.3；本模组的 mixin 目标与启动自检项都不在其中，所以不需要改代码。构建依赖换成 `libs/tacz-forge-1.20.1-1.2.0-hotfix.jar`，`mods.toml` 的 `[1.2.0,)` 实测接受两个版本。⚠ 哨戒动力臂 0.3.6 因 `InteractKey.interactBlock` 多了 `boolean` 参数，与 hotfix 启动即崩，需要停用或等更新
+
 ## 0.4.0-hotfix (2026-11-09)
 
 修复 0.4.0 发布后暴露的问题，功能与数值不变。
