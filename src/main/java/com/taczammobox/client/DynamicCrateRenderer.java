@@ -106,11 +106,11 @@ public class DynamicCrateRenderer implements BlockEntityRenderer<DynamicCrateBlo
                 .normal(0.0F, 1.0F, 0.0F).endVertex();
         pose.popPose();
 
-        renderFrontLabel(crate, textures[1], pose, buffer, packedLight);
+        renderFrontLabel(crate, textures[1], pose, buffer);
     }
 
     private void renderFrontLabel(DynamicCrateBlockEntity crate, ResourceLocation texture, PoseStack pose,
-                                  MultiBufferSource buffer, int packedLight) {
+                                  MultiBufferSource buffer) {
         if (!hasTexture(texture)) {
             return;
         }

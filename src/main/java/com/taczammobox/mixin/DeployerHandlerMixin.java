@@ -17,6 +17,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Coerce;
@@ -136,6 +137,7 @@ public class DeployerHandlerMixin {
         return AmmoBoxHelper.roundsPerBox(pkg.getType()) * pkg.boxesPerItem();
     }
 
+    @Unique
     private static boolean taczammobox$warned;
 
     private static void warnOnce(Throwable throwable) {

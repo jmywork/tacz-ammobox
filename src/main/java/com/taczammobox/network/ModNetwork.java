@@ -70,7 +70,7 @@ public final class ModNetwork {
                 .consumerMainThread(FocusTargetPacket::handle)
                 .add();
 
-        CHANNEL.messageBuilder(SortPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+        CHANNEL.messageBuilder(SortPacket.class, id, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(SortPacket::encode)
                 .decoder(SortPacket::decode)
                 .consumerMainThread((message, contextSupplier) -> {

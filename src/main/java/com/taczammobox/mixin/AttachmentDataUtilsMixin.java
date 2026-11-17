@@ -6,6 +6,7 @@ import com.tacz.guns.util.AttachmentDataUtils;
 import com.taczammobox.config.FeatureFlags;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -19,6 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(AttachmentDataUtils.class)
 public abstract class AttachmentDataUtilsMixin {
+    @Unique
     private static boolean taczammobox$warned;
 
     @Inject(method = "getAmmoCountWithAttachment", at = @At("RETURN"), cancellable = true, remap = false)

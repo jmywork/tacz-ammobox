@@ -5,6 +5,7 @@ import com.taczammobox.config.FeatureFlags;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -18,6 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(AnimationStateMachine.class)
 public abstract class AnimationStateMachineMixin {
+    @Unique
     private static boolean taczammobox$warned;
 
     @Inject(method = "trigger", at = @At("HEAD"), cancellable = true, remap = false)

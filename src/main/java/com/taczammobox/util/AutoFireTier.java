@@ -154,8 +154,8 @@ public final class AutoFireTier {
         for (int index = 0; index < ALL.size(); index++) {
             AutoFireTier tier = ALL.get(index);
             boolean endless = infinite != null && infinite[index];
-            updated.add(new AutoFireTier(tier.path, tier.level, clamp(capacities[index], 1, 2000),
-                    clamp(rpms[index], 1, MAX_RPM), tier.easterEgg, endless));
+            updated.add(new AutoFireTier(tier.path, tier.level, clamp(capacities[index], 2000),
+                    clamp(rpms[index], MAX_RPM), tier.easterEgg, endless));
         }
         ALL.clear();
         ALL.addAll(updated);
@@ -175,8 +175,8 @@ public final class AutoFireTier {
             int rpm = tier != null && tier.has("rpm") ? tier.get("rpm").getAsInt() : defaultRpm(index);
             boolean infinite = tier != null && tier.has("infinite")
                     ? tier.get("infinite").getAsBoolean() : defaultInfinite(index);
-            ALL.add(new AutoFireTier(id, clamp(level, 1, 3), clamp(capacity, 1, 2000),
-                    clamp(rpm, 1, MAX_RPM), index < EASTER_COUNT, infinite));
+            ALL.add(new AutoFireTier(id, clamp(level, 3), clamp(capacity, 2000),
+                    clamp(rpm, MAX_RPM), index < EASTER_COUNT, infinite));
         }
         save();
         TaczAmmoBoxMod.LOGGER.info("[taczammobox] auto-fire tiers: {}", describe());
@@ -223,7 +223,6 @@ public final class AutoFireTier {
     private static int defaultCapacity(int index) {
         return switch (index) {
             case 0 -> 300;
-            case 1 -> 10;
             case 2 -> 20;
             case 3 -> 30;
             default -> 10;
@@ -234,7 +233,6 @@ public final class AutoFireTier {
         return switch (index) {
             // 1200 is the only high rate that lands exactly on one shot per 50 ms tick.
             case 0 -> 1200;
-            case 1 -> 200;
             case 2 -> 400;
             case 3 -> 600;
             default -> 200;
@@ -245,8 +243,8 @@ public final class AutoFireTier {
         return index < EASTER_COUNT;
     }
 
-    private static int clamp(int value, int min, int max) {
-        return Math.max(min, Math.min(max, value));
+    private static int clamp(int value, int max) {
+        return Math.max(1, Math.min(max, value));
     }
 
     private static void save() {
@@ -288,7 +286,7 @@ public final class AutoFireTier {
     public static String describe() {
         StringBuilder builder = new StringBuilder();
         for (AutoFireTier tier : ALL) {
-            if (builder.length() > 0) {
+            if (!builder.isEmpty()) {
                 builder.append(", ");
             }
             builder.append(tier.path).append('=').append(tier.capacity).append('r').append('/').append(tier.rpm);

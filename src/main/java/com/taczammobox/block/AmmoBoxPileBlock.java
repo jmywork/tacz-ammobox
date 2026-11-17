@@ -6,6 +6,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -94,17 +95,18 @@ public class AmmoBoxPileBlock extends BaseEntityBlock {
     }
 
     /** Takes one box from the pile, or leaves the pile untouched if the player has no room. */
-    public static boolean withdraw(Level level, BlockPos pos, BlockState state, Player player,
-                                   net.minecraft.world.InteractionHand hand) {
+    public static void withdraw(Level level, BlockPos pos, BlockState state, Player player,
+                                net.minecraft.world.InteractionHand hand) {
         if (level.isClientSide
                 || !(level.getBlockEntity(pos) instanceof AmmoBoxPileBlockEntity pile)
                 || pile.getAmmoId() == null) {
-            return false;
+            return;
         }
-        ItemStack one = new ItemStack(ModItems.box(pile.getAmmoId()));
-        if (one.isEmpty()) {
-            return false;
+        Item box = ModItems.box(pile.getAmmoId());
+        if (box == null) {
+            return;
         }
+        ItemStack one = new ItemStack(box);
         ItemStack held = player.getItemInHand(hand);
         boolean stored;
         if (held.isEmpty()) {
@@ -117,7 +119,7 @@ public class AmmoBoxPileBlock extends BaseEntityBlock {
             stored = storeInInventory(player, one);
         }
         if (!stored) {
-            return false;
+            return;
         }
 
         int count = state.getValue(BOXES);
@@ -128,7 +130,6 @@ public class AmmoBoxPileBlock extends BaseEntityBlock {
         }
         level.playSound(null, pos, net.minecraft.sounds.SoundEvents.ITEM_PICKUP,
                 SoundSource.BLOCKS, 0.6F, 1.0F);
-        return true;
     }
 
     private static boolean storeInInventory(Player player, ItemStack one) {
@@ -170,7 +171,11 @@ public class AmmoBoxPileBlock extends BaseEntityBlock {
                 || pile.getAmmoId() == null) {
             return;
         }
-        ItemStack stack = new ItemStack(ModItems.box(pile.getAmmoId()), state.getValue(BOXES));
+        Item box = ModItems.box(pile.getAmmoId());
+        if (box == null) {
+            return;
+        }
+        ItemStack stack = new ItemStack(box, state.getValue(BOXES));
         if (!stack.isEmpty()) {
             Block.popResource(level, pos, stack);
         }
