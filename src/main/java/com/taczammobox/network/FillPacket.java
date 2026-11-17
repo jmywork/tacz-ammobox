@@ -41,7 +41,7 @@ public record FillPacket(int slot, int containerId) {
             return;
         }
         LAST_FILL.put(player.getUUID(), now);
-        com.taczammobox.TaczAmmoBoxMod.LOGGER.info("[fill] server got slot={} hand={}", slot,
+        com.taczammobox.TaczAmmoBoxMod.LOGGER.debug("[fill] server got slot={} hand={}", slot,
                 player.getMainHandItem().getItem());
 
         if (slot < 0) {

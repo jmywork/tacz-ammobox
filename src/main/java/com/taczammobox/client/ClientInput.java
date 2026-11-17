@@ -36,7 +36,7 @@ public final class ClientInput {
             ModNetwork.sendFocus(pickFocusTarget(minecraft));
         }
         if (ModKeyMappings.SORT_AMMO.consumeClick()) {
-            TaczAmmoBoxMod.LOGGER.info("[key] pack pressed");
+            TaczAmmoBoxMod.LOGGER.debug("[key] pack pressed");
             ModNetwork.sendPack();
         }
         if (!(minecraft.player.getMainHandItem().getItem() instanceof PackagedAmmo)
@@ -44,7 +44,7 @@ public final class ClientInput {
             return;
         }
         if (ModKeyMappings.FILL_AMMO_BOX.consumeClick()) {
-            TaczAmmoBoxMod.LOGGER.info("[key] fill pressed (hand={})",
+            TaczAmmoBoxMod.LOGGER.debug("[key] fill pressed (hand={})",
                     BuiltInRegistries.ITEM.getKey(minecraft.player.getMainHandItem().getItem()));
             ModNetwork.sendFill();
         }

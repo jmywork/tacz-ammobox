@@ -44,7 +44,7 @@ public abstract class GunDataShootIntervalMixin {
         } catch (Throwable throwable) {
             if (!taczammobox$warned) {
                 taczammobox$warned = true;
-                throwable.printStackTrace();
+                com.taczammobox.TaczAmmoBoxMod.LOGGER.warn("[taczammobox] hook failed once; that override is now inert", throwable);
             }
         }
     }

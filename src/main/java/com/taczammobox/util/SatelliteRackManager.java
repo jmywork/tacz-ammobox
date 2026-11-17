@@ -700,7 +700,7 @@ public final class SatelliteRackManager {
         } catch (Throwable throwable) {
             if (!warned) {
                 warned = true;
-                throwable.printStackTrace();
+                com.taczammobox.TaczAmmoBoxMod.LOGGER.warn("[taczammobox] hook failed once; that override is now inert", throwable);
             }
             return 0L;
         } finally {
