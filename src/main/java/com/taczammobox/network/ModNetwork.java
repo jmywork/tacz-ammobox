@@ -104,12 +104,15 @@ public final class ModNetwork {
     }
 
     public static void sendSettings(ServerPlayer player) {
-        int[] capacities = new int[3];
-        int[] rpms = new int[3];
         var tiers = com.taczammobox.util.AutoFireTier.all();
-        for (int i = 0; i < Math.min(3, tiers.size()); i++) {
+        int count = Math.min(com.taczammobox.util.AutoFireTier.TIER_COUNT, tiers.size());
+        int[] capacities = new int[count];
+        int[] rpms = new int[count];
+        boolean[] infinite = new boolean[count];
+        for (int i = 0; i < count; i++) {
             capacities[i] = tiers.get(i).capacity();
             rpms[i] = tiers.get(i).rpm();
+            infinite[i] = tiers.get(i).isInfinite();
         }
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new SettingsPacket(
                 WasteSettings.waste(), WasteSettings.packerTicks(), WasteSettings.loaderTicks(),
@@ -120,7 +123,7 @@ public final class ModNetwork {
                 com.taczammobox.config.FeatureFlags.easterEggTab(),
                 com.taczammobox.config.FeatureFlags.createCompat(),
                 com.taczammobox.config.FeatureFlags.safeMode(),
-                capacities, rpms));
+                capacities, rpms, infinite));
     }
 
     public static void sendConfig(ServerPlayer player) {

@@ -205,7 +205,7 @@ When the server detects a different capacity, it writes a **per-level multiplier
 ```json
 {
   "tiers": [
-    { "id": "auto_sear_3", "level": 3, "capacity": 300, "rpm": 1000, "easter_egg": true },
+    { "id": "auto_sear_3", "level": 3, "capacity": 300, "infinite": true, "rpm": 1200, "easter_egg": true },
     { "id": "auto_sear_normal", "level": 1, "capacity": 10, "rpm": 200 },
     { "id": "auto_sear_normal_2", "level": 2, "capacity": 20, "rpm": 400 },
     { "id": "auto_sear_normal_3", "level": 3, "capacity": 30, "rpm": 600 }
@@ -214,7 +214,8 @@ When the server detects a different capacity, it writes a **per-level multiplier
 ```
 
 - 第一条是彩蛋弹匣（创造限定），后三条是枪械工作台可合成的标准弹匣
-- `capacity`：弹容（1–2000）；`rpm`：射速（1–1200，实际间隔 = `60000 / rpm` 毫秒）；`level`：贴图与 tooltip 等级（1–3）
+- `capacity`：弹容（1–2000）；`rpm`：射速（1–1200，实际间隔 = `60000 / rpm` 毫秒；只有 1200/600/400/300/240/200 与 50 ms 的 tick 完全对齐，其余会 50/100 ms 交替）；`level`：贴图与 tooltip 等级（1–3）
+- `infinite`：默认只在彩蛋档为 `true`，表示不消耗弹药（服务端不扣弹、每 tick 回满，不会打空进换弹）
 - 按 `id` 匹配读取：删掉或改名的条目会被忽略，被删除的档位会在启动/重载时从 TACZ 枪包目录清理掉
 - 改完执行 `/taczammobox reload`，射速与弹容会同步到客户端；物品名与贴图需要重启游戏
 

@@ -17,9 +17,9 @@ import java.util.function.Supplier;
 public record SettingsPacket(boolean waste, int packerTicks, int loaderTicks,
                              boolean autoFire, boolean capacityOverride, boolean rpmOverride,
                              boolean belt, boolean easterEggTab, boolean createCompat, boolean safeMode,
-                             int[] capacities, int[] rpms) {
+                             int[] capacities, int[] rpms, boolean[] infinite) {
 
-    private static final int TIERS = 3;
+    private static final int TIERS = AutoFireTier.TIER_COUNT;
 
     public static void encode(SettingsPacket message, FriendlyByteBuf buffer) {
         buffer.writeBoolean(message.waste);
@@ -35,6 +35,7 @@ public record SettingsPacket(boolean waste, int packerTicks, int loaderTicks,
         for (int i = 0; i < TIERS; i++) {
             buffer.writeVarInt(message.capacities[i]);
             buffer.writeVarInt(message.rpms[i]);
+            buffer.writeBoolean(message.infinite[i]);
         }
     }
 
@@ -51,12 +52,14 @@ public record SettingsPacket(boolean waste, int packerTicks, int loaderTicks,
         boolean safeMode = buffer.readBoolean();
         int[] capacities = new int[TIERS];
         int[] rpms = new int[TIERS];
+        boolean[] infinite = new boolean[TIERS];
         for (int i = 0; i < TIERS; i++) {
             capacities[i] = buffer.readVarInt();
             rpms[i] = buffer.readVarInt();
+            infinite[i] = buffer.readBoolean();
         }
         return new SettingsPacket(waste, packer, loader, autoFire, capacityOverride, rpmOverride,
-                belt, easterEggTab, createCompat, safeMode, capacities, rpms);
+                belt, easterEggTab, createCompat, safeMode, capacities, rpms, infinite);
     }
 
     public static void handle(SettingsPacket message, Supplier<NetworkEvent.Context> contextSupplier) {
@@ -65,7 +68,7 @@ public record SettingsPacket(boolean waste, int packerTicks, int loaderTicks,
             WasteSettings.applyFromServer(message.waste, message.packerTicks, message.loaderTicks);
             FeatureFlags.applyFromServer(message.autoFire, message.capacityOverride, message.rpmOverride,
                     message.belt, message.easterEggTab, message.createCompat, message.safeMode);
-            AutoFireTier.applyFromServer(message.capacities, message.rpms);
+            AutoFireTier.applyFromServer(message.capacities, message.rpms, message.infinite);
         });
         context.setPacketHandled(true);
     }

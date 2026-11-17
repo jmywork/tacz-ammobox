@@ -45,14 +45,17 @@ public final class AutoFireTier {
     private final int capacity;
     private final int rpm;
     private final boolean easterEgg;
+    /** Never spends rounds; refilled every tick instead of reloading. Easter set only by default. */
+    private final boolean infinite;
 
-    private AutoFireTier(String path, int level, int capacity, int rpm, boolean easterEgg) {
+    private AutoFireTier(String path, int level, int capacity, int rpm, boolean easterEgg, boolean infinite) {
         this.path = path;
         this.id = new ResourceLocation(TaczAmmoBoxMod.MOD_ID, path);
         this.level = level;
         this.capacity = capacity;
         this.rpm = rpm;
         this.easterEgg = easterEgg;
+        this.infinite = infinite;
     }
 
     public ResourceLocation id() {
@@ -79,6 +82,11 @@ public final class AutoFireTier {
     /** True for the creative-only set; false for the craftable standard set. */
     public boolean isEasterEgg() {
         return easterEgg;
+    }
+
+    /** True when the magazine should never spend a round. */
+    public boolean isInfinite() {
+        return infinite;
     }
 
     /** Shoot interval in milliseconds. */
@@ -111,16 +119,18 @@ public final class AutoFireTier {
         return of(gun.getAttachmentId(gunStack, AttachmentType.EXTENDED_MAG));
     }
 
-    /** Client-side apply of the server's capacity/RPM values; never writes the local file. */
-    public static void applyFromServer(int[] capacities, int[] rpms) {
-        if (capacities.length != ALL.size() || rpms.length != ALL.size()) {
+    /** Client-side apply of the server's capacity/RPM/infinite values; never writes the local file. */
+    public static void applyFromServer(int[] capacities, int[] rpms, boolean[] infinite) {
+        if (capacities.length != ALL.size() || rpms.length != ALL.size()
+                || (infinite != null && infinite.length != ALL.size())) {
             return;
         }
         List<AutoFireTier> updated = new ArrayList<>();
         for (int index = 0; index < ALL.size(); index++) {
             AutoFireTier tier = ALL.get(index);
+            boolean endless = infinite != null && infinite[index];
             updated.add(new AutoFireTier(tier.path, tier.level, clamp(capacities[index], 1, 2000),
-                    clamp(rpms[index], 1, MAX_RPM), tier.easterEgg));
+                    clamp(rpms[index], 1, MAX_RPM), tier.easterEgg, endless));
         }
         ALL.clear();
         ALL.addAll(updated);
@@ -138,8 +148,10 @@ public final class AutoFireTier {
             int capacity = tier != null && tier.has("capacity")
                     ? tier.get("capacity").getAsInt() : defaultCapacity(index);
             int rpm = tier != null && tier.has("rpm") ? tier.get("rpm").getAsInt() : defaultRpm(index);
+            boolean infinite = tier != null && tier.has("infinite")
+                    ? tier.get("infinite").getAsBoolean() : defaultInfinite(index);
             ALL.add(new AutoFireTier(id, clamp(level, 1, 3), clamp(capacity, 1, 2000),
-                    clamp(rpm, 1, MAX_RPM), index < EASTER_COUNT));
+                    clamp(rpm, 1, MAX_RPM), index < EASTER_COUNT, infinite));
         }
         save();
         TaczAmmoBoxMod.LOGGER.info("[taczammobox] auto-fire tiers: {}", describe());
@@ -195,12 +207,17 @@ public final class AutoFireTier {
 
     private static int defaultRpm(int index) {
         return switch (index) {
-            case 0 -> 1000;
+            // 1200 is the only high rate that lands exactly on one shot per 50 ms tick.
+            case 0 -> 1200;
             case 1 -> 200;
             case 2 -> 400;
             case 3 -> 600;
             default -> 200;
         };
+    }
+
+    private static boolean defaultInfinite(int index) {
+        return index < EASTER_COUNT;
     }
 
     private static int clamp(int value, int min, int max) {
@@ -213,9 +230,9 @@ public final class AutoFireTier {
             Files.createDirectories(file.getParent());
             JsonObject root = new JsonObject();
             root.addProperty("_comment_cn",
-                    "自动击发弹匣参数，前三条是彩蛋版（创造限定），后三条是标准版（枪械工作台可合成）。capacity 弹容，rpm 射速（上限 1200）；level 影响 tooltip 与贴图（1-3）。修改后重启游戏生效，枪包在启动时生成。");
+                    "自动击发弹匣参数，第一条是彩蛋版（创造限定），后三条是标准版（枪械工作台可合成）。capacity 弹容，rpm 射速（上限 1200，1200 才与 50ms tick 对齐）；infinite 为 true 时不消耗弹药；level 影响 tooltip 与贴图（1-3）。修改后重启游戏生效，枪包在启动时生成。");
             root.addProperty("_comment_en",
-                    "Auto-fire magazine tiers: first three are the easter-egg set (creative only), last three the craftable standard set. capacity = rounds, rpm = fire rate (max 1200); level drives the tooltip and model (1-3). Restart the game after editing; the TACZ gun pack is generated at startup.");
+                    "Auto-fire magazine tiers: the first entry is the easter-egg set (creative only), the last three the craftable standard set. capacity = rounds, rpm = fire rate (max 1200; only 1200 lines up with the 50 ms tick); infinite = true never spends ammo; level drives the tooltip and model (1-3). Restart the game after editing; the TACZ gun pack is generated at startup.");
 
             JsonArray tiers = new JsonArray();
             for (AutoFireTier tier : ALL) {
@@ -226,6 +243,9 @@ public final class AutoFireTier {
                 entry.addProperty("rpm", tier.rpm);
                 if (tier.easterEgg) {
                     entry.addProperty("easter_egg", true);
+                }
+                if (tier.infinite) {
+                    entry.addProperty("infinite", true);
                 }
                 tiers.add(entry);
             }

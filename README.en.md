@@ -33,7 +33,7 @@ Capacity API and data-driven config: [docs/api.md](docs/api.md).
 - **Ammo Assembler**: recipe-driven; the GUI reads TACZ gun smith table recipes into Ammo / Recipe / Output columns, with six configurable faces and redstone control.
 - **Satellite rack** (easter egg): mounts up to 10 TACZ guns in a fan behind the player; each gun picks its own target, press `X` to mark a focus target.
 - **Service satellite rack**: craftable from 4 netherite blocks, a beacon, an ammo chain, 2 dragon breath and a dragon head; keeps its own per-ammo-type feed buffer.
-- **Easter eggs**: the ammo belt, the easter auto-fire magazine III (300 rounds, 1000 RPM, no recoil) and the satellite rack are easter eggs; their tooltip says so and they have **no recipes**.
+- **Easter eggs**: the ammo belt, the easter auto-fire magazine III (300 rounds, 1200 RPM, infinite ammo, no recoil) and the satellite rack are easter eggs; their tooltip says so and they have **no recipes**.
 - **Target priority**: `boxPriority` in `settings.json` controls the order of `main_hand / inventory / curios / open_container`.
 - **Doctor / recipe reload**: `/taczammobox doctor` checks config and generated assets; `/taczammobox reloadrecipes` reloads data packs and third-party recipe injection.
 - **Ammo Packer**: loose ammo → box, 9 boxes → crate, or unpack. Its GUI has a filter slot; insert loose ammo/a box/a crate to process only that ammo type.

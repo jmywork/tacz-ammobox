@@ -41,7 +41,8 @@ public final class AutoFireServer {
         Player player = event.player;
         ItemStack gunStack = player.getMainHandItem();
         IGun gun = IGun.getIGunOrNull(gunStack);
-        if (gun == null || AutoFireTier.of(gunStack) == null) {
+        AutoFireTier tier = AutoFireTier.of(gunStack);
+        if (gun == null || tier == null) {
             return;
         }
         CommonGunIndex index = TimelessAPI.getCommonGunIndex(gun.getGunId(gunStack)).orElse(null);
@@ -65,6 +66,14 @@ public final class AutoFireServer {
         // block shooting though, otherwise the last round would never run out.
         boolean loaded = gun.hasBulletInBarrel(gunStack);
         int count = gun.getCurrentAmmoCount(gunStack);
+        if (tier.isInfinite() && count < tier.capacity()) {
+            // Easter magazine: the shot was never really spent, so top the stack back up
+            // instead of letting TACZ run into a reload. Only write on a mismatch so an
+            // idle trigger does not dirty the item every tick.
+            gun.setCurrentAmmoCount(gunStack, tier.capacity());
+            count = tier.capacity();
+            loaded = true;
+        }
         if (count <= 0 && loaded) {
             gun.setBulletInBarrel(gunStack, false);
         } else if (count > 0 && !loaded) {
@@ -79,11 +88,17 @@ public final class AutoFireServer {
             return;
         }
         ItemStack gunStack = event.getGunItemStack();
-        if (AutoFireTier.of(gunStack) == null) {
+        AutoFireTier tier = AutoFireTier.of(gunStack);
+        if (tier == null) {
             return;
         }
         IGun gun = IGun.getIGunOrNull(gunStack);
         if (gun == null) {
+            return;
+        }
+        if (tier.isInfinite()) {
+            // No round is spent; keep the chamber flag so the next shot passes NEED_BOLT.
+            gun.setBulletInBarrel(gunStack, true);
             return;
         }
         int count = gun.getCurrentAmmoCount(gunStack);
